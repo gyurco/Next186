@@ -155,6 +155,7 @@ module system (
 
 	input  clk_cpu,
 	input  clk_dsp,
+	input  [1:0] cpu_speed, // CPU speed control, 0 - maximum
 
 	output [3:0]sdr_n_CS_WE_RAS_CAS,
 	output [1:0]sdr_BA,
@@ -594,7 +595,8 @@ module system (
 		 .clk(clk_cpu), 
 		 .mreq(MREQ), 
 		 .wmask(RAM_WMASK),
-		 .ce(CE), 
+		 .ce(CE),
+		 .cpu_speed(cpu_speed),
 		 .ddr_din(sys_DOUT), 
 		 .ddr_dout(cntrl0_user_input_data), 
 		 .ddr_clk(clk_sdr), 

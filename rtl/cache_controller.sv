@@ -56,6 +56,7 @@ module cache_controller(
 	 input mreq,
 	 input [3:0]wmask,
 	 output reg ce = 1'b1,	// clock enable for CPU
+	 input [1:0] cpu_speed, // 0 - Maximum 1,2,3 - divide by 1,2,3
 	 input [15:0]ddr_din,
 	 output reg[15:0]ddr_dout,
 	 input ddr_clk,
@@ -103,6 +104,8 @@ module cache_controller(
 	reg s_lowaddr5 = 0;
 	wire [31:0]cache_QA;
 	wire [`WAYS-1:0]lru[(1<<`WAYS)-1:0];
+
+	reg [1:0] ce_div;
 
 	genvar i;
 	generate
@@ -159,6 +162,9 @@ module cache_controller(
 
 		
 	always @(posedge clk) begin
+		ce_div <= ce_div + 1'd1;
+		if (ce_div == cpu_speed) ce_div <= 0;
+
 		s_lowaddr5 <= lowaddr[`LINE-2];
 		flushreq <= ~flushcount[`WAYS+`SETS] & (flushreq | flush);
 		if(ce) begin
@@ -179,7 +185,7 @@ module cache_controller(
 					ce <= 1'b0;
 				end else begin
 					flushcount[`WAYS+`SETS] <= flushcount[`WAYS+`SETS] | flushreq;
-					ce <= 1'b1;
+					ce <= ce_div == 0;
 				end
 			end
 			3'b011: begin	// write cache to ddr

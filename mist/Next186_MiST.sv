@@ -42,9 +42,12 @@ module Next186_MiST
 
 parameter CONF_STR = {
 	"NEXT186;;",
+	"O12,CPU Speed,Maximum,/2,/3,/4;",
 	"T0,Reset;",
 	"V,",`BUILD_DATE
 };
+
+wire  [1:0] cpu_speed = status[2:1];
 
 // core's raw video 
 wire  [5:0] core_r, core_g, core_b;
@@ -81,7 +84,7 @@ reg  reset;
 always @(posedge clk_cpu) reset <= status[0] | buttons[1];
 	
 // user io
-wire  [7:0] status;
+wire [63:0] status;
 wire  [1:0] buttons;
 wire  [1:0] switches;
 
@@ -254,6 +257,8 @@ system sys_inst (
 
 	.clk_cpu(clk_cpu),
 	.clk_dsp(clk_dsp),
+
+	.cpu_speed(cpu_speed),
 
 	.VGA_R(core_r),
 	.VGA_G(core_g),
