@@ -81,7 +81,7 @@ dcm_cpu dcm_cpu_inst (
 
 reg  reset;
     
-always @(posedge clk_cpu) reset <= status[0] | buttons[1];
+always @(posedge clk_cpu) reset <= status[0] | buttons[1] | !bios_loaded;
 	
 // user io
 wire [63:0] status;
@@ -203,6 +203,8 @@ sd_card sd_card (
 	.sd_sdo  ( sd_sdo         )
 );
 
+///// VIDEO OUT /////
+
 mist_video #(.COLOR_DEPTH(6)) mist_video (
 	.clk_sys     ( clk_sys    ),
 
@@ -244,7 +246,65 @@ mist_video #(.COLOR_DEPTH(6)) mist_video (
 	.VGA_HS      ( VGA_HS     )
 );
 
-//////NEXT186///////////////
+////// BIOS DOWNLOAD /////
+
+wire        ioctl_downl;
+wire  [7:0] ioctl_index;
+wire        ioctl_wr;
+wire [24:0] ioctl_addr;
+wire  [7:0] ioctl_dout;
+
+data_io data_io(
+	.clk_sys       ( clk_sdr      ),
+	.SPI_SCK       ( SPI_SCK      ),
+	.SPI_SS2       ( SPI_SS2      ),
+	.SPI_DI        ( SPI_DI       ),
+	.ioctl_download( ioctl_downl  ),
+	.ioctl_index   ( ioctl_index  ),
+	.ioctl_wr      ( ioctl_wr     ),
+	.ioctl_addr    ( ioctl_addr   ),
+	.ioctl_dout    ( ioctl_dout   )
+);
+
+reg [15:0] bios_tmp[64];
+reg [12:0] bios_addr = 0;
+reg [15:0] bios_din;
+reg        bios_wr = 0;
+wire       bios_req;
+reg        bios_loaded = 0;
+
+always @(posedge clk_sdr) begin
+	reg [7:0] dat;
+	reg       bios_reqD;
+	reg       ioctl_downlD;
+
+	ioctl_downlD <= ioctl_downl;
+	if (ioctl_downl & ~ioctl_downlD) begin
+		bios_addr <= 0;
+		bios_wr <= 0;
+	end
+
+	if (ioctl_downlD & ~ioctl_downl) bios_loaded <= 1;
+
+	if (ioctl_downl & ioctl_wr) begin
+		if (ioctl_addr[0]) begin
+			bios_tmp[ioctl_addr[6:1]] <= {ioctl_dout, dat};
+			if (&ioctl_addr[5:1]) bios_wr <= 1;
+		end else begin
+			dat <= ioctl_dout;
+		end
+	end
+
+	bios_reqD <= bios_req;
+	if (bios_reqD & ~bios_req) bios_wr <= 0;
+
+	if (ioctl_downl & bios_req) begin
+		bios_addr <= bios_addr + 1'd1;
+		bios_din <= bios_tmp[bios_addr[5:0]];
+	end
+end
+
+////// NEXT186 ///////////////
 
 wire [3:0]IO;
 
@@ -307,7 +367,12 @@ system sys_inst (
 	.GPIO(), //{IO, GPIO}),
 
 	.I2C_SCL(),//I2C_SCLK),
-	.I2C_SDA() //I2C_SDAT)
+	.I2C_SDA(), //I2C_SDAT)
+
+	.BIOS_ADDR(bios_addr),
+	.BIOS_DIN(bios_din),
+	.BIOS_WR(bios_wr),
+	.BIOS_REQ(bios_req)
 );
 
 endmodule

@@ -45,7 +45,8 @@
 `timescale 1ns / 1ps
 
 module PIC_8259(
-    input CS,
+	 input RST,
+	 input CS,
 	 input WR,
 	 input [7:0]din,
 	 input slave,
@@ -65,6 +66,13 @@ module PIC_8259(
 	assign dout = slave ? {3'b000, IMR[3], 3'b000, IMR[2]} : {3'b000, IMR[4], 2'b00, IMR[1:0]};
 	
 	always @ (posedge clk) begin
+	if (RST) begin
+		ss_I <= 0;
+		s_I <= 0;
+		IMR <= 5'b11111;
+		IRR <= 0;
+		INT <= 0;
+	end else begin
 		ss_I <= I;
 		s_I <= ss_I;
 		IRR <= (IRR | (~s_I & ss_I)) & ~IMR;	// front edge detection
@@ -96,7 +104,7 @@ module PIC_8259(
 			if(slave) IMR[3:2] <= {din[4], din[0]};
 			else {IMR[4], IMR[1:0]} <= {din[4], din[1:0]};
 	end
-	
+	end
 
 endmodule
 

@@ -198,9 +198,15 @@ module system (
 	 
 	inout [7:0]GPIO,
 	output I2C_SCL,
-	inout I2C_SDA
+	inout I2C_SDA,
+
+	input [12:0] BIOS_ADDR,
+	input [15:0] BIOS_DIN,
+	input BIOS_WR,
+	output BIOS_REQ
     );
 
+	localparam BIOS_BASE = 20'h57800;
 	initial SD_n_CS = 1'b1;
 
 	wire [15:0]cntrl0_user_input_data;//i
@@ -432,12 +438,16 @@ module system (
 							 ({8{OPL3_PORT}} & opl32_data) ;
 
 
+	assign BIOS_REQ = sys_wr_data_valid;
+	reg [15:0] BIOS_data;
+	reg        BIOS_data_valid;
+
 	SDRAM_16bit SDR
 	(
 		.sys_CLK(clk_sdr),				// clock
 		.sys_CMD(cntrl0_user_command_register),					// 00=nop, 01 = write 64 bytes, 10=read 32 bytes, 11=read 64 bytes
 		.sys_ADDR(sdraddr),	// word address
-		.sys_DIN(cntrl0_user_input_data),		// data input
+		.sys_DIN(BIOS_data_valid ? BIOS_data : cntrl0_user_input_data),		// data input
 		.sys_DOUT(sys_DOUT),					// data output
 		.sys_rd_data_valid(sys_rd_data_valid),	// data valid read
 		.sys_wr_data_valid(sys_wr_data_valid),	// data valid write
@@ -638,6 +648,7 @@ module system (
 	wire I_COM1;
 	PIC_8259 PIC 
 	(
+		 .RST(!rstcount[18]),
 		 .CS(PIC_OE && IORQ && CPU_CE), // 21h, a1h
 		 .WR(WR), 
 		 .din(CPU_DOUT[7:0]), 
@@ -693,7 +704,7 @@ module system (
 	
 	seg_map seg_mapper 
 	(
-		 .CLK(clk_cpu), 
+		 .CLK(clk_cpu),
 		 .cpuaddr(PORT_ADDR[3:0]), 
 		 .cpurdata(memmap), 
 		 .cpuwdata(CPU_DOUT[8:0]), 
@@ -801,10 +812,16 @@ module system (
 		s_vga_endline <= vga_repln_count == vga_repln;
 		s_vga_endframe <= vga_end_frame;
 		nop <= sys_cmd_ack == 2'b00;
-		sdraddr <= s_prog_empty || !(s_ddr_wr || s_ddr_rd) ? {6'b000001, vga_ddr_row_col + vga_lnbytecount} : {memmap_mux[8:0], cache_hi_addr[9:0], 4'b0000};
+
+		sdraddr <= BIOS_WR ? BIOS_BASE + (BIOS_ADDR >> 1) : 
+		           s_prog_empty || !(s_ddr_wr || s_ddr_rd) ? {6'b000001, vga_ddr_row_col + vga_lnbytecount} : {memmap_mux[8:0], cache_hi_addr[9:0], 4'b0000};
 		max_read <= &sdraddr[7:3] ? ~sdraddr[2:0] : 3'b111;	// SDRAM row size = 512 words
 
-		if(s_prog_empty) cntrl0_user_command_register <= 2'b10;			// read 32 bytes VGA
+		BIOS_data_valid <= BIOS_WR;
+		BIOS_data <= BIOS_DIN;
+
+		if(BIOS_WR) cntrl0_user_command_register <= 2'b01;
+		else if(s_prog_empty) cntrl0_user_command_register <= 2'b10;	// read 32 bytes VGA
 		else if(s_ddr_wr) cntrl0_user_command_register <= 2'b01;		// write 256 bytes cache
 		else if(s_ddr_rd) cntrl0_user_command_register <= 2'b11;		// read 256 bytes cache
 		else if(~s_prog_full) cntrl0_user_command_register <= 2'b10;	// read 32 bytes VGA
@@ -817,7 +834,7 @@ module system (
 				col_counter <= {1'b0, max_read, 1'b1};
 				vga_lnbytecount <= vga_lnbytecount + max_read + 1'b1;
 			end					
-			2'b01, 2'b11: crw <= 1'b1;	// cache read/write			
+			2'b01, 2'b11: crw <= !BIOS_WR;	// cache read/write
 		endcase
 
 		if(s_vga_endscanline) begin
