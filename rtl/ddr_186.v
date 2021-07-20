@@ -907,9 +907,9 @@ module system (
 
 // I2C
 		if(CPU_CE && IORQ && WR && WORD && I2C_SELECT) i2c_cd <= CPU_DOUT[11:0];
-					
-		auto_flush[1:0] <= {auto_flush[0], vblnk};		
-		
+
+		auto_flush[1:0] <= {auto_flush[0], hblnk};
+
 	end
 
 	always @ (posedge clk_25) begin
