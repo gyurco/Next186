@@ -5,7 +5,7 @@
 //
 // Filename: timer8253.v
 // Description: Part of the Next186 SoC PC project, timer
-// 	8253 simplified timer (no gate, only counters 0 and 2, no read back command)
+// 	8253 simplified timer (no gate, only counters 0 and 2, no read back command, no BCD mode)
 // Version 1.0
 // Creation date: May2012
 //
@@ -140,14 +140,15 @@ module counter(
 		if(CE == 2'b10) CE1 <= 1;
 
 		if(CE1) begin
-			newcmd <= 0;
 			newdata <= 0;
 			CE1 <= 0;
 			case(mode[3:1])
 				3'b000, 3'b001:
-					if(newdata) begin
-						mode[6] <= 0;
+					if (newdata) begin
 						count <= init;
+						newcmd <= 0;
+					end else if(newcmd) begin
+						mode[6] <= 0;
 					end else begin
 						count <= count - 1'd1;
 						if(c1) mode[6] <= 1;
@@ -155,20 +156,28 @@ module counter(
 				3'b010, 3'b110: begin
 					mode[6] <= ~c2;
 					if(c1 | newcmd) begin
-						count <= init;
+						if (!newcmd | newdata) begin
+							newcmd <= 0;
+							count <= init;
+						end
 					end else count <= count - 1'd1;
 				end
 				3'b011, 3'b111: begin
 					if(c1 | c2 | newcmd) begin
 						mode[6] <= {~mode[6] | newcmd};
-						count <= {init[15:1], (~mode[6] | newcmd) & init[0]};
+						if (!newcmd | newdata) begin
+							newcmd <= 0;
+							count <= {init[15:1], (~mode[6] | newcmd) & init[0]};
+						end
 					end else count <= count - 2'd2;
 				end
 				3'b100, 3'b101:
-					if(newdata | newcmd) begin
-						mode[6] <= 1;
+					if (newdata) begin
+						newcmd <= 0;
 						count <= init;
 						strobe <= 1;
+					end else if(newcmd) begin
+						mode[6] <= 1;
 					end else begin
 						count <= count - 1'd1;
 						if(c1) begin
@@ -193,10 +202,15 @@ module counter(
 						latched <= count;
 					end
 				end else begin	// data
-					newdata <= 1;
 					state <= state[0] + ^mode[5:4] + 1'd1;
-					if(state[0]) init[15:8] <= din;
-					else init[7:0] <= din;
+					if(state[0]) begin
+						newdata <= 1;
+						init[15:8] <= din;
+					end
+					else begin
+						init[7:0] <= din;
+						newdata <= ^mode[5:4];
+					end
 				end
 			end else begin
 				rd <= ~rd;
