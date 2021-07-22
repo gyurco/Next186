@@ -486,6 +486,12 @@ int08 proc near
 		push    bx
 		push    40h
 		pop     ds
+
+		mov     bx, 40h
+		cmp     word ptr [bx], 0
+		jz      int08_nodec
+		dec     word ptr [bx]
+int08_nodec:
 		mov     bx, 6ch
 		add     word ptr [bx], 1
 		adc     word ptr [bx+2], 0
