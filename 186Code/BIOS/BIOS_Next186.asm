@@ -190,7 +190,7 @@ font8x14	equ	font8x16 - 0e00h
 
 		org 0e000h
 bios:        
-biosmsg     db 'Next186 DE0-Nano SoC PC BIOS (C) 2017 Nicolae Dumitrache', 0
+biosmsg     db 'Next186 MiST SoC PC BIOS (C) 2017 Nicolae Dumitrache', 0
 msgmb       db 'MB SD Card', 13, 10, 0
 msgkb       db 'PS2 KB detected', 13, 10, 0
 
@@ -441,7 +441,7 @@ nomousemsg:
 
 msgmouse    db 'PS2 Mouse detected', 13, 10, 0        
 bioscont    db 13, 10, 'CPU: 80186 50Mhz (50MIPS, 100Mhz 32bit bus)', 13, 10
-            db 'RAM: 32MB SDR 147Mhz 16bit', 13, 10
+            db 'RAM: 32MB SDR 100Mhz 16bit', 13, 10
             db 'Cache: 8KB, 4-way, 128x64 bytes data/inst', 13, 10
 			db 'HD0: ', 0
 
