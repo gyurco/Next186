@@ -336,7 +336,7 @@ module system (
 	wire [11:0]cursorpos;
 	wire [15:0]scraddr;
 	reg flash_on;
-	reg speaker_on = 1'b0;
+	reg [1:0] speaker_on = 0;
 	reg [9:0]rNMI = 0;
 	wire [2:0]shift = half[1] ? ~hcount_pan[3:1] : ~hcount_pan[2:0];
 	wire [2:0]pxindex = -hcount_pan[2:0];
@@ -424,6 +424,7 @@ module system (
 							 ({8{VGA_DAC_OE}} & VGA_DAC_DATA) |
 							 ({8{VGA_FONT_OE}}& VGA_FONT_DATA) |
 							 ({8{KB_OE}} & KB_DOUT) |
+							 ({8{SPEAKER_PORT}} & {6'd0, speaker_on}) |
 							 ({8{INPUT_STATUS_OE}} & {1'b1, i2cack, cpu32_halt, sq_full, vblnk, i2cackerr, s_RS232_DCE_RXD, hblnk | vblnk}) | 
 							 ({8{VGA_CRT_OE}} & VGA_CRT_DATA) | 
 							 ({8{MEMORY_MAP}} & {memmap[7:0]}) |
@@ -737,7 +738,7 @@ module system (
 		.data(CPU_DOUT),
 		.we(IORQ & CPU_CE & WR & PARALLEL_PORT),
 		.word(WORD),
-		.speaker(speaker_on & timer_spk),
+		.speaker(speaker_on[0] ? timer_spk : speaker_on[1]),
 		.opl3left(opl3left),
 		.opl3right(opl3right),
 		.stb44100(stb44100),
@@ -870,7 +871,7 @@ module system (
 				else {COMBRShift[1:0], RS232_HOST_RST, ComSel[1:0]} <= CPU_DOUT[4:0];
 			end
 			if(VGA_FONT_OE) vga_font_counter <= WR && WORD ? {CPU_DOUT[7:0], 4'b0000} : vga_font_counter + 1'b1; 
-			if(WR & SPEAKER_PORT) speaker_on <= &CPU_DOUT[1:0];
+			if(WR & SPEAKER_PORT) speaker_on <= CPU_DOUT[1:0];
 		end
 // SD
 		if(CPU_CE) begin
