@@ -492,6 +492,10 @@ int08 proc near
 		jz      int08_nodec
 		dec     word ptr [bx]
 int08_nodec:
+		push    ax
+		mov     al, 20h
+		out     20h, al
+		pop     ax
 		mov     bx, 6ch
 		add     word ptr [bx], 1
 		adc     word ptr [bx+2], 0
@@ -830,6 +834,8 @@ SF1:
 		mov     KbdFlags3, cx
 		
 int09Exit:
+		mov     al, 20h
+		out     20h, al
 		pop     es
 		pop     ds
 		popa
@@ -1113,6 +1119,8 @@ SF1:
 		mov     KbdFlags3, cx
 		
 int09Exit:
+		mov     al, 20h
+		out     20h, al
 		pop     es
 		pop     ds
 		popa
@@ -3507,6 +3515,12 @@ exit1:
 		out		70h, ax	; stop RTC
 		pop		ax
 exit: 
+		push    ax
+		mov     al, 20h
+		out     0a0h, al
+		mov     al, 20h
+		out     20h, al
+		pop     ax
 		pop     ds
 		iret
 int70 endp
@@ -3551,6 +3565,11 @@ docall:
 		add     sp, 8
 		pop     es
 nocall:        
+		mov     al, 20h
+		out     0a0h, al
+		mov     al, 20h
+		out     20h, al
+
 		pop     ds
 		popa
 		iret

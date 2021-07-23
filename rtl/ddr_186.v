@@ -255,7 +255,7 @@ module system (
 	wire RTC_SELECT = PORT_ADDR[15:0] == 16'h0070;
 	wire VGA_SC = PORT_ADDR[15:1] == (16'h03c4 >> 1); // 3c4h, 3c5h
 	wire VGA_GC = PORT_ADDR[15:1] == (16'h03ce >> 1); // 3ceh, 3cfh
-	wire PIC_OE = PORT_ADDR[15:8] == 8'h00 && PORT_ADDR[6:0] == 7'b0100001;	// 21h, a1h
+	wire PIC_OE = PORT_ADDR[15:8] == 8'h00 && PORT_ADDR[6:1] == 6'b010000;	// 20h, 21h, a0h, a1h
 	wire KB_OE = PORT_ADDR[15:4] == 12'h006 && {PORT_ADDR[3], PORT_ADDR[1:0]} == 3'b000; // 60h, 64h
 	wire JOYSTICK = PORT_ADDR[15:4] == 12'h020; // 0x200-0x20f
 	wire PARALLEL_PORT = PORT_ADDR[15:0] == 16'h0378;
@@ -649,7 +649,8 @@ module system (
 	PIC_8259 PIC 
 	(
 		 .RST(!rstcount[18]),
-		 .CS(PIC_OE && IORQ && CPU_CE), // 21h, a1h
+		 .CS(PIC_OE && IORQ && CPU_CE), // 20h, 21h, a0h, a1h
+		 .A(PORT_ADDR[0]),
 		 .WR(WR), 
 		 .din(CPU_DOUT[7:0]), 
 		 .slave(PORT_ADDR[7]),
