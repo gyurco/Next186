@@ -43,11 +43,13 @@ module Next186_MiST
 parameter CONF_STR = {
 	"NEXT186;;",
 	"O12,CPU Speed,Maximum,/2,/3,/4;",
+	"T3,NMI;",
 	"T0,Reset;",
 	"V,",`BUILD_DATE
 };
 
 wire  [1:0] cpu_speed = status[2:1];
+wire        btn_nmi = status[3];
 
 // core's raw video 
 wire  [5:0] core_r, core_g, core_b;
@@ -118,6 +120,8 @@ wire [15:0] joystick_analog_1;
 wire        scandoubler_disable;
 wire        ypbpr;
 wire        no_csync;
+
+assign LED = ~led_out[0]; // CPU HALT
 
 user_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(2000), .PS2BIDIR(1'b1)) user_io(
 	.conf_str        ( CONF_STR      ),
@@ -222,7 +226,7 @@ mist_video #(.COLOR_DEPTH(6)) mist_video (
 	// 0 = HVSync 31KHz, 1 = CSync 15KHz
 	.scandoubler_disable ( 1'b1 ), // already VGA
 	// disable csync without scandoubler
-	.no_csync    ( no_csync   ),
+	.no_csync    ( 1'b1       ),
 	// YPbPr always uses composite sync
 	.ypbpr       ( ypbpr      ),
 	// Rotate OSD [0] - rotate [1] - left or right
@@ -306,7 +310,23 @@ end
 
 ////// NEXT186 ///////////////
 
-wire [3:0]IO;
+wire [3:0] IO;
+wire [7:0] led_out;
+reg        NMI;
+
+always @(posedge clk_25) begin
+	integer nmi_cnt = 0;
+	reg btn_nmi_d;
+	btn_nmi_d <= btn_nmi;
+	if (nmi_cnt == 0) begin
+		if (~btn_nmi_d & btn_nmi) nmi_cnt <= 24'hFFFFFF;
+		NMI <= 0;
+	end else begin
+		NMI <= 1;
+		nmi_cnt <= nmi_cnt - 1'd1;
+	end
+
+end
 
 system sys_inst (
 	.clk_25(clk_25),
@@ -333,10 +353,10 @@ system sys_inst (
 	.sdr_DATA(SDRAM_DQ),
 	.sdr_DQM({SDRAM_DQMH, SDRAM_DQML}),
 
-	.LED(LED),
+	.LED(led_out),
 
 	.BTN_RESET(reset),
-	.BTN_NMI(1'b0),
+	.BTN_NMI(NMI),
 
 	.RS232_DCE_RXD(),
 	.RS232_DCE_TXD(),
