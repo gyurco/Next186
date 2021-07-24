@@ -54,7 +54,7 @@ module PIC_8259(
 	input [7:0]din,
 	input slave,
 	output wire [7:0]dout,
-	output reg [7:0]ivect,
+	output [7:0]ivect,
 	input clk,		// cpu CLK
 	output reg INT = 0,
 	input IACK,
@@ -67,10 +67,17 @@ reg [4:0]IMR = 5'b11111;
 reg [4:0]IRR = 0;
 reg [4:0]ISR = 0;
 reg      RIS; // Read ISR
+reg      AEOI;
 
 assign dout = A ? (slave ? {3'b000, IMR[3], 3'b000, IMR[2]} : {3'b000, IMR[4], 2'b00, IMR[1:0]}) :
             RIS ? (slave ? {3'b000, ISR[3], 3'b000, ISR[2]} : {3'b000, ISR[4], 2'b00, ISR[1:0]}) :
 			      (slave ? {3'b000, IRR[3], 3'b000, IRR[2]} : {3'b000, IRR[4], 2'b00, IRR[1:0]});
+
+assign ivect = IRR[0] ? 8'h08 :
+               IRR[1] ? 8'h09 :
+               IRR[2] ? 8'h70 :
+               IRR[3] ? 8'h74 :
+               IRR[4] ? 8'h0c : 8'h00;
 
 always @ (posedge clk) begin
 	if (RST) begin
@@ -81,6 +88,7 @@ always @ (posedge clk) begin
 		ISR <= 0;
 		INT <= 0;
 		RIS <= 0;
+		AEOI <= 0;
 	end else begin
 		ss_I <= I;
 		s_I <= ss_I;
@@ -88,71 +96,61 @@ always @ (posedge clk) begin
 		if(~INT) begin
 			if(IRR[0] && !ISR[0]) begin //timer
 				INT <= 1'b1; 
-				ivect <= 8'h08;
-				IRR[0] <= 1'b0;
-				ISR[0] <= 1'b1;
 			end	else if(IRR[1] && ISR[1:0] == 0) begin  // keyboard
 				INT <= 1'b1; 
-				ivect <= 8'h09; 
-				IRR[1] <= 1'b0;
-				ISR[1] <= 1'b1;
 			end else if(IRR[2] && ISR[2:0] == 0) begin  // RTC
 				INT <= 1'b1; 
-				ivect <= 8'h70; 
-				IRR[2] <= 1'b0;
-				ISR[2] <= 1'b1;
 			end else if(IRR[3] && ISR[3:0] == 0) begin // mouse
 				INT <= 1'b1; 
-				ivect <= 8'h74; 
-				IRR[3] <= 1'b0;
-				ISR[3] <= 1'b1;
 			end else if(IRR[4] && ISR[4:0] == 0) begin // COM1
 				INT <= 1'b1;
-				ivect <= 8'h0c;
-				IRR[4] <= 1'b0;
-				ISR[4] <= 1'b1;
 			end
 		end else if(IACK) begin
 			INT <= 1'b0;
 			if (IRR[0]) begin
 				IRR[0] <= 0;
-				ISR[0] <= 1;
+				ISR[0] <= !AEOI;
 			end else if (IRR[1]) begin
 				IRR[1] <= 0;
-				ISR[1] <= 1;
+				ISR[1] <= !AEOI;
 			end else if (IRR[2]) begin
 				IRR[2] <= 0;
-				ISR[2] <= 1;
+				ISR[2] <= !AEOI;
 			end else if (IRR[3]) begin
 				IRR[3] <= 0;
-				ISR[3] <= 1;
+				ISR[3] <= !AEOI;
 			end else if (IRR[4]) begin
 				IRR[4] <= 0;
-				ISR[4] <= 1;
+				ISR[4] <= !AEOI;
 			end
 		end
-
-		if(CS & WR)
+		if(CS & WR) begin
 			if (!A) begin
-				if (!din[3]) begin
-					// OCW2
-					if (din[5]) begin
-						// End-of-interrupt
-						if      (!slave && ISR[0]) ISR[0] <= 0;
-						else if (!slave && ISR[1]) ISR[1] <= 0;
-						else if ( slave && ISR[2]) ISR[2] <= 0;
-						else if ( slave && ISR[3]) ISR[3] <= 0;
-						else if (!slave && ISR[4]) ISR[4] <= 0;
+				if (!din[4]) begin
+					// OCW
+					if (!din[3]) begin
+						// OCW2
+						if (din[5]) begin
+							// End-of-interrupt
+							if      (!slave && ISR[0]) ISR[0] <= 0;
+							else if (!slave && ISR[1]) ISR[1] <= 0;
+							else if ( slave && ISR[2]) ISR[2] <= 0;
+							else if ( slave && ISR[3]) ISR[3] <= 0;
+							else if (!slave && ISR[4]) ISR[4] <= 0;
+						end
+					end else begin
+						// OCW3
+						if (din[1]) RIS <= din[0];
 					end
 				end else begin
-					// OCW3
-					if (din[1]) RIS <= din[0];
+					// ICW
 				end
 			end else begin
 				// OCW1
 				if(slave) IMR[3:2] <= {din[4], din[0]};
 				else {IMR[4], IMR[1:0]} <= {din[4], din[1:0]};
 			end
+		end
 	end
 end
 
