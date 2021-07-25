@@ -43,6 +43,7 @@ module Next186_MiST
 parameter CONF_STR = {
 	"NEXT186;;",
 	"O12,CPU Speed,Maximum,/2,/3,/4;",
+	"O4,Swap Joysticks,Off,On;",
 	"T3,NMI;",
 	"T0,Reset;",
 	"V,",`BUILD_DATE
@@ -50,6 +51,7 @@ parameter CONF_STR = {
 
 wire  [1:0] cpu_speed = status[2:1];
 wire        btn_nmi = status[3];
+wire        joyswap = status[4];
 
 // core's raw video 
 wire  [5:0] core_r, core_g, core_b;
@@ -308,6 +310,35 @@ always @(posedge clk_sdr) begin
 	end
 end
 
+////////////// JOYSTICKS /////////////
+
+reg   [7:0] joy = 8'hFF;
+wire        joy_wr;
+reg   [7:0] joy_cnt = 8'hFF;
+reg   [5:0] joy_cnt_ce_cnt;
+reg         joy_cnt_ce;
+wire [15:0] joy0 = joyswap ? joystick_analog_1: joystick_analog_0;
+wire [15:0] joy1 = joyswap ? joystick_analog_0: joystick_analog_1;
+
+always @(posedge clk_cpu) begin
+	joy[7:4] <= joyswap ? ~{joystick_1[5:4], joystick_0[5:4]} : ~{joystick_0[5:4], joystick_1[5:4]};
+	joy_cnt_ce_cnt <= joy_cnt_ce_cnt + 1'd1;
+	if (joy_cnt_ce_cnt == {cpu_speed, {4{1'b1}}}) joy_cnt_ce_cnt <= 0;
+	joy_cnt_ce <= joy_cnt_ce_cnt == 0;
+	if (joy_wr) begin
+		joy[3:0] <= 4'b1111;
+		joy_cnt <= 0;
+		joy_cnt_ce_cnt <= 1;
+		joy_cnt_ce <= 0;
+	end else if (joy_cnt != 8'hFF) begin
+		if (joy_cnt == {~joy1[15], joy1[14:8]}) joy[0] <= 0;
+		if (joy_cnt == {~joy1[ 7], joy1[ 6:0]}) joy[1] <= 0;
+		if (joy_cnt == {~joy0[15], joy0[14:8]}) joy[2] <= 0;
+		if (joy_cnt == {~joy0[ 7], joy0[ 6:0]}) joy[3] <= 0;
+		if (joy_cnt_ce) joy_cnt <= joy_cnt + 1'd1;
+	end else joy[3:0] <= 0;
+end
+
 ////// NEXT186 ///////////////
 
 wire [3:0] IO;
@@ -384,7 +415,8 @@ system sys_inst (
 	.RS232_HOST_TXD(),
 	.RS232_HOST_RST(),
 
-	.GPIO(), //{IO, GPIO}),
+	.GPIO_WR(joy_wr),
+	.GPIO_IN(joy),
 
 	.I2C_SCL(),//I2C_SCLK),
 	.I2C_SDA(), //I2C_SDAT)

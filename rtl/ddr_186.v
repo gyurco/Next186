@@ -195,8 +195,12 @@ module system (
 	output PS2_DATA1_O,
 	input PS2_DATA2_I,
 	output PS2_DATA2_O,
-	 
-	inout [7:0]GPIO,
+
+	input  [7:0] GPIO_IN,
+	output [7:0] GPIO_OUT,
+	output [7:0] GPIO_OE,
+	output reg   GPIO_WR,
+
 	output I2C_SCL,
 	inout I2C_SDA,
 
@@ -384,14 +388,8 @@ module system (
 	reg [7:0]GPIOState = 8'h00;
 	reg [7:0]GPIOData;
 	reg [7:0]GPIODout = 8'hff;
-	assign GPIO[0] = GPIOState[0] ? GPIODout[0] : 1'bz;
-	assign GPIO[1] = GPIOState[1] ? GPIODout[1] : 1'bz;
-	assign GPIO[2] = GPIOState[2] ? GPIODout[2] : 1'bz;
-	assign GPIO[3] = GPIOState[3] ? GPIODout[3] : 1'bz;
-	assign GPIO[4] = GPIOState[4] ? GPIODout[4] : 1'bz;
-	assign GPIO[5] = GPIOState[5] ? GPIODout[5] : 1'bz;
-	assign GPIO[6] = GPIOState[6] ? GPIODout[6] : 1'bz;
-	assign GPIO[7] = GPIOState[7] ? GPIODout[7] : 1'bz;
+	assign GPIO_OUT = GPIODout;
+	assign GPIO_OE = GPIOState;
 
 // I2C interface
 	reg [11:0]i2c_cd = 0;
@@ -896,10 +894,14 @@ module system (
 		end
 
 // GPIO
-		if(CPU_CE) GPIOData <= GPIO;
+		if(CPU_CE) begin
+			GPIOData <= GPIO_IN;
+			GPIO_WR <= 0;
+		end
 		if(IORQ && CPU_CE && WR && JOYSTICK) begin
 			if(WORD) GPIOState <= CPU_DOUT[15:8];
 			GPIODout <= CPU_DOUT[7:0];
+			GPIO_WR <= 1;
 		end
 		
 // NMI on IORQ
