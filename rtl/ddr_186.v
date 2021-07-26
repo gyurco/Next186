@@ -313,6 +313,7 @@ module system (
 	reg [2:0]max_read;
 	reg [4:0]col_counter;
 	wire vga_end_frame = vga_ddr_row_count == (v240[0] ? 479 : 399);
+	wire vga_start_fifo = vcount == (v240[0] ? 519 : 445);
 	reg [3:0]vga_repln_count = 0; // repeat line counter
 	wire [3:0]vga_repln = vgatext[0] ? (half[0] ? 7 : 15) : {3'b000, repln_graph[0]};//(vga13[0] | half[0]) ? 1 : 0;
 	reg [7:0]vga_lnbytecount = 0; // line byte count (multiple of 4)
@@ -353,6 +354,7 @@ module system (
 	reg s_vga_endline;
 	reg s_vga_endscanline = 1'b0;
 	reg s_vga_endframe;
+	reg s_vga_start_fifo;
 	reg [23:0]sdraddr;
 	wire [3:0]vga_wplane;
 	wire [1:0]vga_rplane;
@@ -614,7 +616,7 @@ module system (
 		 .hiaddr(cache_hi_addr),
 		 .cache_write_data(crw && sys_rd_data_valid), // read DDR, write to cache
 		 .cache_read_data(crw && sys_wr_data_valid),
-		 .flush(auto_flush == 3'b110)
+		 .flush(fifo_fill && auto_flush == 3'b101)
 	);
 
 	wire I_KB;
@@ -800,6 +802,7 @@ module system (
 	);
 
 	reg nop;
+	reg fifo_fill = 1;
 	always @ (posedge clk_sdr) begin
 		s_prog_full <= fifo_wr_used_words > 350; // AlmostFull;
 		if(fifo_wr_used_words < 64) s_prog_empty <= 1'b1; //AlmostEmpty;
@@ -811,20 +814,21 @@ module system (
 		s_ddr_wr <= ddr_wr;
 		s_vga_endline <= vga_repln_count == vga_repln;
 		s_vga_endframe <= vga_end_frame;
+		s_vga_start_fifo <= vga_start_fifo;
 		nop <= sys_cmd_ack == 2'b00;
 
 		sdraddr <= BIOS_WR ? BIOS_BASE + (BIOS_ADDR >> 1) : 
-		           s_prog_empty || !(s_ddr_wr || s_ddr_rd) ? {6'b000001, vga_ddr_row_col + vga_lnbytecount} : {cache_hi_addr[18:0], 4'b0000};
+		           (fifo_fill & (s_prog_empty || !(s_ddr_wr || s_ddr_rd))) ? {6'b000001, vga_ddr_row_col + vga_lnbytecount} : {cache_hi_addr[18:0], 4'b0000};
 		max_read <= &sdraddr[7:3] ? ~sdraddr[2:0] : 3'b111;	// SDRAM row size = 512 words
 
 		BIOS_data_valid <= BIOS_WR;
 		BIOS_data <= BIOS_DIN;
 
 		if(BIOS_WR) cntrl0_user_command_register <= 2'b01;
-		else if(s_prog_empty) cntrl0_user_command_register <= 2'b10;	// read 32 bytes VGA
+		else if(s_prog_empty & fifo_fill) cntrl0_user_command_register <= 2'b10;	// read 32 bytes VGA
 		else if(s_ddr_wr) cntrl0_user_command_register <= 2'b01;		// write 256 bytes cache
 		else if(s_ddr_rd) cntrl0_user_command_register <= 2'b11;		// read 256 bytes cache
-		else if(~s_prog_full) cntrl0_user_command_register <= 2'b10;	// read 32 bytes VGA
+		else if(~s_prog_full & fifo_fill) cntrl0_user_command_register <= 2'b10;	// read 32 bytes VGA
 		else cntrl0_user_command_register <= 2'b00;
 
 		if(!crw && sys_rd_data_valid) col_counter <= col_counter - 1'b1;
@@ -836,6 +840,8 @@ module system (
 			end					
 			2'b01, 2'b11: crw <= !BIOS_WR;	// cache read/write
 		endcase
+
+		if(s_vga_start_fifo) fifo_fill <= 1;
 
 		if(s_vga_endscanline) begin
 			col_counter[3:1] <= col_counter[3:1] - vga_lnbytecount[2:0];
@@ -856,6 +862,7 @@ module system (
 				half[0] <= halfreq;
 				repln_graph[0] <= replnreq;
 				vga_ddr_row_count <= 0;
+				fifo_fill <= 0;
 			end else vga_ddr_row_count <= vga_ddr_row_count + 1'b1; 
 		end else s_vga_endscanline <= (vga_lnbytecount[7:3] == vga_lnend);
 	end
