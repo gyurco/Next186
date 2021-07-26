@@ -46,7 +46,7 @@
 `define WAYS	2	// 2^ways
 `define SETS	5	// 2^sets
 `define LINE	6	// 2^LINE bytes / cache line
-`define ADDR	21
+`define ADDR	25
 
 module cache_controller(
 	 input [`ADDR-1:0]addr,

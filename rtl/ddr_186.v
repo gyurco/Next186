@@ -325,7 +325,7 @@ module system (
 	reg [15:0]RTCSET = 0;
 	wire RTCEND = RTC == RTCSET;
 	wire RTCDIVEND = RTCDIV25 == 24;
-	wire [14:0]cache_hi_addr;
+	wire [18:0]cache_hi_addr;
 	wire [8:0]memmap;
 	wire [8:0]memmap_mux;
 	wire [7:0]font_dout;
@@ -598,7 +598,7 @@ module system (
 
 	cache_controller cache_ctl 
 	(
-		 .addr(ADDR), 
+		 .addr({memmap_mux, ADDR[15:0]}),
 		 .dout(DRAM_dout), 
 		 .din(DOUT), 
 		 .clk(clk_cpu), 
@@ -708,7 +708,7 @@ module system (
 		 .cpuaddr(PORT_ADDR[3:0]), 
 		 .cpurdata(memmap), 
 		 .cpuwdata(CPU_DOUT[8:0]), 
-		 .memaddr(cache_hi_addr[14:10]), 
+		 .memaddr(ADDR[20:16]),
 		 .memdata(memmap_mux), 
 		 .WE(MEMORY_MAP & WR & WORD & IORQ & CPU_CE),
 		 .seg_addr(seg_addr),
@@ -814,7 +814,7 @@ module system (
 		nop <= sys_cmd_ack == 2'b00;
 
 		sdraddr <= BIOS_WR ? BIOS_BASE + (BIOS_ADDR >> 1) : 
-		           s_prog_empty || !(s_ddr_wr || s_ddr_rd) ? {6'b000001, vga_ddr_row_col + vga_lnbytecount} : {memmap_mux[8:0], cache_hi_addr[9:0], 4'b0000};
+		           s_prog_empty || !(s_ddr_wr || s_ddr_rd) ? {6'b000001, vga_ddr_row_col + vga_lnbytecount} : {cache_hi_addr[18:0], 4'b0000};
 		max_read <= &sdraddr[7:3] ? ~sdraddr[2:0] : 3'b111;	// SDRAM row size = 512 words
 
 		BIOS_data_valid <= BIOS_WR;
