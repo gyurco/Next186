@@ -44,6 +44,7 @@ parameter CONF_STR = {
 	"NEXT186;;",
 	"O12,CPU Speed,Maximum,/2,/3,/4;",
 	"O4,Swap Joysticks,Off,On;",
+	"O5,MIDI,MPU401,COM1;",
 	"T3,NMI;",
 	"T0,Reset;",
 	"V,",`BUILD_DATE
@@ -52,12 +53,14 @@ parameter CONF_STR = {
 wire  [1:0] cpu_speed = status[2:1];
 wire        btn_nmi = status[3];
 wire        joyswap = status[4];
+wire        midi = ~status[5];
 
 // core's raw video 
 wire  [5:0] core_r, core_g, core_b;
 wire        core_hs, core_vs;
 
 wire        clk_25, clk_sdr, clk_50, CLK44100x256, CLK14745600;
+wire        clk_mpu; //3MHz MIDI, (31250Hz * 32)*3
 wire        clk_sys = clk_25;
 
 assign SDRAM_CKE = 1'b1;
@@ -73,7 +76,8 @@ dcm dcm_system (
 dcm_misc dcm_misc (
 	.inclk0(CLOCK_27),
 	.c0(CLK44100x256),
-	.c1(CLK14745600)
+	.c1(CLK14745600),
+	.c2(clk_mpu)
 );
 
 wire        clk_cpu, clk_dsp;
@@ -359,12 +363,20 @@ always @(posedge clk_25) begin
 
 end
 
+wire com1_Rx, com1_Tx;
+wire mpu_Rx, mpu_Tx;
+
+assign UART_TX = midi ? mpu_Tx : com1_Tx;
+assign com1_Rx = midi ? 1'b1 : UART_RX;
+assign mpu_Rx = midi ? UART_RX : 1'b1;
+
 system sys_inst (
 	.clk_25(clk_25),
 	.clk_sdr(clk_sdr),
 	.CLK44100x256(CLK44100x256),
 	.CLK14745600(CLK14745600),
 	.clk_50(clk_50),
+	.clk_mpu(clk_mpu),
 
 	.clk_cpu(clk_cpu),
 	.clk_dsp(clk_dsp),
@@ -391,8 +403,10 @@ system sys_inst (
 
 	.RS232_DCE_RXD(),
 	.RS232_DCE_TXD(),
-	.RS232_EXT_RXD(UART_RX),
-	.RS232_EXT_TXD(UART_TX),
+	.RS232_EXT_RXD(com1_Rx),
+	.RS232_EXT_TXD(com1_Tx),
+	.MPU_RX(mpu_Rx),
+	.MPU_TX(mpu_Tx),
 
 	.SD_n_CS(sd_cs),
 	.SD_DI(sd_sdi),

@@ -33,3 +33,4 @@ set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) ./Next1
 set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) ./Next186/Next186_CPU.v      ]
 set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) ./Next186/Next186_BIU_2T_delayread.v      ]
 set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) ./Next186/Next186_Regs.v      ]
+set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) ./uart/uart.qip      ]

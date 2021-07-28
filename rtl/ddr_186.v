@@ -152,6 +152,7 @@ module system (
 	input  CLK44100x256, // Soundwave
 	input  CLK14745600, // RS232 clk
 	input  clk_50, // OPL3
+ 	input  clk_mpu, // MPU401 clock 
 
 	input  clk_cpu,
 	input  clk_dsp,
@@ -179,6 +180,8 @@ module system (
 	input RS232_HOST_RXD,
 	output RS232_HOST_TXD,
 	output reg RS232_HOST_RST,
+	input MPU_RX,
+	output MPU_TX,
 
 	output reg SD_n_CS = 1'b1,
 	output wire SD_DI,
@@ -268,6 +271,7 @@ module system (
 	wire COM1_PORT = PORT_ADDR[15:3] == (16'h03f8 >> 3);
 	wire OPL3_PORT = PORT_ADDR[15:2] == (16'h0388 >> 2); // 0x388 .. 0x38b
 	wire NMI_IORQ_PORT = PORT_ADDR[15:1] == (16'h0006 >> 1); // 6, 7
+	wire MPU_PORT = PORT_ADDR[15:1] == (16'h0330 >> 1); // 0x330, 0x331
  	wire [7:0]VGA_DAC_DATA;
 	wire [7:0]VGA_CRT_DATA;
 	wire [7:0]VGA_SC_DATA;
@@ -436,7 +440,8 @@ module system (
 							 ({8{PARALLEL_PORT_CTL}} & {1'bx, dss_full, 6'bxxxxxx}) |
 							 ({8{CPU32_PORT}} & cpu32_data[7:0]) | 
 							 ({8{COM1_PORT}} & COM1_DOUT) | 
-							 ({8{OPL3_PORT}} & opl32_data) ;
+							 ({8{OPL3_PORT}} & opl32_data)  |
+							 ({8{MPU_PORT}} & mpu_data)  ;
 
 
 	assign BIOS_REQ = sys_wr_data_valid;
@@ -775,6 +780,36 @@ module system (
 		.INT(I_COM1)
     );
 
+	reg [7:0] mpu_data;
+	wire [7:0] mpu_uart_data;
+	wire rx_empty, tx_full;
+	reg mpu_read_ack;
+	reg mpu_dumb;
+	wire mpu_cs = MPU_PORT & ~PORT_ADDR[0] & ((!WR & ~mpu_read_ack) | WR) & (mpu_dumb ? (IORQ && CPU_CE):1'b1 );
+
+	gh_uart_16550 #(1'b1) mpu_uart
+	(
+		.clk(clk_cpu),
+		.BR_clk(clk_mpu),
+		.rst(!rstcount[18]),
+		.CS(mpu_cs),
+		.WR(WR),
+		.ADD(0),
+		.D(CPU_DOUT[7:0]),
+		.RD(mpu_uart_data),
+
+		.sRX(MPU_RX),
+		.sTX(MPU_TX),
+		.RIn(1),
+		.CTSn(0),
+		.DSRn(0),
+		.DCDn(0),
+
+		.DIV2(1),
+		.TX_Full(tx_full),
+		.RX_Empty(rx_empty)
+	);
+
     opl3 opl3_inst (
 		.clk(clk_50), // 50Mhz (min 45Mhz)
 		.cpu_clk(clk_cpu),
@@ -922,6 +957,30 @@ module system (
 
 		auto_flush[1:0] <= {auto_flush[0], hblnk};
 
+// MPU
+		//MPU starts intelligent mode but we only support UART/dumb mode
+		//and a few commands to enter that mode
+		//Game needs to know it can switch correctly into UART mode
+		//Once in UART mode the data is passed directly to the 16550 UART
+		if(!rstcount[18]) begin
+			mpu_read_ack <= 0;
+			mpu_dumb <= 0;
+		end
+		else if(MPU_PORT & IORQ) begin
+			if(PORT_ADDR[0]) begin	// 0=MPU DATA PORT 330h, 1=MPU COMMAND/STATUS PORT 331h
+				if(!WR) mpu_data <= {~(mpu_read_ack | ~rx_empty), tx_full, 6'd0}; // &80h read ready, &40h write ready
+				if(WR) begin
+					mpu_read_ack <= ~mpu_dumb;
+					if(CPU_DOUT[7:0] == 8'hFF) mpu_dumb <= 0;
+					if(CPU_DOUT[7:0] == 8'h3F) mpu_dumb <= 1;
+				end
+			end
+			else if(!WR) begin
+				mpu_data <= mpu_read_ack ? 8'hFE : mpu_uart_data;
+				mpu_read_ack <= 0;
+			end
+		end
+		
 	end
 
 	always @ (posedge clk_25) begin
@@ -961,4 +1020,3 @@ module system (
 	end
 	
 endmodule
-
