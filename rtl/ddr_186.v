@@ -152,6 +152,7 @@ module system (
 	input  CLK44100x256, // Soundwave
 	input  CLK14745600, // RS232 clk
 	input  clk_50, // OPL3
+ 	input  clk_mpu, // MPU401 clock 500Khz
 
 	input  clk_cpu,
 	input  clk_dsp,
@@ -268,6 +269,7 @@ module system (
 	wire COM1_PORT = PORT_ADDR[15:3] == (16'h03f8 >> 3);
 	wire OPL3_PORT = PORT_ADDR[15:2] == (16'h0388 >> 2); // 0x388 .. 0x38b
 	wire NMI_IORQ_PORT = PORT_ADDR[15:1] == (16'h0006 >> 1); // 6, 7
+	wire MPU_PORT = PORT_ADDR[15:1] == (16'h0330 >> 1); // 0x330, 0x331
  	wire [7:0]VGA_DAC_DATA;
 	wire [7:0]VGA_CRT_DATA;
 	wire [7:0]VGA_SC_DATA;
@@ -378,7 +380,8 @@ module system (
 	wire RX = ComSel[1] ? RS232_HOST_RXD : ComSel[0] ? RS232_EXT_RXD : RS232_DCE_RXD;	
 	wire TX;
 	assign RS232_DCE_TXD = ComSel[1:0] == 2'b00 ? TX : 1'b1;
-	assign RS232_EXT_TXD = ComSel[1:0] == 2'b01 ? TX : 1'b1;
+	//sq assign RS232_EXT_TXD = ComSel[1:0] == 2'b01 ? TX : 1'b1;
+	assign RS232_EXT_TXD = mpu_tx;
 	assign RS232_HOST_TXD = ComSel[1] ? TX : 1'b1;
 	reg [1:0]COMBRShift = 2'b00; 
 	
@@ -436,7 +439,8 @@ module system (
 							 ({8{PARALLEL_PORT_CTL}} & {1'bx, dss_full, 6'bxxxxxx}) |
 							 ({8{CPU32_PORT}} & cpu32_data[7:0]) | 
 							 ({8{COM1_PORT}} & COM1_DOUT) | 
-							 ({8{OPL3_PORT}} & opl32_data) ;
+							 ({8{OPL3_PORT}} & opl32_data)  |
+							 ({8{MPU_PORT}} & mpu_data)  ;
 
 
 	assign BIOS_REQ = sys_wr_data_valid;
@@ -774,7 +778,36 @@ module system (
 		.INT(I_COM1)
     );
 
-    opl3 opl3_inst (
+	wire mpu_tx, mpu_rx;
+	wire [7:0] mpu_data;
+	wire MPU_IRQ;
+
+	mpu mpu
+	(
+		.clk               (clk_cpu),
+		.br_clk            (clk_mpu),
+		.reset             (!rstcount[18]),
+
+		.address           (PORT_ADDR[0]),
+		.writedata         (CPU_DOUT[7:0]),
+		.read              (!WR),
+		.write             (WR),
+		.readdata          (mpu_data),
+	//sq   .cs                (MPU_PORT && IORQ && CPU_CE),
+		.cs                (MPU_PORT),
+		
+		.rx                (mpu_rx),
+		.tx                (mpu_tx),
+
+		.double_rate		 (1),
+		.irq               (MPU_IRQ)
+		);
+
+
+
+
+//sqopl
+/*    opl3 opl3_inst (
 		.clk(clk_50), // 50Mhz (min 45Mhz)
 		.cpu_clk(clk_cpu),
 		.addr(PORT_ADDR[1:0]),
@@ -786,7 +819,8 @@ module system (
 		.right(opl3right),
 		.stb44100(stb44100),
 		.reset(!rstcount[18])
-	);
+	); */
+
 
 	i2c_master_byte i2cmb
 	(

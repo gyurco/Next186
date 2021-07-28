@@ -58,6 +58,7 @@ wire  [5:0] core_r, core_g, core_b;
 wire        core_hs, core_vs;
 
 wire        clk_25, clk_sdr, clk_50, CLK44100x256, CLK14745600;
+wire		clk_mpu; //500Khz MIDI
 wire        clk_sys = clk_25;
 
 assign SDRAM_CKE = 1'b1;
@@ -73,7 +74,8 @@ dcm dcm_system (
 dcm_misc dcm_misc (
 	.inclk0(CLOCK_27),
 	.c0(CLK44100x256),
-	.c1(CLK14745600)
+	.c1(CLK14745600),
+	.c2(clk_mpu)
 );
 
 wire        clk_cpu, clk_dsp;
@@ -365,6 +367,7 @@ system sys_inst (
 	.CLK44100x256(CLK44100x256),
 	.CLK14745600(CLK14745600),
 	.clk_50(clk_50),
+	.clk_mpu(clk_mpu),
 
 	.clk_cpu(clk_cpu),
 	.clk_dsp(clk_dsp),
