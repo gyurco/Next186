@@ -726,7 +726,8 @@ module system (
 		 .din(CPU_DOUT[7:0]), 
 		 .dout(TIMER_DOUT), 
 		 .CLK_25(clk_25), 
-		 .clk(clk_cpu), 
+		 .clk(clk_cpu),
+		 .gate2(speaker_on[0]),
 		 .out0(timer_int), 
 		 .out2(timer_spk)
     );
@@ -738,7 +739,7 @@ module system (
 		.data(CPU_DOUT),
 		.we(IORQ & CPU_CE & WR & PARALLEL_PORT),
 		.word(WORD),
-		.speaker(speaker_on[0] ? timer_spk : speaker_on[1]),
+		.speaker(timer_spk & speaker_on[1]),
 		.opl3left(opl3left),
 		.opl3right(opl3right),
 		.stb44100(stb44100),

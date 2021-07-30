@@ -5,7 +5,7 @@
 //
 // Filename: timer8253.v
 // Description: Part of the Next186 SoC PC project, timer
-// 	8253 simplified timer (no gate, only counters 0 and 2, no read back command, no BCD mode)
+// 	8253 simplified timer (only counters 0 and 2, no read back command, no BCD mode)
 // Version 1.0
 // Creation date: May2012
 //
@@ -52,8 +52,13 @@ module timer_8253(
 	output wire [7:0]dout,
 	input CLK_25,
 	input clk,		// cpu CLK
+	input gate2,
 	output out0,
-	output out2
+	output out2,
+
+	output reg dbg_wr,
+	output reg [1:0] dbg_addr,
+	output reg [7:0] dbg_din
 	);
 	 
 	reg [8:0]rclk = 0; // rclk[8] oscillates at 1193181.8181... Hz
@@ -67,7 +72,14 @@ module timer_8253(
 	always @ (posedge clk) begin
 		cclk <= {cclk[0], rclk[8]};
 	end
-	
+
+	always @(posedge clk)
+		if (CS) begin
+			dbg_wr <= WR;
+			dbg_addr <= addr;
+			if (WR) dbg_din <= din;
+		end
+
 	wire a0 = addr == 0;
 	wire a2 = addr == 2;
 	wire a3 = addr == 3;
@@ -82,6 +94,7 @@ module timer_8253(
 		.CS(CS && (a0 || cmd0)),
 		.WR(WR),
 		.clk(clk),
+		.gate(1'b1),
 		.cmd(cmd0),
 		.din(din),
 		.dout(dout0),
@@ -93,6 +106,7 @@ module timer_8253(
 		.CS(CS && (a2 || cmd2)),
 		.WR(WR),
 		.clk(clk),
+		.gate(gate2),
 		.cmd(cmd2),
 		.din(din),
 		.dout(dout2),
@@ -109,6 +123,7 @@ module counter(
 	input CS,
     input WR,	// write cmd/data
 	input clk,	// CPU clk
+	input gate,
     input cmd,
 	input [7:0]din,
 	output [7:0]dout,
@@ -129,26 +144,52 @@ module counter(
 	wire c1 = count == 1;
 	wire c2 = count == 2;
 	reg CE1 = 0;
+	reg waitgate = 0;
+	reg gate_d;
 
 	assign out = mode[6];
 	assign dout = latch ?
 		(rd ? latched[15:8] : latched[7:0]) : 
 		(mode[5] & (~mode[4] | rd) ? count[15:8] : count[7:0]);
 
+	wire gate_r = ~gate_d & gate;
+
 	always @(posedge clk) begin
-		
+
 		if(CE == 2'b10) CE1 <= 1;
 
 		if(CE1) begin
 			newdata <= 0;
+			gate_d <= gate;
 			CE1 <= 0;
 			case(mode[3:1])
-				3'b000, 3'b001:
+				3'b000:
 					if (newdata) begin
 						count <= init;
 						newcmd <= 0;
+						mode[6] <= 0;
 					end else if(newcmd) begin
 						mode[6] <= 0;
+					end else begin
+						count <= count - 1'd1;
+						if(c1) mode[6] <= 1;
+					end
+				3'b001:
+					if(newcmd) begin
+						if (newdata) begin
+							count <= init;
+							newdata <= 0;
+							newcmd <= 0;
+							waitgate <= 1;
+						end
+					end else if (waitgate) begin
+						if (gate_r) begin
+							mode[6] <= 0;
+							waitgate <= 0;
+						end
+					end else if (gate_r) begin
+						mode[6] <= 0;
+						count <= init;
 					end else begin
 						count <= count - 1'd1;
 						if(c1) mode[6] <= 1;
@@ -162,7 +203,7 @@ module counter(
 						end
 					end else count <= count - 1'd1;
 				end
-				3'b011, 3'b111: begin
+				3'b011, 3'b111:
 					if(c1 | c2 | newcmd) begin
 						mode[6] <= {~mode[6] | newcmd};
 						if (!newcmd | newdata) begin
@@ -170,8 +211,7 @@ module counter(
 							count <= {init[15:1], (~mode[6] | newcmd) & init[0]};
 						end
 					end else count <= count - 2'd2;
-				end
-				3'b100, 3'b101:
+				3'b100:
 					if (newdata) begin
 						newcmd <= 0;
 						count <= init;
@@ -185,6 +225,25 @@ module counter(
 							strobe <= 0;
 						end else mode[6] <= 1'd1;
 					end
+				3'b101:
+					if(newcmd) begin
+						mode[6] <= 1;
+						if (newdata) begin
+							newcmd <= 0;
+							waitgate <= 1;
+						end
+					end else if (gate_r) begin
+						count <= init;
+						strobe <= 1;
+						waitgate <= 0;
+					end else if (!waitgate) begin
+						count <= count - 1'd1;
+						if(c1) begin
+							if(strobe) mode[6] <= 0;
+							strobe <= 0;
+						end else mode[6] <= 1'd1;
+					end
+
 			endcase
 		end
 
@@ -206,9 +265,11 @@ module counter(
 					if(state[0]) begin
 						newdata <= 1;
 						init[15:8] <= din;
+						if (~mode[4]) init[7:0] <= 0;
 					end
 					else begin
 						init[7:0] <= din;
+						if (~mode[5]) init[15:8] <= 0;
 						newdata <= ^mode[5:4];
 					end
 				end
