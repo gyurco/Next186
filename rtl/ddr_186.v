@@ -616,7 +616,7 @@ module system (
 		 .hiaddr(cache_hi_addr),
 		 .cache_write_data(crw && sys_rd_data_valid), // read DDR, write to cache
 		 .cache_read_data(crw && sys_wr_data_valid),
-		 .flush(fifo_fill && auto_flush == 3'b101)
+		 .flush(auto_flush == 3'b101) // rising edge of hblank
 	);
 
 	wire I_KB;
