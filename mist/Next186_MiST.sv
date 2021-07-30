@@ -44,6 +44,7 @@ parameter CONF_STR = {
 	"NEXT186;;",
 	"O12,CPU Speed,Maximum,/2,/3,/4;",
 	"O4,Swap Joysticks,Off,On;",
+	"O5,MIDI,MPU401,COM1;",
 	"T3,NMI;",
 	"T0,Reset;",
 	"V,",`BUILD_DATE
@@ -58,7 +59,7 @@ wire  [5:0] core_r, core_g, core_b;
 wire        core_hs, core_vs;
 
 wire        clk_25, clk_sdr, clk_50, CLK44100x256, CLK14745600;
-wire		clk_mpu; //500Khz MIDI
+wire        clk_mpu; //3MHz MIDI, (31250Hz * 32)*3
 wire        clk_sys = clk_25;
 
 assign SDRAM_CKE = 1'b1;
@@ -396,6 +397,7 @@ system sys_inst (
 	.RS232_DCE_TXD(),
 	.RS232_EXT_RXD(UART_RX),
 	.RS232_EXT_TXD(UART_TX),
+   .UART_SEL(status[5]),
 
 	.SD_n_CS(sd_cs),
 	.SD_DI(sd_sdi),

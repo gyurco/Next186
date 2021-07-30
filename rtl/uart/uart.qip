@@ -17,4 +17,3 @@ set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) gh_shift_r
 set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) gh_uart_Rx_8bit.vhd ]
 set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) gh_uart_Tx_8bit.vhd ]
 set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) gh_uart_16550.vhd ]
-set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) mpu.v ]
