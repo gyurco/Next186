@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 6.14.8444		    07/23/21 23:28:29
+Microsoft (R) Macro Assembler Version 6.14.8444		    08/01/21 01:44:48
 BIOS_Next186.asm					     Page 1 - 1
 
 
@@ -236,7 +236,7 @@ BIOS_Next186.asm					     Page 1 - 1
 						
 
 				; ------------------ MAP init
- E07E  E8 1559					call    flush
+ E07E  E8 157B					call    flush
  E081  B8 0015					mov     ax, 15h     ; BIOS physical segment 15h mapped on virtual segment 0ch
  E084  E7 8C					out     8ch, ax
  E086  68 C000					push    0c000h
@@ -248,7 +248,7 @@ BIOS_Next186.asm					     Page 1 - 1
  E092  B9 8000					mov     cx, 8000h
  E095  F3/ A5					rep     movsw       ; copy BIOS virtual segment 0fh over physical segment 15h
 
- E097  E8 1540					call    flush
+ E097  E8 1562					call    flush
  E09A  BA 0080					mov     dx, 80h      
  E09D  33 C0					xor     ax, ax
  E09F				mapi:        
@@ -269,7 +269,7 @@ BIOS_Next186.asm					     Page 1 - 1
  E0B0  07					pop     es
  E0B1  33 F6					xor     si, si
  E0B3  BF 0004					mov     di, 4
- E0B6  C7 04 F5D9 R				mov     word ptr [si], offset defint
+ E0B6  C7 04 F5FB R				mov     word ptr [si], offset defint
  E0BA  8C 4C 02					mov     word ptr [si+2], cs
  E0BD  B9 00FE					mov     cx, 256-2
  E0C0  F3/ A5					rep     movsw
@@ -282,12 +282,12 @@ BIOS_Next186.asm					     Page 1 - 1
  E0E6  C7 06 004C EE44 R			mov     word ptr ds:[13h*4], offset int13        
  E0EC  C7 06 0050 F031 R			mov     word ptr ds:[14h*4], offset int14        
  E0F2  C7 06 0054 F182 R			mov     word ptr ds:[15h*4], offset int15
- E0F8  C7 06 0058 F31A R			mov     word ptr ds:[16h*4], offset int16
- E0FE  C7 06 0060 F405 R			mov     word ptr ds:[18h*4], offset int18
- E104  C7 06 0064 F484 R			mov     word ptr ds:[19h*4], offset int19
- E10A  C7 06 0068 F49E R			mov     word ptr ds:[1ah*4], offset int1a
- E110  C7 06 01C0 F4CA R			mov     word ptr ds:[70h*4], offset int70
- E116  C7 06 01D0 F502 R			mov     word ptr ds:[74h*4], offset int74
+ E0F8  C7 06 0058 F33C R			mov     word ptr ds:[16h*4], offset int16
+ E0FE  C7 06 0060 F427 R			mov     word ptr ds:[18h*4], offset int18
+ E104  C7 06 0064 F4A6 R			mov     word ptr ds:[19h*4], offset int19
+ E10A  C7 06 0068 F4C0 R			mov     word ptr ds:[1ah*4], offset int1a
+ E110  C7 06 01C0 F4EC R			mov     word ptr ds:[70h*4], offset int70
+ E116  C7 06 01D0 F524 R			mov     word ptr ds:[74h*4], offset int74
 
 				; ------------------- BDA init
  E11C  6A 40					push    40h
@@ -324,36 +324,36 @@ BIOS_Next186.asm					     Page 1 - 1
  E175  E6 64					out     64h, al     ; disable mouse
  E177  B9 0019					mov     cx, 25
  E17A				kbi1:       
- E17A  E8 1425					call    getps2byte
+ E17A  E8 1447					call    getps2byte
  E17D  E2 FB					loop    short kbi1  ; wait for kb timeout
  E17F  B4 FF					mov     ah, 0ffh    ; reset kb
  E181  F8					clc                 ; kb command
- E182  E8 1437					call    sendcmd   
+ E182  E8 1459					call    sendcmd   
  E185  72 31					jc      short nokb
  E187  B1 19					mov     cl, 25
  E189				kbi2:        
  E189  49					dec     cx
  E18A  E3 2C					jcxz    short nokb
- E18C  E8 1413					call    getps2byte
+ E18C  E8 1435					call    getps2byte
  E18F  72 F8					jc      short kbi2  ; wait for BAT
  E191  3C AA					cmp     al, 0aah
  E193  75 23					jne     short nokb
  E195  B4 F2					mov     ah, 0f2h    ; kb id
- E197  E8 1422					call    sendcmd     ; CF = 0
+ E197  E8 1444					call    sendcmd     ; CF = 0
  E19A  72 1C					jc      short nokb
- E19C  E8 1403					call    getps2byte
+ E19C  E8 1425					call    getps2byte
  E19F  3C AB					cmp     al, 0abh
  E1A1  75 15					jne     short nokb
- E1A3  E8 13FC					call    getps2byte
+ E1A3  E8 141E					call    getps2byte
  E1A6  3C 83					cmp     al, 83h
 				; set scan code 1
 				IFDEF SCANCODE1
  E1A8  75 0E					jne     short nokb
  E1AA  B4 F0					mov     ah, 0f0h    ; kb scan set
- E1AC  E8 140D					call    sendcmd   
+ E1AC  E8 142F					call    sendcmd   
  E1AF  72 07					jc      short nokb
  E1B1  B4 01					mov     ah, 1       ; scan set 1
- E1B3  E8 1406					call    sendcmd   
+ E1B3  E8 1428					call    sendcmd   
  E1B6  73 05					jnc     short kbok
 				ELSE
 				ENDIF        
@@ -368,20 +368,20 @@ BIOS_Next186.asm					     Page 1 - 1
  E1C1  B0 A8					mov     al, 0a8h
  E1C3  E6 64					out     64h, al      ; enable mouse
  E1C5				mousei0:        
- E1C5  E8 13DA					call    getps2byte
+ E1C5  E8 13FC					call    getps2byte
  E1C8  73 FB					jnc     short mousei0
  E1CA  B4 FF					mov     ah, 0ffh
- E1CC  E8 13ED					call    sendcmd      ; reset mouse (CF = 1)
+ E1CC  E8 140F					call    sendcmd      ; reset mouse (CF = 1)
  E1CF  72 15					jc      short nomouse
  E1D1  B1 19					mov     cl, 25
  E1D3				mousei1:        
  E1D3  49					dec     cx
  E1D4  E3 10					jcxz    short nomouse
- E1D6  E8 13C9					call    getps2byte
+ E1D6  E8 13EB					call    getps2byte
  E1D9  72 F8					jc      short mousei1
  E1DB  3C AA					cmp     al, 0aah     ; BAT
  E1DD  75 07					jne     short nomouse
- E1DF  E8 13C0					call    getps2byte
+ E1DF  E8 13E2					call    getps2byte
  E1E2  3C 00					cmp     al, 0        ; mouse ID
  E1E4  74 09					je      short mouseok
  E1E6				nomouse:
@@ -389,7 +389,7 @@ BIOS_Next186.asm					     Page 1 - 1
  E1E8  E6 64					out     64h, al      ; disable mouse
  E1EA  80 26 0010 FB				and     byte ptr EquipmentWord, not 4 ; ps2 mouse not present in equipement word
  E1EF				mouseok:
- E1EF  E8 13DB					call    enableKbIfPresent
+ E1EF  E8 13FD					call    enableKbIfPresent
 
  E1F2  B0 20					mov     al, 20h
  E1F4  E6 64					out     64h, al
@@ -422,28 +422,28 @@ BIOS_Next186.asm					     Page 1 - 1
  E21D  72 F8			        jc      short COMFlush
 
 				; ---------------------   HDD init
- E21F  E8 15A6					call    sdinit
+ E21F  E8 15C8					call    sdinit
  E222  A3 0094					mov     HDSize, ax
  E225  0E					push    cs
  E226  07					pop     es
  E227  BE E000 R				mov     si, offset biosmsg
- E22A  E8 13EB					call    prts
+ E22A  E8 140D					call    prts
  E22D  BE E27E R				mov     si, offset bioscont
- E230  E8 13E5					call    prts
+ E230  E8 1407					call    prts
  E233  A1 0094					mov     ax, HDSize
  E236  D1 E8					shr     ax, 1
- E238  E8 13C4					call    dispAX
+ E238  E8 13E6					call    dispAX
  E23B  BE E035 R				mov     si, offset msgmb
- E23E  E8 13D7					call    prts
+ E23E  E8 13F9					call    prts
  E241  F6 06 0096 10				test    byte ptr KbdFlags3, 10h
  E246  74 06					jz      nokbmsg
  E248  BE E042 R				mov     si, offset msgkb
- E24B  E8 13CA					call    prts
+ E24B  E8 13EC					call    prts
  E24E				nokbmsg:
  E24E  F6 06 0010 04				test    byte ptr EquipmentWord, 4
  E253  74 06					jz      nomousemsg
  E255  BE E269 R				mov     si, offset msgmouse
- E258  E8 13BD					call    prts
+ E258  E8 13DF					call    prts
  E25B				nomousemsg:
 
 				;-------------- HD bootstrap
@@ -630,7 +630,7 @@ BIOS_Next186.asm					     Page 1 - 1
  E39E  8A E5					mov     ah, ch          ; LED update command sent, ACK received, need to send second byte
  E3A0  80 E4 07					and     ah, ScrLockLED or NumLockLED or CapsLockLED
  E3A3  B3 00					mov     bl, 0
- E3A5  E8 11D5					call    sendps2byte
+ E3A5  E8 11F7					call    sendps2byte
  E3A8  EB 03					jmp     short ToggleACK
  E3AA				SecondACK:        
  E3AA  80 F5 40					xor     ch, LEDUpdate   ; second ACK, clear LED update bit
@@ -781,7 +781,7 @@ BIOS_Next186.asm					     Page 1 - 1
  E4D7				SetFlagsKey1:
  E4D7  E9 0085					jmp     SetFlagsKey
  E4DA				E0Key:
- E4DA  BF FB58 R				mov     di, offset E0KeyList
+ E4DA  BF FB7A R				mov     di, offset E0KeyList
  E4DD  51					push    cx
  E4DE  B9 000C					mov     cx, E0KeyIndex - E0KeyList
  E4E1  FC					cld
@@ -800,7 +800,7 @@ BIOS_Next186.asm					     Page 1 - 1
  E4F8  3C 59					cmp     al, 59h
  E4FA  1A E4					sbb     ah, ah
  E4FC  22 C4					and     al, ah
- E4FE  BB FAFF R				mov     bx, offset KeyIndex
+ E4FE  BB FB21 R				mov     bx, offset KeyIndex
  E501  2E: D7					xlat    cs:[bx]
  E503				KeyDown:
  E503  33 DB					xor     bx, bx 
@@ -834,7 +834,7 @@ BIOS_Next186.asm					     Page 1 - 1
  E536  98					cbw
  E537  C1 E0 03					shl     ax, 3
  E53A  03 D8					add     bx, ax
- E53C  2E: 8B 87 FB70 R				mov     ax, cs:KeyCode[bx]
+ E53C  2E: 8B 87 FB92 R				mov     ax, cs:KeyCode[bx]
  E541  83 F8 0A					cmp     ax, 000ah
  E544  77 0E					ja      short pushKey
  E546  48					dec     ax
@@ -864,7 +864,7 @@ BIOS_Next186.asm					     Page 1 - 1
  E574  32 E8					xor     ch, al      ; insert the LEDs in KbdFlags4
  E576  B4 ED					mov     ah, 0edh    ; set LED
  E578  B3 00					mov     bl, 0
- E57A  E8 1000					call    sendps2byte
+ E57A  E8 1022					call    sendps2byte
  E57D				SF1:        
  E57D  89 16 0017				mov     KbdFlags1, dx
  E581  89 0E 0096				mov     KbdFlags3, cx
@@ -1032,7 +1032,7 @@ BIOS_Next186.asm					     Page 1 - 1
  E653  04 0A					add     al, 0ah
  E655  84 FF					test    bh, bh
  E657  75 08					jnz     getpageinfo
- E659  E8 0F7E					call    flush
+ E659  E8 0FA0					call    flush
  E65C  EF					out     dx, ax          
  E65D  5A					pop     dx
  E65E  58					pop     ax
@@ -1128,7 +1128,7 @@ BIOS_Next186.asm					     Page 1 - 1
  E6F5  B9 4000					mov     cx, 4000h   ; video len/2
  E6F8  BE 0720					mov     si, 0720h   ; clear value
  E6FB  BF 8F14					mov		di, 08f14h  ; 400lines, 14h offset
- E6FE  C7 06 0069 FA2F R			mov		word ptr PalOffset, offset PalVGA
+ E6FE  C7 06 0069 FA51 R			mov		word ptr PalOffset, offset PalVGA
  E704  E9 00AE					jmp     setmode2
  E707				setmode1:
  E707  3C 1A					cmp		al,	0dh*2
@@ -1137,12 +1137,12 @@ BIOS_Next186.asm					     Page 1 - 1
  E70E  B4 11					mov		ah, 11h		; graphic, 640x480x16, half -> 320x200x16
  E710  C7 06 004A 0028				mov     word ptr ScreenWidth, 40
  E716  C7 06 004C 2000				mov     word ptr RegenLength, 2000h
- E71C  C7 06 0069 F95F R			mov		word ptr PalOffset, offset PalEGA
+ E71C  C7 06 0069 F981 R			mov		word ptr PalOffset, offset PalEGA
  E722  EB 3F					jmp		short setmode121
  E724				setmode12:	
  E724  3C 1C					cmp		al, 0eh*2	; 640x200x16
  E726  75 19					jne		short setmode122
- E728  C7 06 0069 F95F R			mov		word ptr PalOffset, offset PalEGA
+ E728  C7 06 0069 F981 R			mov		word ptr PalOffset, offset PalEGA
  E72E  BF 8F28					mov		di, 8f28h	; 400lines, 28h offset
  E731				setmode1221:
  E731  B4 01					mov		ah, 1		; graphic, 640x400
@@ -1150,7 +1150,7 @@ BIOS_Next186.asm					     Page 1 - 1
  E739  C7 06 004C 4000				mov     word ptr RegenLength, 04000h
  E73F  EB 22					jmp		short setmode121
  E741				setmode122:
- E741  C7 06 0069 FA2F R			mov		word ptr PalOffset, offset PalVGA
+ E741  C7 06 0069 FA51 R			mov		word ptr PalOffset, offset PalVGA
  E747  3C 20					cmp		al, 10h*2
  E749  BF 5D28					mov		di, 5d28h	; 350lines, 28h offset
  E74C  74 E3					je		short setmode1221	; 640x350x16
@@ -1176,7 +1176,7 @@ BIOS_Next186.asm					     Page 1 - 1
  E778  C7 06 004A 0028				mov     word ptr ScreenWidth, 40
  E77E  C7 06 004C 0000				mov     word ptr RegenLength, 0000h
  E784  BF 8F28					mov		di, 08f28h	; 400 lines, 28h offset
- E787  C7 06 0069 F88F R			mov		word ptr PalOffset, offset Pal256
+ E787  C7 06 0069 F8B1 R			mov		word ptr PalOffset, offset Pal256
  E78D  EB 1E					jmp     short setmode21
  E78F				setmode3:
  E78F  3C 4A					cmp     al, 25h*2
@@ -1185,7 +1185,7 @@ BIOS_Next186.asm					     Page 1 - 1
  E799  B4 01					mov     ah, 1       ; graphic mode, 640x480, 256 colors
  E79B  C7 06 004A 0050				mov     word ptr ScreenWidth, 80
  E7A1  C7 06 004C 0000				mov     word ptr RegenLength, 0000h
- E7A7  C7 06 0069 F88F R			mov		word ptr PalOffset, offset Pal256
+ E7A7  C7 06 0069 F8B1 R			mov		word ptr PalOffset, offset Pal256
  E7AD				setmode21:
  E7AD  BB A000					mov     bx, 0a000h  ; segment
  E7B0  B9 8000					mov     cx, 8000h   ; video len/2
@@ -1356,7 +1356,7 @@ BIOS_Next186.asm					     Page 1 - 1
 				;---------------- fn 05h, set active video page
  E8C8				apage:
  E8C8  60					pusha
- E8C9  E8 0D0E					call    flush
+ E8C9  E8 0D30					call    flush
  E8CC  24 07					and     al, 7
  E8CE  8A F8					mov     bh, al
  E8D0  A2 0062					mov     ActivePage, al
@@ -2310,13 +2310,13 @@ BIOS_Next186.asm					     Page 1 - 1
  EF0A  C3					ret
 					  
  EF0B				DiskVerify:
- EF0B  BD F6CA R				mov     bp, sdverify
+ EF0B  BD F6EC R				mov     bp, sdverify
  EF0E  EB 08					jmp     short   DiskRead1
  EF10				DiskWrite:
- EF10  BD F74A R				mov     bp, sdwrite
+ EF10  BD F76C R				mov     bp, sdwrite
  EF13  EB 03					jmp     short   DiskRead1
  EF15				DiskRead:
- EF15  BD F6CF R				mov     bp, sdread
+ EF15  BD F6F1 R				mov     bp, sdread
  EF18				DiskRead1:        
  EF18  84 C0					test    al, al
  EF1A  74 E7					jz      short DiskReset
@@ -2403,13 +2403,13 @@ BIOS_Next186.asm					     Page 1 - 1
  EFA4  C3					ret        
 
  EFA5				DiskExtVerify:
- EFA5  BD F6CA R				mov     bp, sdverify
+ EFA5  BD F6EC R				mov     bp, sdverify
  EFA8  EB 08					jmp     short DiskExtRead1
  EFAA				DiskExtWrite:
- EFAA  BD F74A R				mov     bp, sdwrite
+ EFAA  BD F76C R				mov     bp, sdwrite
  EFAD  EB 03					jmp     short DiskExtRead1
  EFAF				DiskExtRead:
- EFAF  BD F6CF R				mov     bp, sdread
+ EFAF  BD F6F1 R				mov     bp, sdread
  EFB2				DiskExtRead1:
  EFB2  80 FA 80					cmp     dl, 80h
  EFB5  75 B4					jne     short notready
@@ -2689,7 +2689,7 @@ BIOS_Next186.asm					     Page 1 - 1
  F101  8A 7C 17					mov     bh, [si+17h]
  F104  8B 7C 1A					mov     di, [si+1ah]
  F107  8B 74 12					mov     si, [si+12h]
- F10A  E8 04CD					call    flush   
+ F10A  E8 04EF					call    flush   
  F10D  E8 FFB5					call    SetSeg      ; 02000h = destination, DX=82h
  F110  4A					dec     dx
  F111  93					xchg    ax, bx
@@ -2732,7 +2732,7 @@ BIOS_Next186.asm					     Page 1 - 1
  F14E  73 01					jnc     short MovExt_next
  F150  A4					movsb
  F151				MovExt_next:
- F151  E8 0486					call    flush
+ F151  E8 04A8					call    flush
  F154  8B C8					mov     cx, ax
  F156  0B C3					or      ax, bx
  F158  74 0D					jz      short MovExt_exit  ; finalized
@@ -2851,7 +2851,7 @@ BIOS_Next186.asm					     Page 1 - 1
  F20F  33 C0					xor     ax, ax
  F211  0E					push    cs
  F212  07					pop     es
- F213  BB F310 R				mov     bx, offset SysParams
+ F213  BB F332 R				mov     bx, offset SysParams
  F216  EB 9F					jmp     short exit_ax
 						
 				; ------------ Mouse 
@@ -2861,7 +2861,7 @@ BIOS_Next186.asm					     Page 1 - 1
  F21A  6A 40					push    40h
  F21C  1F					pop     ds
  F21D  F6 06 0010 04				test    byte ptr EquipmentWord, 4 ; ps2 mouse equipement word
- F222  75 16					jnz     short mouse_present
+ F222  75 15					jnz     short mouse_present
  F224				if_err:
  F224  B8 03A7					mov     ax, 03a7h   ; interface error (no mouse present)
  F227  E6 64					out     64h, al     ; disable mouse
@@ -2869,142 +2869,172 @@ BIOS_Next186.asm					     Page 1 - 1
  F229  F9					stc                 ; error
  F22A				exitok:        
  F22A  9C					pushf               ; save CF
- F22B  E4 A1					in      al, 0a1h
- F22D  24 EF					and     al, not 10h     
- F22F  E6 A1					out     0a1h, al    ; enable mouse interrupts
- F231  E8 0399					call    enableKbIfPresent
- F234  9D					popf
- F235  5A					pop     dx
- F236  1F					pop     ds
- F237  E9 FF7D					jmp     exit_ax
- F23A				mouse_present:
- F23A  8A C4					mov     al, ah                                  
- F23C  B4 01					mov     ah, 1       ; invalid function
- F23E  3C 07					cmp     al, 7
- F240  77 E7					ja      short errexit
- F242  50					push    ax
- F243  E4 A1					in      al, 0a1h
- F245  0C 10					or      al, 10h     
- F247  E6 A1					out     0a1h, al    ; disable mouse interrupts
- F249  FB					sti                 ; allow interrupts for a short time, to flush possible pending KB/mouse requests
- F24A  B0 AD					mov     al, 0adh
- F24C  E6 64					out     64h, al     ; disable kb interface
- F24E  58					pop     ax
- F24F  3C 01					cmp     al, 1
- F251  FA					cli                 ; from now on we are working with ints disabled, as the following code is highly non re-entrant
- F252  72 1C					jb      short en_dis
- F254  74 33					je      short reset
- F256  3C 03					cmp     al, 3
- F258  72 40					jb      short sampling
- F25A  74 5D					je      short resolution
- F25C  3C 05					cmp     al, 5
- F25E  72 63					jb      short gettype
- F260  74 27					je      short reset
- F262  3C 06					cmp     al, 6
- F264  74 75					je      short extend
+ F22B  50					push    ax
+ F22C  E8 00D6					call    enablemouseinterrupt
+ F22F  58					pop     ax
+						;in      al, 0a1h
+						;and     al, not 10h     
+						;out     0a1h, al    ; enable mouse interrupts
+				
+ F230  E8 03BC					call    enableKbIfPresent
+ F233  9D					popf
+ F234  5A					pop     dx
+ F235  1F					pop     ds
+ F236  E9 FF7E					jmp     exit_ax
+ F239				mouse_present:
+ F239  8A C4					mov     al, ah                                  
+ F23B  B4 01					mov     ah, 1       ; invalid function
+ F23D  3C 07					cmp     al, 7
+ F23F  77 E8					ja      short errexit
+ F241  50					push    ax
+				
+ F242  E8 00D3					call    disablemouseinterrupt
+				
+						;in      al, 0a1h
+						;or      al, 10h     
+						;out     0a1h, al    ; disable mouse interrupts
+ F245  FB					sti                 ; allow interrupts for a short time, to flush possible pending KB/mouse requests
+ F246  B0 AD					mov     al, 0adh
+ F248  E6 64					out     64h, al     ; disable kb interface
+ F24A  58					pop     ax
+ F24B  3C 01					cmp     al, 1
+ F24D  FA					cli                 ; from now on we are working with ints disabled, as the following code is highly non re-entrant
+ F24E  72 1C					jb      short en_dis
+ F250  74 33					je      short reset
+ F252  3C 03					cmp     al, 3
+ F254  72 40					jb      short sampling
+ F256  74 5D					je      short resolution
+ F258  3C 05					cmp     al, 5
+ F25A  72 63					jb      short gettype
+ F25C  74 27					je      short reset
+ F25E  3C 06					cmp     al, 6
+ F260  74 75					je      short extend
 
 				; ------------- set handler
- F266  89 1E 00A1				mov     HandlerPtr[0], bx
- F26A  8C 06 00A3				mov     HandlerPtr[2], es
- F26E  EB 15					jmp     short exit_success1        
+ F262  89 1E 00A1				mov     HandlerPtr[0], bx
+ F266  8C 06 00A3				mov     HandlerPtr[2], es
+ F26A  EB 15					jmp     short exit_success1        
 
 				; ------------- enable/disable
- F270				en_dis:
- F270  B8 02F5					mov     ax, 02f5h   ; ah = invalid input
- F273  2A C7					sub     al, bh
- F275  38 E7					cmp     bh, ah
- F277  73 B0					jnc     short errexit
- F279  8A E0					mov     ah, al
- F27B  E8 033E					call    sendcmd     ; enable/disable data reporting (CF = 1)
- F27E				if_err1:        
- F27E  72 A4					jc      short if_err
- F280				exit_success:
- F280  C6 06 0067 00				mov     byte ptr DataCounter, 0
- F285				exit_success1:
- F285  32 E4					xor     ah, ah      ; success
- F287  EB A1					jmp     short exitok
+ F26C				en_dis:
+ F26C  B8 02F5					mov     ax, 02f5h   ; ah = invalid input
+ F26F  2A C7					sub     al, bh
+ F271  38 E7					cmp     bh, ah
+ F273  73 B4					jnc     short errexit
+ F275  8A E0					mov     ah, al
+ F277  E8 0364					call    sendcmd     ; enable/disable data reporting (CF = 1)
+ F27A				if_err1:        
+ F27A  72 A8					jc      short if_err
+ F27C				exit_success:
+ F27C  C6 06 0067 00				mov     byte ptr DataCounter, 0
+ F281				exit_success1:
+ F281  32 E4					xor     ah, ah      ; success
+ F283  EB A5					jmp     short exitok
 
 				; ------------- reset
- F289				reset:
- F289  B4 F6					mov     ah, 0f6h    ; set defaults
- F28B  F9					stc                 ; mouse command
- F28C  E8 032D					call    sendcmd     
- F28F  72 93					jc      short if_err
- F291  BB 00AA					mov     bx, 00aah
- F294  88 3E 0068				mov     byte ptr PacketSize, bh ; 3bytes packet
- F298  EB E6					jmp     short exit_success
+ F285				reset:
+ F285  B4 F6					mov     ah, 0f6h    ; set defaults
+ F287  F9					stc                 ; mouse command
+ F288  E8 0353					call    sendcmd     
+ F28B  72 97					jc      short if_err
+ F28D  BB 00AA					mov     bx, 00aah
+ F290  88 3E 0068				mov     byte ptr PacketSize, bh ; 3bytes packet
+ F294  EB E6					jmp     short exit_success
 
 				; ------------- sampling
- F29A				sampling:
- F29A  80 FF 06					cmp     bh, 6
- F29D				badparam:
- F29D  B4 02					mov     ah, 2       ; invalid input
- F29F  77 88					ja      short errexit
- F2A1  C1 EB 08					shr     bx, 8
- F2A4  2E: 8A A7 F309 R				mov     ah, cs:sample_tbl[bx]
- F2A9  50					push    ax
- F2AA  B4 F3					mov     ah, 0f3h    ; st sample rate
- F2AC				send2c:
- F2AC  F9					stc
- F2AD  E8 030C					call    sendcmd              
- F2B0  58					pop     ax
- F2B1  72 CB					jc      short if_err1
- F2B3				send1c:
- F2B3  F9					stc
- F2B4  E8 0305					call    sendcmd
- F2B7  EB C5					jmp     short if_err1
+ F296				sampling:
+ F296  80 FF 06					cmp     bh, 6
+ F299				badparam:
+ F299  B4 02					mov     ah, 2       ; invalid input
+ F29B  77 8C					ja      short errexit
+ F29D  C1 EB 08					shr     bx, 8
+ F2A0  2E: 8A A7 F32B R				mov     ah, cs:sample_tbl[bx]
+ F2A5  50					push    ax
+ F2A6  B4 F3					mov     ah, 0f3h    ; st sample rate
+ F2A8				send2c:
+ F2A8  F9					stc
+ F2A9  E8 0332					call    sendcmd              
+ F2AC  58					pop     ax
+ F2AD  72 CB					jc      short if_err1
+ F2AF				send1c:
+ F2AF  F9					stc
+ F2B0  E8 032B					call    sendcmd
+ F2B3  EB C5					jmp     short if_err1
 
 				; ------------- resolution
- F2B9				resolution:
- F2B9  80 FF 03					cmp     bh, 3
- F2BC  77 DF					ja      short badparam
- F2BE  53					push    bx
- F2BF  B4 E8					mov     ah, 0e8h    ; set resolution
- F2C1  EB E9					jmp     short send2c
+ F2B5				resolution:
+ F2B5  80 FF 03					cmp     bh, 3
+ F2B8  77 DF					ja      short badparam
+ F2BA  53					push    bx
+ F2BB  B4 E8					mov     ah, 0e8h    ; set resolution
+ F2BD  EB E9					jmp     short send2c
 
 				; ------------- gettype
- F2C3				gettype:
- F2C3  B4 F2					mov     ah, 0f2h
- F2C5  F9					stc
- F2C6  E8 02F3					call    sendcmd
- F2C9  72 B3					jc      short if_err1
- F2CB  E8 02D4					call    getps2byte
- F2CE  72 AE					jc      short if_err1
- F2D0  8A F8					mov     bh, al
- F2D2  F6 D8					neg     al          ; CF=1 if al != 0
- F2D4  12 C7					adc     al, bh
- F2D6  A2 0068					mov     byte ptr PacketSize, al ; 3 or 4 bytes packet
- F2D9  EB A5					jmp     short exit_success
+ F2BF				gettype:
+ F2BF  B4 F2					mov     ah, 0f2h
+ F2C1  F9					stc
+ F2C2  E8 0319					call    sendcmd
+ F2C5  72 B3					jc      short if_err1
+ F2C7  E8 02FA					call    getps2byte
+ F2CA  72 AE					jc      short if_err1
+ F2CC  8A F8					mov     bh, al
+ F2CE  F6 D8					neg     al          ; CF=1 if al != 0
+ F2D0  12 C7					adc     al, bh
+ F2D2  A2 0068					mov     byte ptr PacketSize, al ; 3 or 4 bytes packet
+ F2D5  EB A5					jmp     short exit_success
 						
 				; ------------- extended commands
- F2DB				extend:
- F2DB  84 FF					test    bh, bh
- F2DD  75 1F					jnz     short setscaling
- F2DF  B4 E9					mov     ah, 0e9h    ; status request
- F2E1  F9					stc
- F2E2  E8 02D7					call    sendcmd
- F2E5  72 97					jc      short if_err1
- F2E7  E8 02B8					call    getps2byte
- F2EA  72 92					jc      short if_err1
- F2EC  8A D8					mov     bl, al
- F2EE  E8 02B1					call    getps2byte
- F2F1  72 8B					jc      short if_err1
- F2F3  8A C8					mov     cl, al
- F2F5  E8 02AA					call    getps2byte
- F2F8  72 84					jc      short if_err1
- F2FA  5A					pop     dx  
- F2FB  50					push    ax          ; replace dx on stack
- F2FC  EB 82					jmp     short exit_success
- F2FE				setscaling:    
- F2FE  80 FF 02					cmp     bh, 2
- F301  77 9A					ja      short badparam
- F303  B4 E5					mov     ah, 0e5h    ; set scaling 1:1 or 2:1
- F305  02 E7					add     ah, bh
- F307  EB AA					jmp     short send1c
+ F2D7				extend:
+ F2D7  84 FF					test    bh, bh
+ F2D9  75 1F					jnz     short setscaling
+ F2DB  B4 E9					mov     ah, 0e9h    ; status request
+ F2DD  F9					stc
+ F2DE  E8 02FD					call    sendcmd
+ F2E1  72 97					jc      short if_err1
+ F2E3  E8 02DE					call    getps2byte
+ F2E6  72 92					jc      short if_err1
+ F2E8  8A D8					mov     bl, al
+ F2EA  E8 02D7					call    getps2byte
+ F2ED  72 8B					jc      short if_err1
+ F2EF  8A C8					mov     cl, al
+ F2F1  E8 02D0					call    getps2byte
+ F2F4  72 84					jc      short if_err1
+ F2F6  5A					pop     dx  
+ F2F7  50					push    ax          ; replace dx on stack
+ F2F8  EB 82					jmp     exit_success
+ F2FA				setscaling:    
+ F2FA  80 FF 02					cmp     bh, 2
+ F2FD  77 9A					ja      short badparam
+ F2FF  B4 E5					mov     ah, 0e5h    ; set scaling 1:1 or 2:1
+ F301  02 E7					add     ah, bh
+ F303  EB AA					jmp     short send1c
 
- F309 0A 14 28 3C 50 64		sample_tbl  db  10, 20, 40, 60, 80, 100, 200
+ F305				enablemouseinterrupt:
+ F305  B0 20					mov     al, 20h
+ F307  E6 64					out     064h, al
+ F309  E4 60					in      al, 060h    ; read 8042 config byte
+ F30B  0C 02					or      al, 02h     ; set enable mouse interrupt
+ F30D  8A E0					mov     ah, al
+ F30F  B0 60					mov     al, 60h
+ F311  E6 64					out     064h, al
+ F313  8A C4					mov     al, ah
+ F315  E6 60					out     060h, al    ; send 8042 config byte
+ F317  C3					ret
+ F318				disablemouseinterrupt:
+ F318  B0 20					mov     al, 20h
+ F31A  E6 64					out     064h, al
+ F31C  E4 60					in      al, 060h    ; read 8042 config byte
+ F31E  24 FD					and     al, 0fdh     ; set disable mouse interrupt
+ F320  8A E0					mov     ah, al
+ F322  B0 60					mov     al, 60h
+ F324  E6 64					out     064h, al
+ F326  8A C4					mov     al, ah
+ F328  E6 60					out     060h, al    ; send 8042 config byte
+ F32A  C3					ret
+				
+ F32B 0A 14 28 3C 50 64		sample_tbl  db  10, 20, 40, 60, 80, 100, 200
        C8
- F310 08 00 FC 00 00		SysParams   db  8, 0, 0fch, 0, 0
+ F332 08 00 FC 00 00		SysParams   db  8, 0, 0fch, 0, 0
 				;--------------------------------------------------------------------------
 				; Feature byte 1
 				; b7: 1=DMA channel 3 used by hard disk
@@ -3016,7 +3046,7 @@ BIOS_Next186.asm					     Page 1 - 1
 				; b1: 0=AT or ESDI bus, 1=MicroChannel
 				; b0: 1=Dual bus (MicroChannel + ISA)
 				;--------------------------------------------------------------------------
- F315  10						db      10h
+ F337  10						db      10h
 				;--------------------------------------------------------------------------
 				; Feature byte 2
 				; b7: 1=32-bit DMA supported
@@ -3028,7 +3058,7 @@ BIOS_Next186.asm					     Page 1 - 1
 				; b1: 1=data streaming supported
 				; b0: reserved
 				;--------------------------------------------------------------------------
- F316  44						db      44h
+ F338  44						db      44h
 				;--------------------------------------------------------------------------
 				; Feature byte 3
 				; b7: not used
@@ -3040,7 +3070,7 @@ BIOS_Next186.asm					     Page 1 - 1
 				; b1: Initial Machine Load (IML) system - BIOS on disk
 				; b0: SCSI supported in IML
 				;--------------------------------------------------------------------------
- F317  00						db      0
+ F339  00						db      0
 				;--------------------------------------------------------------------------
 				; Feature byte 4
 				; b7: IBM private
@@ -3050,13 +3080,13 @@ BIOS_Next186.asm					     Page 1 - 1
 				; b1: memory split above 16Mb supported
 				; b0: POSTEXT directly supported by POST
 				;--------------------------------------------------------------------------
- F318  00						db      0
+ F33A  00						db      0
 				;--------------------------------------------------------------------------
 				; Feature byte 5 (IBM)
 				; b1: enhanced mouse
 				; b0: flash EPROM
 				;--------------------------------------------------------------------------
- F319  00						db      0                                                
+ F33B  00						db      0                                                
 
 
 				; --------------------- INT 16h - keyboard interface ----------------
@@ -3078,178 +3108,178 @@ BIOS_Next186.asm					     Page 1 - 1
  = ds:[80h]			Buffer          equ     <ds:[80h]>;1eh
  = ds:[82h]			EndBuf          equ     <ds:[82h]>;3eh
 
- F31A				int16 proc near
- F31A  1E					push    ds
- F31B  56					push    si
- F31C  6A 40					push    40h
- F31E  1F					pop     ds
- F31F  86 C4					xchg    al, ah          ;shorter opcodes for al than ah
- F321  48					dec     ax
- F322  A8 EF					test    al, 0EFh        ;Check for 01h and 11h
- F324  74 3E					jz      short TestKey   ;TestKey does not need cld
- F326  40					inc     ax
- F327  FC					cld
- F328  A8 EF					test    al, 0EFh        ;Check for 0h and 10h
- F32A  74 1C					jz      short GetKey
- F32C  3C 03					cmp     al, 3           ;Check for 02h and 03h
- F32E  72 78					jb      short GetStatus
- F330  74 7B					je      short SetAutoRpt   
- F332  3C 05					cmp     al, 5           ;Check for StoreKey function.
- F334  74 3D					je      short StoreKey
- F336  3C 09					cmp     al, 9           ;Get KB functionality
- F338  74 08					je      short kbfunc     
- F33A  3C 12					cmp     al, 12h         ;Extended status call
- F33C  74 56					je      short ExtStatus
- F33E  3C 92					cmp     al, 92h         ;stupid keyb.com 
- F340  75 02					jne     short Exit
- F342				kbfunc:
- F342  B0 24					mov     al, 24h         ;AL=20h (fn 10h, 12h supported, set typematic supported)        
- F344				Exit:        
- F344  5E					pop     si
- F345  1F					pop     ds
- F346  CF					iret                    ; unknown function, Restores flags.
+ F33C				int16 proc near
+ F33C  1E					push    ds
+ F33D  56					push    si
+ F33E  6A 40					push    40h
+ F340  1F					pop     ds
+ F341  86 C4					xchg    al, ah          ;shorter opcodes for al than ah
+ F343  48					dec     ax
+ F344  A8 EF					test    al, 0EFh        ;Check for 01h and 11h
+ F346  74 3E					jz      short TestKey   ;TestKey does not need cld
+ F348  40					inc     ax
+ F349  FC					cld
+ F34A  A8 EF					test    al, 0EFh        ;Check for 0h and 10h
+ F34C  74 1C					jz      short GetKey
+ F34E  3C 03					cmp     al, 3           ;Check for 02h and 03h
+ F350  72 78					jb      short GetStatus
+ F352  74 7B					je      short SetAutoRpt   
+ F354  3C 05					cmp     al, 5           ;Check for StoreKey function.
+ F356  74 3D					je      short StoreKey
+ F358  3C 09					cmp     al, 9           ;Get KB functionality
+ F35A  74 08					je      short kbfunc     
+ F35C  3C 12					cmp     al, 12h         ;Extended status call
+ F35E  74 56					je      short ExtStatus
+ F360  3C 92					cmp     al, 92h         ;stupid keyb.com 
+ F362  75 02					jne     short Exit
+ F364				kbfunc:
+ F364  B0 24					mov     al, 24h         ;AL=20h (fn 10h, 12h supported, set typematic supported)        
+ F366				Exit:        
+ F366  5E					pop     si
+ F367  1F					pop     ds
+ F368  CF					iret                    ; unknown function, Restores flags.
 
- F347				GetKey1:                        ; wait for interrupt
- F347  F4					hlt
- F348				GetKey: ; ----------- fn 00h, 10h
- F348  B4 11					mov     ah, 11h
- F34A  CD 16					int     16h             ;See if key is available (IF becomes 1 after this int)
- F34C  74 F9					jz      short GetKey1   ;Wait for keystroke.
- F34E  FA					cli                     ;Critical region! Ints off.
- F34F  8B 36 001A				mov     si, HeadPtr     ;Ptr to next character.
- F353  AD					lodsw                   ;Get the character, Bump up HeadPtr
- F354  3B 36 0082				cmp     si, EndBuf
- F358  72 04					jb      short noWrap
- F35A  8B 36 0080				mov     si, Buffer
- F35E				noWrap:             
- F35E  89 36 001A				mov     HeadPtr, si
- F362  EB E0					jmp     short Exit
+ F369				GetKey1:                        ; wait for interrupt
+ F369  F4					hlt
+ F36A				GetKey: ; ----------- fn 00h, 10h
+ F36A  B4 11					mov     ah, 11h
+ F36C  CD 16					int     16h             ;See if key is available (IF becomes 1 after this int)
+ F36E  74 F9					jz      short GetKey1   ;Wait for keystroke.
+ F370  FA					cli                     ;Critical region! Ints off.
+ F371  8B 36 001A				mov     si, HeadPtr     ;Ptr to next character.
+ F375  AD					lodsw                   ;Get the character, Bump up HeadPtr
+ F376  3B 36 0082				cmp     si, EndBuf
+ F37A  72 04					jb      short noWrap
+ F37C  8B 36 0080				mov     si, Buffer
+ F380				noWrap:             
+ F380  89 36 001A				mov     HeadPtr, si
+ F384  EB E0					jmp     short Exit
 
- F364				TestKey: ; ---------- fn 01h
- F364  8B 36 001A				mov     si, HeadPtr
- F368  3B 36 001C				cmp     si, TailPtr     ;ZF=1, if empty buffer
- F36C  AD					lodsw                   ;BIOS returns avail keycode.
- F36D  FB					sti                     ;Ints back on.
- F36E  5E					pop     si
- F36F  1F					pop     ds
- F370  CA 0002					retf    2               ;Pop flags (ZF is important!)
+ F386				TestKey: ; ---------- fn 01h
+ F386  8B 36 001A				mov     si, HeadPtr
+ F38A  3B 36 001C				cmp     si, TailPtr     ;ZF=1, if empty buffer
+ F38E  AD					lodsw                   ;BIOS returns avail keycode.
+ F38F  FB					sti                     ;Ints back on.
+ F390  5E					pop     si
+ F391  1F					pop     ds
+ F392  CA 0002					retf    2               ;Pop flags (ZF is important!)
 
- F373				StoreKey: ; ---------- fn 05h - Inserts the value in CX into the type ahead buffer.  
- F373  8B 36 001C				mov     si, TailPtr     ;Address where we can put next key code.
- F377  89 0C					mov     [si], cx        ;Store the key code away
- F379  46					inc     si
- F37A  46					inc     si              ;Move on to next entry in buf
- F37B  3B 36 0082				cmp     si, EndBuf
- F37F  72 04					jb      short NoWrap1
- F381  8B 36 0080				mov     si, Buffer
- F385				 NoWrap1:
- F385  B0 01					mov     al, 1           ;no room
- F387  3B 36 001A				cmp     si, HeadPtr     ;Data overrun?
- F38B  74 B7					je      short Exit      ;if so, ignore key entry.
- F38D  89 36 001C				mov     TailPtr, si
- F391  48					dec     ax              ;al=0
- F392  EB B0					jmp     short Exit       
+ F395				StoreKey: ; ---------- fn 05h - Inserts the value in CX into the type ahead buffer.  
+ F395  8B 36 001C				mov     si, TailPtr     ;Address where we can put next key code.
+ F399  89 0C					mov     [si], cx        ;Store the key code away
+ F39B  46					inc     si
+ F39C  46					inc     si              ;Move on to next entry in buf
+ F39D  3B 36 0082				cmp     si, EndBuf
+ F3A1  72 04					jb      short NoWrap1
+ F3A3  8B 36 0080				mov     si, Buffer
+ F3A7				 NoWrap1:
+ F3A7  B0 01					mov     al, 1           ;no room
+ F3A9  3B 36 001A				cmp     si, HeadPtr     ;Data overrun?
+ F3AD  74 B7					je      short Exit      ;if so, ignore key entry.
+ F3AF  89 36 001C				mov     TailPtr, si
+ F3B3  48					dec     ax              ;al=0
+ F3B4  EB B0					jmp     short Exit       
 
- F394				ExtStatus: ; ------- fn 12h - Retrieve the extended keyboard status and return it in AH, and the standard keyboard status in AL.    
- F394  A0 0018					mov     al, KbdFlags2
- F397  24 77					and     al, 01110111b   ;Clear final sysreq field, and final right alt bit.
- F399  A8 04					test    al, 100b        ;Test cur sysreq bit.
- F39B  74 02					jz      short NoSysReq  ;Skip if it's zero.
- F39D  2C 84					sub     al, 10000100b   ;Set final sysreq bit, clear final right ctl bit.
- F39F				NoSysReq:
- F39F  8A 26 0096				mov     ah, KbdFlags3
- F3A3  80 E4 0C					and     ah, 1100b       ;Grab rt alt/ctrl bits.
- F3A6  0A E0					or      ah, al          ;Merge into AH.
+ F3B6				ExtStatus: ; ------- fn 12h - Retrieve the extended keyboard status and return it in AH, and the standard keyboard status in AL.    
+ F3B6  A0 0018					mov     al, KbdFlags2
+ F3B9  24 77					and     al, 01110111b   ;Clear final sysreq field, and final right alt bit.
+ F3BB  A8 04					test    al, 100b        ;Test cur sysreq bit.
+ F3BD  74 02					jz      short NoSysReq  ;Skip if it's zero.
+ F3BF  2C 84					sub     al, 10000100b   ;Set final sysreq bit, clear final right ctl bit.
+ F3C1				NoSysReq:
+ F3C1  8A 26 0096				mov     ah, KbdFlags3
+ F3C5  80 E4 0C					and     ah, 1100b       ;Grab rt alt/ctrl bits.
+ F3C8  0A E0					or      ah, al          ;Merge into AH.
 
- F3A8				GetStatus: ; --------- fn 02h     
- F3A8  A0 0017					mov     al, KbdFlags1   ;Just return Std Status.
- F3AB				Exit1:
- F3AB  EB 97					jmp     short Exit
+ F3CA				GetStatus: ; --------- fn 02h     
+ F3CA  A0 0017					mov     al, KbdFlags1   ;Just return Std Status.
+ F3CD				Exit1:
+ F3CD  EB 97					jmp     short Exit
 
- F3AD				SetAutoRpt: ; ------ fn 03h
- F3AD  80 FC 05					cmp     ah, 5
- F3B0  75 92					jne     short Exit
- F3B2  52					push    dx
- F3B3  C0 E7 05					shl     bh, 5
- F3B6  80 E3 1F					and     bl, 1fh
- F3B9  0A DF					or      bl, bh
- F3BB  80 E3 7F					and     bl, 7fh
- F3BE  B4 00					mov     ah, 0           ; wait LED update progress to finalize
- F3C0  E8 0028					call    WaitFlag        ; leaves with IF=0
- F3C3  72 23					jc      short timeout
- F3C5  80 0E 0097 08				or      byte ptr KbdFlags4, SetRepeat    ; set auto repeat in progress
- F3CA  B4 F3					mov     ah, 0f3h        ; set typematic rate and delay
- F3CC  53					push    bx
- F3CD  32 DB					xor     bl, bl          ; send to kb
- F3CF  E8 01AB					call    sendps2byte
- F3D2  5B					pop     bx
- F3D3  72 0E					jc      short timeout1  ; send timeout
- F3D5  B4 18					mov     ah, SetRepeat or AckReceived ; test if ACK received
- F3D7  E8 0011					call    WaitFlag
- F3DA  72 07					jc      short timeout1
- F3DC  8A E3					mov     ah, bl
- F3DE  32 DB					xor     bl, bl          ; send to kb
- F3E0  E8 019A					call    sendps2byte     ; send data
- F3E3				timeout1:
- F3E3  80 26 0097 F7				and     byte ptr KbdFlags4, not SetRepeat   
- F3E8				timeout:
- F3E8  5A					pop     dx
- F3E9  EB C0					jmp     short Exit1
+ F3CF				SetAutoRpt: ; ------ fn 03h
+ F3CF  80 FC 05					cmp     ah, 5
+ F3D2  75 92					jne     short Exit
+ F3D4  52					push    dx
+ F3D5  C0 E7 05					shl     bh, 5
+ F3D8  80 E3 1F					and     bl, 1fh
+ F3DB  0A DF					or      bl, bh
+ F3DD  80 E3 7F					and     bl, 7fh
+ F3E0  B4 00					mov     ah, 0           ; wait LED update progress to finalize
+ F3E2  E8 0028					call    WaitFlag        ; leaves with IF=0
+ F3E5  72 23					jc      short timeout
+ F3E7  80 0E 0097 08				or      byte ptr KbdFlags4, SetRepeat    ; set auto repeat in progress
+ F3EC  B4 F3					mov     ah, 0f3h        ; set typematic rate and delay
+ F3EE  53					push    bx
+ F3EF  32 DB					xor     bl, bl          ; send to kb
+ F3F1  E8 01AB					call    sendps2byte
+ F3F4  5B					pop     bx
+ F3F5  72 0E					jc      short timeout1  ; send timeout
+ F3F7  B4 18					mov     ah, SetRepeat or AckReceived ; test if ACK received
+ F3F9  E8 0011					call    WaitFlag
+ F3FC  72 07					jc      short timeout1
+ F3FE  8A E3					mov     ah, bl
+ F400  32 DB					xor     bl, bl          ; send to kb
+ F402  E8 019A					call    sendps2byte     ; send data
+ F405				timeout1:
+ F405  80 26 0097 F7				and     byte ptr KbdFlags4, not SetRepeat   
+ F40A				timeout:
+ F40A  5A					pop     dx
+ F40B  EB C0					jmp     short Exit1
 
 
- F3EB				WaitFlag:   ; ah = desired KbdFlags4 & (AckReceived | LEDUpdate | SetRepeat)
- F3EB  BA 03DA					mov     dx, 3dah
- F3EE  B7 C8					mov     bh, 8*25    ; wait for max 25 * VGA frame time
- F3F0				wf_loop:
- F3F0  FA					cli
- F3F1  A0 0097					mov     al, KbdFlags4
- F3F4  24 58					and     al, AckReceived or LEDUpdate or SetRepeat
- F3F6  38 E0					cmp     al, ah
- F3F8  74 0A					je      short wf_ok ; flag ok, CF=0
- F3FA  FB					sti
- F3FB  EC					in      al, dx      ; get vblank
- F3FC  32 C7					xor     al, bh
- F3FE  24 08					and     al, 8h
- F400  2A F8					sub     bh, al
- F402  73 EC					jnc     short wf_loop     ; IBF - buffer full, no timeout
- F404				wf_ok:
- F404  C3					ret
- F405				int16 endp
+ F40D				WaitFlag:   ; ah = desired KbdFlags4 & (AckReceived | LEDUpdate | SetRepeat)
+ F40D  BA 03DA					mov     dx, 3dah
+ F410  B7 C8					mov     bh, 8*25    ; wait for max 25 * VGA frame time
+ F412				wf_loop:
+ F412  FA					cli
+ F413  A0 0097					mov     al, KbdFlags4
+ F416  24 58					and     al, AckReceived or LEDUpdate or SetRepeat
+ F418  38 E0					cmp     al, ah
+ F41A  74 0A					je      short wf_ok ; flag ok, CF=0
+ F41C  FB					sti
+ F41D  EC					in      al, dx      ; get vblank
+ F41E  32 C7					xor     al, bh
+ F420  24 08					and     al, 8h
+ F422  2A F8					sub     bh, al
+ F424  73 EC					jnc     short wf_loop     ; IBF - buffer full, no timeout
+ F426				wf_ok:
+ F426  C3					ret
+ F427				int16 endp
 
 				; --------------------- INT 18h - BIOS Basic ------------------
- F405				int18 proc near
- F405  0E					push    cs
- F406  07					pop     es
- F407  BE F43D R				mov     si, offset booterrmsg
- F40A  E8 020B					call    prts
- F40D  E8 01CA					call	flush
+ F427				int18 proc near
+ F427  0E					push    cs
+ F428  07					pop     es
+ F429  BE F45F R				mov     si, offset booterrmsg
+ F42C  E8 020B					call    prts
+ F42F  E8 01CA					call	flush
 
 				;-------------- RS232 bootstrap
- F410  B0 B4					mov     al, 0b4h
- F412  E6 43					out     43h, al
- F414  B8 F000					mov     ax, 0f000h
- F417  E6 42					out     42h, al
- F419  E6 42					out     42h, al      ; 18Hz PIT CH2
- F41B  E7 01					out		1, ax		; disable auto flush on vblank (bit0)
- F41D  8E D8					mov		ds,ax
- F41F  8E C0					mov		es,ax
+ F432  B0 B4					mov     al, 0b4h
+ F434  E6 43					out     43h, al
+ F436  B8 F000					mov     ax, 0f000h
+ F439  E6 42					out     42h, al
+ F43B  E6 42					out     42h, al      ; 18Hz PIT CH2
+ F43D  E7 01					out		1, ax		; disable auto flush on vblank (bit0)
+ F43F  8E D8					mov		ds,ax
+ F441  8E C0					mov		es,ax
 
- F421  BE 0100					mov		si,100h
- F424  E8 012A					call	srecb
- F427  FA					cli
- F428  8A FC					mov		bh,ah
- F42A  E8 0124					call	srecb
- F42D  8A DC					mov		bl,ah
- F42F				sloop:	
- F42F  E8 011F					call	srecb
- F432  88 24					mov		[si],ah
- F434  46					inc		si
- F435  4B					dec		bx
- F436  75 F7					jnz		short sloop
- F438  EA					db		0eah
- F439  0100 F000				dw		100h,0f000h
+ F443  BE 0100					mov		si,100h
+ F446  E8 012A					call	srecb
+ F449  FA					cli
+ F44A  8A FC					mov		bh,ah
+ F44C  E8 0124					call	srecb
+ F44F  8A DC					mov		bl,ah
+ F451				sloop:	
+ F451  E8 011F					call	srecb
+ F454  88 24					mov		[si],ah
+ F456  46					inc		si
+ F457  4B					dec		bx
+ F458  75 F7					jnz		short sloop
+ F45A  EA					db		0eah
+ F45B  0100 F000				dw		100h,0f000h
 
- F43D 4E 6F 20 62 6F 6F		booterrmsg db   'No boot device available, waiting on RS232 (115200bps, f000:100) ...', 13, 10, 0
+ F45F 4E 6F 20 62 6F 6F		booterrmsg db   'No boot device available, waiting on RS232 (115200bps, f000:100) ...', 13, 10, 0
        74 20 64 65 76 69
        63 65 20 61 76 61
        69 6C 61 62 6C 65
@@ -3261,696 +3291,696 @@ BIOS_Next186.asm					     Page 1 - 1
        20 66 30 30 30 3A
        31 30 30 29 20 2E
        2E 2E 0D 0A 00
- F484				int18 endp
+ F4A6				int18 endp
 
 				; --------------------- INT 19h - OS Bootstrap loader ------------------
- F484				int19 proc near
- F484  B8 0201					mov     ax, 201h
- F487  B9 0001					mov     cx, 1
- F48A  BA 0080					mov     dx, 80h
- F48D  6A 00					push    0
- F48F  07					pop     es
- F490  BB 7C00					mov     bx, 7c00h
- F493  CD 13					int     13h
- F495  72 05					jc      int19err
- F497  EA					db      0eah
- F498  7C00 0000				dw      7c00h, 0     ; jmp far 0000h:7c00h
- F49C				int19err:
- F49C  CD 18					int     18h
- F49E				int19 endp
+ F4A6				int19 proc near
+ F4A6  B8 0201					mov     ax, 201h
+ F4A9  B9 0001					mov     cx, 1
+ F4AC  BA 0080					mov     dx, 80h
+ F4AF  6A 00					push    0
+ F4B1  07					pop     es
+ F4B2  BB 7C00					mov     bx, 7c00h
+ F4B5  CD 13					int     13h
+ F4B7  72 05					jc      int19err
+ F4B9  EA					db      0eah
+ F4BA  7C00 0000				dw      7c00h, 0     ; jmp far 0000h:7c00h
+ F4BE				int19err:
+ F4BE  CD 18					int     18h
+ F4C0				int19 endp
 
 
 				; --------------------- INT 1ah - Get System Time ------------------
- F49E				int1a proc near
- F49E  1E					push    ds
- F49F  6A 40					push    40h
- F4A1  1F					pop     ds
- F4A2  80 FC 01					cmp     ah, 1
- F4A5  77 12					ja      clockexit
- F4A7  74 16					je      setclock
- F4A9  8B 16 006C				mov     dx, ds:[6ch]    ; read clock
- F4AD  8B 0E 006E				mov     cx, ds:[6eh]
- F4B1  A0 0070					mov     al, ds:[70h]
- F4B4				clockexit1:
- F4B4  C6 06 0070 00				mov     byte ptr ds:[70h], 0
- F4B9				clockexit:
- F4B9  F5					cmc     ; CF = 1 on error
- F4BA  1F					pop     ds
- F4BB  FB					sti
- F4BC  CA 0002					retf    2
+ F4C0				int1a proc near
+ F4C0  1E					push    ds
+ F4C1  6A 40					push    40h
+ F4C3  1F					pop     ds
+ F4C4  80 FC 01					cmp     ah, 1
+ F4C7  77 12					ja      clockexit
+ F4C9  74 16					je      setclock
+ F4CB  8B 16 006C				mov     dx, ds:[6ch]    ; read clock
+ F4CF  8B 0E 006E				mov     cx, ds:[6eh]
+ F4D3  A0 0070					mov     al, ds:[70h]
+ F4D6				clockexit1:
+ F4D6  C6 06 0070 00				mov     byte ptr ds:[70h], 0
+ F4DB				clockexit:
+ F4DB  F5					cmc     ; CF = 1 on error
+ F4DC  1F					pop     ds
+ F4DD  FB					sti
+ F4DE  CA 0002					retf    2
 
- F4BF				setclock:
- F4BF  89 16 006C				mov     ds:[6ch], dx
- F4C3  89 0E 006E				mov     ds:[6eh], cx
- F4C7  F9					stc
- F4C8  EB EA					jmp     short clockexit1    
- F4CA				int1a endp
+ F4E1				setclock:
+ F4E1  89 16 006C				mov     ds:[6ch], dx
+ F4E5  89 0E 006E				mov     ds:[6eh], cx
+ F4E9  F9					stc
+ F4EA  EB EA					jmp     short clockexit1    
+ F4EC				int1a endp
 
 
 				; --------------------- INT 70h - RTC ------------------
- F4CA				int70 proc near
- F4CA  1E					push    ds
- F4CB  6A 40					push    40h
- F4CD  1F					pop     ds
- F4CE  F6 06 00A0 01				test    byte ptr UWaitFlag, 1    ; is wait in progress?
- F4D3  74 1B					jz      short exit1
- F4D5  81 2E 009C 03E8				sub     word ptr WaitCount[0], 1000
- F4DB  83 1E 009E 00				sbb     word ptr WaitCount[2], 0
- F4E0  73 14					jnc     short exit
- F4E2  C6 06 00A0 00				mov     byte ptr UWaitFlag, 0
- F4E7  53					push    bx
- F4E8  C5 1E 0098				lds     bx, UFPtr
- F4EC  80 0F 80					or      byte ptr [bx], 80h
- F4EF  5B					pop     bx
- F4F0				exit1:
- F4F0  50					push	ax
- F4F1  33 C0					xor		ax, ax
- F4F3  E7 70					out		70h, ax	; stop RTC
- F4F5  58					pop		ax
- F4F6				exit: 
- F4F6  50					push    ax
- F4F7  B0 20					mov     al, 20h
- F4F9  E6 A0					out     0a0h, al
- F4FB  B0 20					mov     al, 20h
- F4FD  E6 20					out     20h, al
- F4FF  58					pop     ax
- F500  1F					pop     ds
- F501  CF					iret
- F502				int70 endp
+ F4EC				int70 proc near
+ F4EC  1E					push    ds
+ F4ED  6A 40					push    40h
+ F4EF  1F					pop     ds
+ F4F0  F6 06 00A0 01				test    byte ptr UWaitFlag, 1    ; is wait in progress?
+ F4F5  74 1B					jz      short exit1
+ F4F7  81 2E 009C 03E8				sub     word ptr WaitCount[0], 1000
+ F4FD  83 1E 009E 00				sbb     word ptr WaitCount[2], 0
+ F502  73 14					jnc     short exit
+ F504  C6 06 00A0 00				mov     byte ptr UWaitFlag, 0
+ F509  53					push    bx
+ F50A  C5 1E 0098				lds     bx, UFPtr
+ F50E  80 0F 80					or      byte ptr [bx], 80h
+ F511  5B					pop     bx
+ F512				exit1:
+ F512  50					push	ax
+ F513  33 C0					xor		ax, ax
+ F515  E7 70					out		70h, ax	; stop RTC
+ F517  58					pop		ax
+ F518				exit: 
+ F518  50					push    ax
+ F519  B0 20					mov     al, 20h
+ F51B  E6 A0					out     0a0h, al
+ F51D  B0 20					mov     al, 20h
+ F51F  E6 20					out     20h, al
+ F521  58					pop     ax
+ F522  1F					pop     ds
+ F523  CF					iret
+ F524				int70 endp
 
 						
 				; --------------------- INT 74h - mouse ------------------
- F502				int74 proc near
- F502  FC					cld
- F503  60					pusha
- F504  1E					push    ds
- F505  6A 40					push    40h
- F507  1F					pop     ds
- F508  B4 00					mov     ah, 0
- F50A  E4 60					in      al, 60h
- F50C  8B D8					mov     bx, ax
- F50E  FE 06 0067				inc     byte ptr DataCounter
- F512  A0 0067					mov     al, DataCounter
- F515  8B F0					mov     si, ax
- F517  2C 03					sub     al, 3
- F519  77 0C					ja      short docall
- F51B  88 9C 00A4				mov     DataBuffer[si-1], bl
- F51F  3A 06 0068				cmp     al, PacketSize
- F523  75 21					jne     short nocall
- F525  B3 00					mov     bl, 0
- F527				docall:
- F527  88 3E 0067				mov     byte ptr DataCounter, bh    ; BH=0
- F52B  BE 00A3					mov     si, offset DataBuffer-2
- F52E  AD					lodsw
- F52F  0B 44 FC					or      ax, [si-4]
- F532  74 12					jz      short nocall
- F534  FB					sti
- F535  06					push    es
- F536  B4 00					mov     ah, 0
- F538  AC					lodsb
- F539  50					push    ax
- F53A  AC					lodsb
- F53B  50					push    ax
- F53C  AC					lodsb
- F53D  50					push    ax
- F53E  53					push    bx
- F53F  FF 5C F9					call    far ptr [si-7]
- F542  83 C4 08					add     sp, 8
- F545  07					pop     es
- F546				nocall:        
- F546  B0 20					mov     al, 20h
- F548  E6 A0					out     0a0h, al
- F54A  B0 20					mov     al, 20h
- F54C  E6 20					out     20h, al
+ F524				int74 proc near
+ F524  FC					cld
+ F525  60					pusha
+ F526  1E					push    ds
+ F527  6A 40					push    40h
+ F529  1F					pop     ds
+ F52A  B4 00					mov     ah, 0
+ F52C  E4 60					in      al, 60h
+ F52E  8B D8					mov     bx, ax
+ F530  FE 06 0067				inc     byte ptr DataCounter
+ F534  A0 0067					mov     al, DataCounter
+ F537  8B F0					mov     si, ax
+ F539  2C 03					sub     al, 3
+ F53B  77 0C					ja      short docall
+ F53D  88 9C 00A4				mov     DataBuffer[si-1], bl
+ F541  3A 06 0068				cmp     al, PacketSize
+ F545  75 21					jne     short nocall
+ F547  B3 00					mov     bl, 0
+ F549				docall:
+ F549  88 3E 0067				mov     byte ptr DataCounter, bh    ; BH=0
+ F54D  BE 00A3					mov     si, offset DataBuffer-2
+ F550  AD					lodsw
+ F551  0B 44 FC					or      ax, [si-4]
+ F554  74 12					jz      short nocall
+ F556  FB					sti
+ F557  06					push    es
+ F558  B4 00					mov     ah, 0
+ F55A  AC					lodsb
+ F55B  50					push    ax
+ F55C  AC					lodsb
+ F55D  50					push    ax
+ F55E  AC					lodsb
+ F55F  50					push    ax
+ F560  53					push    bx
+ F561  FF 5C F9					call    far ptr [si-7]
+ F564  83 C4 08					add     sp, 8
+ F567  07					pop     es
+ F568				nocall:        
+ F568  B0 20					mov     al, 20h
+ F56A  E6 A0					out     0a0h, al
+ F56C  B0 20					mov     al, 20h
+ F56E  E6 20					out     20h, al
 				
- F54E  1F					pop     ds
- F54F  61					popa
- F550  CF					iret
- F551				int74 endp
+ F570  1F					pop     ds
+ F571  61					popa
+ F572  CF					iret
+ F573				int74 endp
 
 
 				; ----------------  serial receive byte 115200 bps --------------
- F551  B4 80			srecb:  mov     ah, 80h
- F553  BA 03DA					mov     dx, 3dah
- F556  B9 FA52					mov     cx, -5aeh ; (half start bit)
- F559  EC			srstb:  in      al, dx
- F55A  C0 E8 02					shr     al, 2
- F55D  72 FA					jc      short srstb
- F55F  E4 42					in      al, 42h ; lo counter
- F561  02 E8					add     ch, al
- F563  E4 42					in      al, 42h ; hi counter, ignore
- F565				l1:
- F565  E8 0008					call    dlybit
- F568  EC					in      al, dx
- F569  C0 E8 02					shr     al, 2
- F56C  D0 DC					rcr     ah, 1
- F56E  73 F5					jnc     short l1
- F570				dlybit:
- F570  81 E9 0A5B				sub     cx, 0a5bh  ;  (full bit)
- F574				dly1:
- F574  E4 42					in      al, 42h
- F576  38 E8					cmp     al, ch
- F578  E4 42					in      al, 42h
- F57A  75 F8					jnz     short dly1
- F57C  C3					ret
+ F573  B4 80			srecb:  mov     ah, 80h
+ F575  BA 03DA					mov     dx, 3dah
+ F578  B9 FA52					mov     cx, -5aeh ; (half start bit)
+ F57B  EC			srstb:  in      al, dx
+ F57C  C0 E8 02					shr     al, 2
+ F57F  72 FA					jc      short srstb
+ F581  E4 42					in      al, 42h ; lo counter
+ F583  02 E8					add     ch, al
+ F585  E4 42					in      al, 42h ; hi counter, ignore
+ F587				l1:
+ F587  E8 0008					call    dlybit
+ F58A  EC					in      al, dx
+ F58B  C0 E8 02					shr     al, 2
+ F58E  D0 DC					rcr     ah, 1
+ F590  73 F5					jnc     short l1
+ F592				dlybit:
+ F592  81 E9 0A5B				sub     cx, 0a5bh  ;  (full bit)
+ F596				dly1:
+ F596  E4 42					in      al, 42h
+ F598  38 E8					cmp     al, ch
+ F59A  E4 42					in      al, 42h
+ F59C  75 F8					jnz     short dly1
+ F59E  C3					ret
 
 				; -------------------- KB/Mouse access ----------------
- F57D				sendps2byte proc near   ; ah=data, bl!=0 for mouse, 0 for kb. returns cf=1 if timeout (al = 8)
+ F59F				sendps2byte proc near   ; ah=data, bl!=0 for mouse, 0 for kb. returns cf=1 if timeout (al = 8)
 				; changes BH, AL
- F57D  52					push    dx
- F57E  BA 03DA					mov     dx, 3dah
- F581  B7 28					mov     bh, 8*5
- F583				sps2b2:
- F583  E4 64					in      al, 64h
- F585  A8 02					test    al, 2
- F587  74 0B					jz      short sps2b1; buffer empty
- F589  EC					in      al, dx      ; get vblank
- F58A  32 C7					xor     al, bh
- F58C  24 08					and     al, 8h
- F58E  2A F8					sub     bh, al
- F590  73 F1					jnc     short sps2b2; IBF - buffer full, no timeout
- F592  EB 0C					jmp     short exit  ; timeout, CF=1
- F594				sps2b1:
- F594  84 DB					test    bl, bl      ; CF=0
- F596  74 04					jz      short sps2_kb
- F598  B0 D4					mov     al, 0d4h    ; next mouse
- F59A  E6 64					out     64h, al
- F59C				sps2_kb:
- F59C  8A C4					mov     al, ah
- F59E  E6 60					out     60h, al     ; send byte
- F5A0				exit:        
- F5A0  5A					pop     dx
- F5A1  C3					ret
- F5A2				sendps2byte endp
+ F59F  52					push    dx
+ F5A0  BA 03DA					mov     dx, 3dah
+ F5A3  B7 28					mov     bh, 8*5
+ F5A5				sps2b2:
+ F5A5  E4 64					in      al, 64h
+ F5A7  A8 02					test    al, 2
+ F5A9  74 0B					jz      short sps2b1; buffer empty
+ F5AB  EC					in      al, dx      ; get vblank
+ F5AC  32 C7					xor     al, bh
+ F5AE  24 08					and     al, 8h
+ F5B0  2A F8					sub     bh, al
+ F5B2  73 F1					jnc     short sps2b2; IBF - buffer full, no timeout
+ F5B4  EB 0C					jmp     short exit  ; timeout, CF=1
+ F5B6				sps2b1:
+ F5B6  84 DB					test    bl, bl      ; CF=0
+ F5B8  74 04					jz      short sps2_kb
+ F5BA  B0 D4					mov     al, 0d4h    ; next mouse
+ F5BC  E6 64					out     64h, al
+ F5BE				sps2_kb:
+ F5BE  8A C4					mov     al, ah
+ F5C0  E6 60					out     60h, al     ; send byte
+ F5C2				exit:        
+ F5C2  5A					pop     dx
+ F5C3  C3					ret
+ F5C4				sendps2byte endp
 
- F5A2				getps2byte proc near    ; returns al=data, zf=0 for mouse, 1 for kb, cf=1 if timeout (al=8)
+ F5C4				getps2byte proc near    ; returns al=data, zf=0 for mouse, 1 for kb, cf=1 if timeout (al=8)
 				; changes BH, DX, AL
- F5A2  BA 03DA					mov     dx, 3dah
- F5A5  B7 28					mov     bh, 8*5
- F5A7				gps2b2:
- F5A7  E4 64					in      al, 64h
- F5A9  A8 01					test    al, 1
- F5AB  75 0A					jnz     short gps2b1     ; OBF (buffer full), continue
- F5AD  EC					in      al, dx     ; get vblank
- F5AE  32 C7					xor     al, bh
- F5B0  24 08					and     al, 8
- F5B2  2A F8					sub     bh, al
- F5B4  73 F1					jnc     short gps2b2     ; buffer empty, no timeout
- F5B6  C3					ret                ; timeout, CF=1
- F5B7				gps2b1:
- F5B7  A8 20					test    al, 20h    ; CF=0, ZF <- !MOBF
- F5B9  E4 60					in      al, 60h    ; read byte (if IF=1, this data may be invalid)
- F5BB  C3					ret
- F5BC				getps2byte endp
+ F5C4  BA 03DA					mov     dx, 3dah
+ F5C7  B7 28					mov     bh, 8*5
+ F5C9				gps2b2:
+ F5C9  E4 64					in      al, 64h
+ F5CB  A8 01					test    al, 1
+ F5CD  75 0A					jnz     short gps2b1     ; OBF (buffer full), continue
+ F5CF  EC					in      al, dx     ; get vblank
+ F5D0  32 C7					xor     al, bh
+ F5D2  24 08					and     al, 8
+ F5D4  2A F8					sub     bh, al
+ F5D6  73 F1					jnc     short gps2b2     ; buffer empty, no timeout
+ F5D8  C3					ret                ; timeout, CF=1
+ F5D9				gps2b1:
+ F5D9  A8 20					test    al, 20h    ; CF=0, ZF <- !MOBF
+ F5DB  E4 60					in      al, 60h    ; read byte (if IF=1, this data may be invalid)
+ F5DD  C3					ret
+ F5DE				getps2byte endp
 
- F5BC				sendcmd proc near     ; ah = command, CF=1 for mouse, CF=0 for kb. returns CF=1 on error
- F5BC  1A DB					sbb     bl, bl      ; bl <- CF
- F5BE  E8 FFBC					call    sendps2byte 
- F5C1  72 09					jc      short exit
- F5C3				retry:        
- F5C3  E8 FFDC					call    getps2byte
- F5C6  72 04					jc      short exit        
- F5C8  3C FA					cmp     al, 0fah    ; ack (returns CF=1 on error, when al=8)
- F5CA  75 F7					jne     short retry
- F5CC				exit:
- F5CC  C3					ret
- F5CD				sendcmd endp
+ F5DE				sendcmd proc near     ; ah = command, CF=1 for mouse, CF=0 for kb. returns CF=1 on error
+ F5DE  1A DB					sbb     bl, bl      ; bl <- CF
+ F5E0  E8 FFBC					call    sendps2byte 
+ F5E3  72 09					jc      short exit
+ F5E5				retry:        
+ F5E5  E8 FFDC					call    getps2byte
+ F5E8  72 04					jc      short exit        
+ F5EA  3C FA					cmp     al, 0fah    ; ack (returns CF=1 on error, when al=8)
+ F5EC  75 F7					jne     short retry
+ F5EE				exit:
+ F5EE  C3					ret
+ F5EF				sendcmd endp
 
- F5CD				enableKbIfPresent proc near ; input DS = 40h
+ F5EF				enableKbIfPresent proc near ; input DS = 40h
 				; modify AL, flags
- F5CD  F6 06 0096 10				test    byte ptr KbdFlags3, 10h
- F5D2  74 04					jz      short noenablekb
- F5D4  B0 AE					mov     al, 0aeh
- F5D6  E6 64					out     64h, al     ; enable kb interface
- F5D8				noenablekb:        
- F5D8  C3					ret
- F5D9				enableKbIfPresent endp
+ F5EF  F6 06 0096 10				test    byte ptr KbdFlags3, 10h
+ F5F4  74 04					jz      short noenablekb
+ F5F6  B0 AE					mov     al, 0aeh
+ F5F8  E6 64					out     64h, al     ; enable kb interface
+ F5FA				noenablekb:        
+ F5FA  C3					ret
+ F5FB				enableKbIfPresent endp
 
 				; ----------------------- default interrupt handler ---------------
- F5D9				defint  proc near
- F5D9  CF					iret
- F5DA				defint  endp             
+ F5FB				defint  proc near
+ F5FB  CF					iret
+ F5FC				defint  endp             
 
 				; ------------------------------- flush --------------------------
- F5DA				flush:
- F5DA  2E: 8F 06 F5FB R				pop     cs:flushret
- F5DF				flush_nostack:        
- F5DF  2E: 89 1E F5FD R				mov     cs:flushbh, bx
- F5E4  BB 2000					mov     bx, 2000h       ; flush all cache lines
- F5E7				flush1:        
- F5E7  2E: 84 9F BF00				test    bl, cs:[bx + 0bf00h]
- F5EC  83 EB 40					sub		bx, 40h
- F5EF  75 F6					jnz     short flush1
- F5F1  2E: 8B 1E F5FD R				mov     bx, cs:flushbh
- F5F6  2E: FF 26 F5FB R				jmp     word ptr cs:flushret
- F5FB 0000			flushret dw 0
- F5FD 0000			flushbh  dw 0          
+ F5FC				flush:
+ F5FC  2E: 8F 06 F61D R				pop     cs:flushret
+ F601				flush_nostack:        
+ F601  2E: 89 1E F61F R				mov     cs:flushbh, bx
+ F606  BB 2000					mov     bx, 2000h       ; flush all cache lines
+ F609				flush1:        
+ F609  2E: 84 9F BF00				test    bl, cs:[bx + 0bf00h]
+ F60E  83 EB 40					sub		bx, 40h
+ F611  75 F6					jnz     short flush1
+ F613  2E: 8B 1E F61F R				mov     bx, cs:flushbh
+ F618  2E: FF 26 F61D R				jmp     word ptr cs:flushret
+ F61D 0000			flushret dw 0
+ F61F 0000			flushbh  dw 0          
 
 				; ------------------------------- misc --------------------------
- F5FF				dispAX: 
- F5FF  52					push    dx
- F600  33 D2					xor     dx, dx
- F602  2E: F7 36 F616 R				div     word ptr cs:ten
- F607  85 C0					test    ax, ax
- F609  74 03					jz      dispAX1
- F60B  E8 FFF1					call    dispAX
- F60E				dispAX1:
- F60E  92					xchg    ax, dx
- F60F  05 0E30					add     ax, 0e00h + '0'
- F612  CD 10					int     10h
- F614  5A					pop     dx
- F615  C3					ret        
- F616 000A			ten     dw      10
+ F621				dispAX: 
+ F621  52					push    dx
+ F622  33 D2					xor     dx, dx
+ F624  2E: F7 36 F638 R				div     word ptr cs:ten
+ F629  85 C0					test    ax, ax
+ F62B  74 03					jz      dispAX1
+ F62D  E8 FFF1					call    dispAX
+ F630				dispAX1:
+ F630  92					xchg    ax, dx
+ F631  05 0E30					add     ax, 0e00h + '0'
+ F634  CD 10					int     10h
+ F636  5A					pop     dx
+ F637  C3					ret        
+ F638 000A			ten     dw      10
 
- F618				prts:   ; es:si = string
- F618  B4 0E					mov     ah, 0eh    
- F61A  26: AC					lodsb   es:[si]
- F61C  0A C0					or      al, al
- F61E  74 04					jz      short prtse
- F620  CD 10					int     10h
- F622  EB F4					jmp     short prts
- F624				prtse:
- F624  C3					ret
+ F63A				prts:   ; es:si = string
+ F63A  B4 0E					mov     ah, 0eh    
+ F63C  26: AC					lodsb   es:[si]
+ F63E  0A C0					or      al, al
+ F640  74 04					jz      short prtse
+ F642  CD 10					int     10h
+ F644  EB F4					jmp     short prts
+ F646				prtse:
+ F646  C3					ret
 
 
 
 				;---------------------  read/write byte ----------------------
- F625  B0 FF			sdrb:   mov al,0ffh
- F627				sdsb:               ; in AL=byte, DX = 03dah, out AX=result
- F627  EE					out     dx, al
- F628  03 C0					add     ax, ax
- F62A  EE					out     dx, al
- F62B  03 C0					add     ax, ax
- F62D  EE					out     dx, al
- F62E  03 C0					add     ax, ax
- F630  EE					out     dx, al
- F631  03 C0					add     ax, ax
- F633  EE					out     dx, al
- F634  03 C0					add     ax, ax
- F636  EE					out     dx, al
- F637  03 C0					add     ax, ax
- F639  EE					out     dx, al
- F63A  03 C0					add     ax, ax
- F63C  EE					out     dx, al
- F63D  ED					in      ax, dx
- F63E  C3					ret
+ F647  B0 FF			sdrb:   mov al,0ffh
+ F649				sdsb:               ; in AL=byte, DX = 03dah, out AX=result
+ F649  EE					out     dx, al
+ F64A  03 C0					add     ax, ax
+ F64C  EE					out     dx, al
+ F64D  03 C0					add     ax, ax
+ F64F  EE					out     dx, al
+ F650  03 C0					add     ax, ax
+ F652  EE					out     dx, al
+ F653  03 C0					add     ax, ax
+ F655  EE					out     dx, al
+ F656  03 C0					add     ax, ax
+ F658  EE					out     dx, al
+ F659  03 C0					add     ax, ax
+ F65B  EE					out     dx, al
+ F65C  03 C0					add     ax, ax
+ F65E  EE					out     dx, al
+ F65F  ED					in      ax, dx
+ F660  C3					ret
 
 				;---------------------  write block ----------------------
- F63F				sdwblk proc near              ; in SI=data ptr, DX=03dah, CX=size
- F63F  D1 E9					shr     cx, 1
- F641				sdwblk1:
- F641  AC					lodsb
- F642  EE					out     dx, al
- F643  03 C0					add     ax, ax
- F645  EE					out     dx, al
- F646  03 C0					add     ax, ax
- F648  EE					out     dx, al
- F649  03 C0					add     ax, ax
- F64B  EE					out     dx, al
- F64C  03 C0					add     ax, ax
- F64E  EE					out     dx, al
- F64F  03 C0					add     ax, ax
- F651  EE					out     dx, al
- F652  03 C0					add     ax, ax
- F654  EE					out     dx, al
- F655  03 C0					add     ax, ax
- F657  EE					out     dx, al
- F658  AC					lodsb
- F659  EE					out     dx, al
- F65A  03 C0					add     ax, ax
- F65C  EE					out     dx, al
- F65D  03 C0					add     ax, ax
- F65F  EE					out     dx, al
- F660  03 C0					add     ax, ax
- F662  EE					out     dx, al
- F663  03 C0					add     ax, ax
- F665  EE					out     dx, al
- F666  03 C0					add     ax, ax
- F668  EE					out     dx, al
- F669  03 C0					add     ax, ax
- F66B  EE					out     dx, al
- F66C  03 C0					add     ax, ax
- F66E  EE					out     dx, al
- F66F  E2 D0					loop    short sdwblk1
- F671  C3					ret
- F672				sdwblk endp
+ F661				sdwblk proc near              ; in SI=data ptr, DX=03dah, CX=size
+ F661  D1 E9					shr     cx, 1
+ F663				sdwblk1:
+ F663  AC					lodsb
+ F664  EE					out     dx, al
+ F665  03 C0					add     ax, ax
+ F667  EE					out     dx, al
+ F668  03 C0					add     ax, ax
+ F66A  EE					out     dx, al
+ F66B  03 C0					add     ax, ax
+ F66D  EE					out     dx, al
+ F66E  03 C0					add     ax, ax
+ F670  EE					out     dx, al
+ F671  03 C0					add     ax, ax
+ F673  EE					out     dx, al
+ F674  03 C0					add     ax, ax
+ F676  EE					out     dx, al
+ F677  03 C0					add     ax, ax
+ F679  EE					out     dx, al
+ F67A  AC					lodsb
+ F67B  EE					out     dx, al
+ F67C  03 C0					add     ax, ax
+ F67E  EE					out     dx, al
+ F67F  03 C0					add     ax, ax
+ F681  EE					out     dx, al
+ F682  03 C0					add     ax, ax
+ F684  EE					out     dx, al
+ F685  03 C0					add     ax, ax
+ F687  EE					out     dx, al
+ F688  03 C0					add     ax, ax
+ F68A  EE					out     dx, al
+ F68B  03 C0					add     ax, ax
+ F68D  EE					out     dx, al
+ F68E  03 C0					add     ax, ax
+ F690  EE					out     dx, al
+ F691  E2 D0					loop    short sdwblk1
+ F693  C3					ret
+ F694				sdwblk endp
 
 				;---------------------  read block ----------------------
- F672				sdrblk proc near              ; in DI=data ptr, DX=03dah, CX=size. Returns CF = 0
- F672  B0 FF					mov     al, 0ffh
- F674  EE					out     dx, al
- F675  D1 E9					shr     cx, 1         ; CF = 0
- F677  EE					out     dx, al
- F678  EB 05					jmp     short sdrblk2 
- F67A				sdrblk1:
- F67A  EE					out     dx, al
- F67B  88 25					mov     [di], ah
- F67D  EE					out     dx, al
- F67E  47					inc     di
- F67F				sdrblk2:
- F67F  EE					out     dx, al
- F680  90					nop
- F681  EE					out     dx, al
- F682  90					nop
- F683  EE					out     dx, al
- F684  90					nop
- F685  EE					out     dx, al
- F686  90					nop
- F687  EE					out     dx, al
- F688  90					nop
- F689  EE					out     dx, al
- F68A  ED					in      ax, dx
- F68B  EE					out     dx, al
- F68C  88 25					mov     [di], ah
- F68E  EE					out     dx, al
- F68F  47					inc     di
- F690  EE					out     dx, al
- F691  90					nop
- F692  EE					out     dx, al
- F693  90					nop
- F694  EE					out     dx, al
- F695  90					nop
+ F694				sdrblk proc near              ; in DI=data ptr, DX=03dah, CX=size. Returns CF = 0
+ F694  B0 FF					mov     al, 0ffh
  F696  EE					out     dx, al
- F697  90					nop
- F698  EE					out     dx, al
- F699  90					nop
- F69A  EE					out     dx, al
- F69B  ED					in      ax, dx
- F69C  E2 DC					loop    short sdrblk1
- F69E  88 25					mov     [di], ah
+ F697  D1 E9					shr     cx, 1         ; CF = 0
+ F699  EE					out     dx, al
+ F69A  EB 05					jmp     short sdrblk2 
+ F69C				sdrblk1:
+ F69C  EE					out     dx, al
+ F69D  88 25					mov     [di], ah
+ F69F  EE					out     dx, al
  F6A0  47					inc     di
- F6A1  C3					ret
- F6A2				sdrblk endp
+ F6A1				sdrblk2:
+ F6A1  EE					out     dx, al
+ F6A2  90					nop
+ F6A3  EE					out     dx, al
+ F6A4  90					nop
+ F6A5  EE					out     dx, al
+ F6A6  90					nop
+ F6A7  EE					out     dx, al
+ F6A8  90					nop
+ F6A9  EE					out     dx, al
+ F6AA  90					nop
+ F6AB  EE					out     dx, al
+ F6AC  ED					in      ax, dx
+ F6AD  EE					out     dx, al
+ F6AE  88 25					mov     [di], ah
+ F6B0  EE					out     dx, al
+ F6B1  47					inc     di
+ F6B2  EE					out     dx, al
+ F6B3  90					nop
+ F6B4  EE					out     dx, al
+ F6B5  90					nop
+ F6B6  EE					out     dx, al
+ F6B7  90					nop
+ F6B8  EE					out     dx, al
+ F6B9  90					nop
+ F6BA  EE					out     dx, al
+ F6BB  90					nop
+ F6BC  EE					out     dx, al
+ F6BD  ED					in      ax, dx
+ F6BE  E2 DC					loop    short sdrblk1
+ F6C0  88 25					mov     [di], ah
+ F6C2  47					inc     di
+ F6C3  C3					ret
+ F6C4				sdrblk endp
 
 				;---------------------  verify block ----------------------
- F6A2				sdvblk:              ; in DI=data ptr, DX=03dah, CX=size. Returns CF=1 on error
- F6A2  53					push    bx
- F6A3  32 DB					xor     bl, bl
- F6A5				sdvblk1:
- F6A5  E8 FF7D					call    sdrb
- F6A8  2A 25					sub     ah, [di]
- F6AA  0A DC					or      bl, ah
- F6AC  47					inc     di
- F6AD  E2 F6					loop    short sdvblk1
- F6AF  F6 DB					neg     bl  ; CF=1 if BL != 0
- F6B1  5B					pop     bx
- F6B2  C3					ret
+ F6C4				sdvblk:              ; in DI=data ptr, DX=03dah, CX=size. Returns CF=1 on error
+ F6C4  53					push    bx
+ F6C5  32 DB					xor     bl, bl
+ F6C7				sdvblk1:
+ F6C7  E8 FF7D					call    sdrb
+ F6CA  2A 25					sub     ah, [di]
+ F6CC  0A DC					or      bl, ah
+ F6CE  47					inc     di
+ F6CF  E2 F6					loop    short sdvblk1
+ F6D1  F6 DB					neg     bl  ; CF=1 if BL != 0
+ F6D3  5B					pop     bx
+ F6D4  C3					ret
 
 				;---------------------  write command ----------------------
- F6B3				sdcmd8T:
- F6B3  E8 FF6F					call    sdrb
- F6B6				sdcmd:              ; in SI=6 bytes cmd buffer, DX=03dah, out AH = 0ffh on error
- F6B6  B9 0006					mov     cx, 6
- F6B9  E8 FF83					call    sdwblk
- F6BC				sdresp:
- F6BC  33 F6					xor     si, si
- F6BE				sdresp1:
- F6BE  E8 FF64					call    sdrb
- F6C1  46					inc     si
- F6C2  74 05					jz      short sdcmd1
- F6C4  80 FC FF					cmp     ah, 0ffh
- F6C7  74 F5					je      short sdresp1
- F6C9  C3			sdcmd1: ret         
+ F6D5				sdcmd8T:
+ F6D5  E8 FF6F					call    sdrb
+ F6D8				sdcmd:              ; in SI=6 bytes cmd buffer, DX=03dah, out AH = 0ffh on error
+ F6D8  B9 0006					mov     cx, 6
+ F6DB  E8 FF83					call    sdwblk
+ F6DE				sdresp:
+ F6DE  33 F6					xor     si, si
+ F6E0				sdresp1:
+ F6E0  E8 FF64					call    sdrb
+ F6E3  46					inc     si
+ F6E4  74 05					jz      short sdcmd1
+ F6E6  80 FC FF					cmp     ah, 0ffh
+ F6E9  74 F5					je      short sdresp1
+ F6EB  C3			sdcmd1: ret         
 
 				;---------------------  read ----------------------
- F6CA				sdverify:
- F6CA  68 F6A2 R				push    sdvblk
- F6CD  EB 03					jmp     short sdread1
- F6CF				sdread:   ; DX:AX sector, ES:BX buffer, CX=sectors. returns AX=read sectors
- F6CF  68 F672 R				push    sdrblk   ; push proc address (read or verify) on stack
- F6D2				sdread1:        
- F6D2  50					push    ax
- F6D3  8A C2					mov     al, dl
- F6D5  50					push    ax
- F6D6  B2 51					mov     dl, 51h  ; CMD17
- F6D8  83 F9 01					cmp     cx, 1
- F6DB  74 01					je      short sdr1s
- F6DD  42					inc     dx      ; CMD18 - multiple sectors
- F6DE				sdr1s:
- F6DE  52					push    dx
- F6DF  8B F4					mov     si, sp 
+ F6EC				sdverify:
+ F6EC  68 F6C4 R				push    sdvblk
+ F6EF  EB 03					jmp     short sdread1
+ F6F1				sdread:   ; DX:AX sector, ES:BX buffer, CX=sectors. returns AX=read sectors
+ F6F1  68 F694 R				push    sdrblk   ; push proc address (read or verify) on stack
+ F6F4				sdread1:        
+ F6F4  50					push    ax
+ F6F5  8A C2					mov     al, dl
+ F6F7  50					push    ax
+ F6F8  B2 51					mov     dl, 51h  ; CMD17
+ F6FA  83 F9 01					cmp     cx, 1
+ F6FD  74 01					je      short sdr1s
+ F6FF  42					inc     dx      ; CMD18 - multiple sectors
+ F700				sdr1s:
+ F700  52					push    dx
+ F701  8B F4					mov     si, sp 
 
- F6E1  BA 03DA					mov     dx, 3dah
- F6E4  B4 01					mov     ah, 1
- F6E6  EF					out     dx, ax       ; CS on
- F6E7  8B FB					mov     di, bx
- F6E9  8B D9					mov     bx, cx
- F6EB  8B E9					mov     bp, cx       ; save sectors number
- F6ED  16					push    ss
- F6EE  1F					pop     ds
- F6EF  C6 44 05 FF			mov	byte ptr [si+5], 0ffh ; checksum
- F6F3  E8 FFC0					call    sdcmd
- F6F6  83 C4 06					add     sp, 6
- F6F9  0A E4					or      ah, ah
- F6FB  75 41					jnz     short sdr11   ; error
- F6FD  06					push    es
- F6FE  1F					pop     ds
- F6FF				sdrms:
- F6FF  8B C7					mov     ax, di
- F701  C1 E8 04					shr     ax, 4
- F704  8C DE					mov     si, ds
- F706  03 C6					add     ax, si
- F708  8E D8					mov     ds, ax
- F70A  83 E7 0F					and     di, 15
- F70D  E8 FFAC					call    sdresp     ; wait for 0feh token
- F710  80 FC FE					cmp     ah, 0feh
- F713  75 29					jne     short sdr11; read token error 
- F715  B5 02					mov     ch, 2      ; 512 byte sector
- F717  5E					pop     si
- F718  FF D6					call    si         ; sdrblk or sdvblk
- F71A  56					push    si
- F71B  9C					pushf
- F71C  E8 FF06					call    sdrb       ; ignore CRC
- F71F  E8 FF03					call    sdrb       ; ignore CRC
- F722  9D					popf
- F723  72 03					jc      short sdr3 ; verify error   
- F725  4B					dec     bx
- F726  75 D7					jnz     short sdrms; multiple sectors
- F728				sdr3:        
- F728  83 FD 01					cmp     bp, 1
- F72B  74 11					je      short sdr11; single sector
- F72D  BE F877 R				mov     si, offset SD_CMD12 ; stop transfer
- F730  0E					push    cs
- F731  1F					pop     ds
- F732  E8 FF81					call    sdcmd
- F735				sdr2:
- F735  D0 EC					shr     ah, 1
- F737  73 05					jnc     short sdr11
- F739  E8 FEE9					call    sdrb
- F73C  EB F7					jmp     short sdr2
- F73E				sdr11:
- F73E  58					pop     ax         ; remove proc address from stack
- F73F				sdr1:       
- F73F  33 C0					xor     ax, ax
- F741  EF					out     dx, ax
- F742  E8 FEE0					call    sdrb       ; 8T
- F745  8B C5					mov     ax, bp
- F747  2B C3					sub     ax, bx
- F749  C3					ret     
+ F703  BA 03DA					mov     dx, 3dah
+ F706  B4 01					mov     ah, 1
+ F708  EF					out     dx, ax       ; CS on
+ F709  8B FB					mov     di, bx
+ F70B  8B D9					mov     bx, cx
+ F70D  8B E9					mov     bp, cx       ; save sectors number
+ F70F  16					push    ss
+ F710  1F					pop     ds
+ F711  C6 44 05 FF			mov	byte ptr [si+5], 0ffh ; checksum
+ F715  E8 FFC0					call    sdcmd
+ F718  83 C4 06					add     sp, 6
+ F71B  0A E4					or      ah, ah
+ F71D  75 41					jnz     short sdr11   ; error
+ F71F  06					push    es
+ F720  1F					pop     ds
+ F721				sdrms:
+ F721  8B C7					mov     ax, di
+ F723  C1 E8 04					shr     ax, 4
+ F726  8C DE					mov     si, ds
+ F728  03 C6					add     ax, si
+ F72A  8E D8					mov     ds, ax
+ F72C  83 E7 0F					and     di, 15
+ F72F  E8 FFAC					call    sdresp     ; wait for 0feh token
+ F732  80 FC FE					cmp     ah, 0feh
+ F735  75 29					jne     short sdr11; read token error 
+ F737  B5 02					mov     ch, 2      ; 512 byte sector
+ F739  5E					pop     si
+ F73A  FF D6					call    si         ; sdrblk or sdvblk
+ F73C  56					push    si
+ F73D  9C					pushf
+ F73E  E8 FF06					call    sdrb       ; ignore CRC
+ F741  E8 FF03					call    sdrb       ; ignore CRC
+ F744  9D					popf
+ F745  72 03					jc      short sdr3 ; verify error   
+ F747  4B					dec     bx
+ F748  75 D7					jnz     short sdrms; multiple sectors
+ F74A				sdr3:        
+ F74A  83 FD 01					cmp     bp, 1
+ F74D  74 11					je      short sdr11; single sector
+ F74F  BE F899 R				mov     si, offset SD_CMD12 ; stop transfer
+ F752  0E					push    cs
+ F753  1F					pop     ds
+ F754  E8 FF81					call    sdcmd
+ F757				sdr2:
+ F757  D0 EC					shr     ah, 1
+ F759  73 05					jnc     short sdr11
+ F75B  E8 FEE9					call    sdrb
+ F75E  EB F7					jmp     short sdr2
+ F760				sdr11:
+ F760  58					pop     ax         ; remove proc address from stack
+ F761				sdr1:       
+ F761  33 C0					xor     ax, ax
+ F763  EF					out     dx, ax
+ F764  E8 FEE0					call    sdrb       ; 8T
+ F767  8B C5					mov     ax, bp
+ F769  2B C3					sub     ax, bx
+ F76B  C3					ret     
 
 				;---------------------  write ----------------------
- F74A				sdwrite:   ; DX:AX sector, ES:BX buffer, CX=sectors, returns AX=wrote sectors
- F74A  50					push    ax
- F74B  8A C2					mov     al, dl
- F74D  50					push    ax
- F74E  B2 58					mov     dl, 58h  ; CMD24
- F750  83 F9 01					cmp     cx, 1
- F753  74 01					je      short sdw1s
- F755  42					inc     dx      ; CMD25 - multiple sectors
- F756				sdw1s:
- F756  52					push    dx
- F757  8B F4					mov     si, sp 
+ F76C				sdwrite:   ; DX:AX sector, ES:BX buffer, CX=sectors, returns AX=wrote sectors
+ F76C  50					push    ax
+ F76D  8A C2					mov     al, dl
+ F76F  50					push    ax
+ F770  B2 58					mov     dl, 58h  ; CMD24
+ F772  83 F9 01					cmp     cx, 1
+ F775  74 01					je      short sdw1s
+ F777  42					inc     dx      ; CMD25 - multiple sectors
+ F778				sdw1s:
+ F778  52					push    dx
+ F779  8B F4					mov     si, sp 
 
- F759  BA 03DA					mov     dx, 3dah
- F75C  B4 01					mov     ah, 1
- F75E  EF					out     dx, ax       ; CS on
- F75F  8B E9					mov     bp, cx       ; save sectors number
- F761  16					push    ss
- F762  1F					pop     ds
- F763  C6 44 05 FF			mov	byte ptr [si+5], 0ffh ; checksum
- F767  E8 FF4C					call    sdcmd
- F76A  83 C4 06					add     sp, 6
- F76D  8B F3					mov     si, bx
- F76F  8B DD					mov     bx, bp
- F771  0A E4					or      ah, ah
- F773  75 CA					jnz     short sdr1   ; error
- F775  06					push    es
- F776  1F					pop     ds
- F777				sdwms:
- F777  8B C6					mov     ax, si
- F779  C1 E8 04					shr     ax, 4
- F77C  8C DF					mov     di, ds
- F77E  03 C7					add     ax, di
- F780  8E D8					mov     ds, ax
- F782  83 E6 0F					and     si, 15
- F785  B0 FE					mov     al, 0feh      ; start token
- F787  83 FD 01					cmp     bp, 1
- F78A  74 02					je      short sdw1s1
- F78C  B0 FC					mov     al, 0fch   ; multiple sectors
- F78E				sdw1s1:        
- F78E  E8 FE96					call    sdsb     
- F791  B5 02					mov     ch, 2      ; 512 byte sector
- F793  E8 FEA9					call    sdwblk
- F796  E8 FE8C					call    sdrb       ; ignore CRC
- F799  E8 FE89					call    sdrb       ; ignore CRC
- F79C  E8 FE86					call    sdrb       ; read response byte xxx00101
- F79F  80 E4 0E					and     ah, 0eh
- F7A2  80 FC 04					cmp     ah, 4
- F7A5  75 98					jne     short sdr1 ; write error
- F7A7				sdwwait:
- F7A7  E8 FE7B					call    sdrb
- F7AA  D0 EC					shr     ah, 1
- F7AC  73 F9					jnc     short sdwwait     ; wait write completion
- F7AE  4B					dec     bx
- F7AF  75 C6					jnz     short sdwms       ; multiple sectors
+ F77B  BA 03DA					mov     dx, 3dah
+ F77E  B4 01					mov     ah, 1
+ F780  EF					out     dx, ax       ; CS on
+ F781  8B E9					mov     bp, cx       ; save sectors number
+ F783  16					push    ss
+ F784  1F					pop     ds
+ F785  C6 44 05 FF			mov	byte ptr [si+5], 0ffh ; checksum
+ F789  E8 FF4C					call    sdcmd
+ F78C  83 C4 06					add     sp, 6
+ F78F  8B F3					mov     si, bx
+ F791  8B DD					mov     bx, bp
+ F793  0A E4					or      ah, ah
+ F795  75 CA					jnz     short sdr1   ; error
+ F797  06					push    es
+ F798  1F					pop     ds
+ F799				sdwms:
+ F799  8B C6					mov     ax, si
+ F79B  C1 E8 04					shr     ax, 4
+ F79E  8C DF					mov     di, ds
+ F7A0  03 C7					add     ax, di
+ F7A2  8E D8					mov     ds, ax
+ F7A4  83 E6 0F					and     si, 15
+ F7A7  B0 FE					mov     al, 0feh      ; start token
+ F7A9  83 FD 01					cmp     bp, 1
+ F7AC  74 02					je      short sdw1s1
+ F7AE  B0 FC					mov     al, 0fch   ; multiple sectors
+ F7B0				sdw1s1:        
+ F7B0  E8 FE96					call    sdsb     
+ F7B3  B5 02					mov     ch, 2      ; 512 byte sector
+ F7B5  E8 FEA9					call    sdwblk
+ F7B8  E8 FE8C					call    sdrb       ; ignore CRC
+ F7BB  E8 FE89					call    sdrb       ; ignore CRC
+ F7BE  E8 FE86					call    sdrb       ; read response byte xxx00101
+ F7C1  80 E4 0E					and     ah, 0eh
+ F7C4  80 FC 04					cmp     ah, 4
+ F7C7  75 98					jne     short sdr1 ; write error
+ F7C9				sdwwait:
+ F7C9  E8 FE7B					call    sdrb
+ F7CC  D0 EC					shr     ah, 1
+ F7CE  73 F9					jnc     short sdwwait     ; wait write completion
+ F7D0  4B					dec     bx
+ F7D1  75 C6					jnz     short sdwms       ; multiple sectors
 
- F7B1  83 FD 01					cmp     bp, 1
- F7B4  74 89					je      short sdr1
- F7B6  B0 FD					mov     al, 0fdh     ; multiple end transfer
- F7B8  E8 FE6C					call    sdsb 
- F7BB  E8 FE67					call	sdrb     
- F7BE				sdwwait1:
- F7BE  E8 FE64					call    sdrb
- F7C1  D0 EC					shr     ah, 1
- F7C3  73 F9					jnc     short sdwwait1     ; wait write completion
- F7C5  E9 FF77					jmp     sdr1
+ F7D3  83 FD 01					cmp     bp, 1
+ F7D6  74 89					je      short sdr1
+ F7D8  B0 FD					mov     al, 0fdh     ; multiple end transfer
+ F7DA  E8 FE6C					call    sdsb 
+ F7DD  E8 FE67					call	sdrb     
+ F7E0				sdwwait1:
+ F7E0  E8 FE64					call    sdrb
+ F7E3  D0 EC					shr     ah, 1
+ F7E5  73 F9					jnc     short sdwwait1     ; wait write completion
+ F7E7  E9 FF77					jmp     sdr1
 						
 				;---------------------  init SD ----------------------
- F7C8				sdinit  proc near       ; returns AX = num kilosectors
- F7C8  1E					push    ds
- F7C9  51					push    cx
- F7CA  52					push    dx
- F7CB  56					push    si
- F7CC  57					push    di
- F7CD  BA 03DA					mov     dx, 3dah
- F7D0  B9 000A					mov     cx, 10
- F7D3				sdinit1:                   ; send 80T
- F7D3  E8 FE4F					call    sdrb
- F7D6  E2 FB					loop    short sdinit1
+ F7EA				sdinit  proc near       ; returns AX = num kilosectors
+ F7EA  1E					push    ds
+ F7EB  51					push    cx
+ F7EC  52					push    dx
+ F7ED  56					push    si
+ F7EE  57					push    di
+ F7EF  BA 03DA					mov     dx, 3dah
+ F7F2  B9 000A					mov     cx, 10
+ F7F5				sdinit1:                   ; send 80T
+ F7F5  E8 FE4F					call    sdrb
+ F7F8  E2 FB					loop    short sdinit1
 
- F7D8  B4 01					mov     ah, 1
- F7DA  EF					out     dx, ax       ; select SD
+ F7FA  B4 01					mov     ah, 1
+ F7FC  EF					out     dx, ax       ; select SD
 
- F7DB  BE F865 R				mov     si, offset SD_CMD0
- F7DE  0E					push    cs
- F7DF  1F					pop     ds
- F7E0  E8 FED3					call    sdcmd
- F7E3  FE CC					dec     ah
- F7E5  75 70					jnz     short sdexit ; error
+ F7FD  BE F887 R				mov     si, offset SD_CMD0
+ F800  0E					push    cs
+ F801  1F					pop     ds
+ F802  E8 FED3					call    sdcmd
+ F805  FE CC					dec     ah
+ F807  75 70					jnz     short sdexit ; error
 						
- F7E7  BE F86B R				mov     si, offset SD_CMD8
- F7EA  E8 FEC6					call    sdcmd8T
- F7ED  FE CC					dec     ah
- F7EF  75 66					jnz     short sdexit ; error
- F7F1  B1 04					mov     cl, 4
- F7F3  2B E1					sub     sp, cx
- F7F5  8B FC					mov     di, sp
- F7F7  16					push    ss
- F7F8  1F					pop     ds
- F7F9  E8 FE76					call    sdrblk
- F7FC  58					pop     ax
- F7FD  58					pop     ax
- F7FE  80 FC AA					cmp     ah, 0aah
- F801  75 54					jne     short sdexit ; CMD8 error
- F803				repinit:        
- F803  BE F883 R				mov     si, offset SD_CMD55
- F806  0E					push    cs
- F807  1F					pop     ds
- F808  E8 FEA8					call    sdcmd8T
- F80B  E8 FE17					call    sdrb
- F80E  BE F87D R				mov     si, offset SD_CMD41
- F811  E8 FEA2					call    sdcmd
- F814  FE CC					dec     ah
- F816  74 EB					jz      short repinit
+ F809  BE F88D R				mov     si, offset SD_CMD8
+ F80C  E8 FEC6					call    sdcmd8T
+ F80F  FE CC					dec     ah
+ F811  75 66					jnz     short sdexit ; error
+ F813  B1 04					mov     cl, 4
+ F815  2B E1					sub     sp, cx
+ F817  8B FC					mov     di, sp
+ F819  16					push    ss
+ F81A  1F					pop     ds
+ F81B  E8 FE76					call    sdrblk
+ F81E  58					pop     ax
+ F81F  58					pop     ax
+ F820  80 FC AA					cmp     ah, 0aah
+ F823  75 54					jne     short sdexit ; CMD8 error
+ F825				repinit:        
+ F825  BE F8A5 R				mov     si, offset SD_CMD55
+ F828  0E					push    cs
+ F829  1F					pop     ds
+ F82A  E8 FEA8					call    sdcmd8T
+ F82D  E8 FE17					call    sdrb
+ F830  BE F89F R				mov     si, offset SD_CMD41
+ F833  E8 FEA2					call    sdcmd
+ F836  FE CC					dec     ah
+ F838  74 EB					jz      short repinit
 						
- F818  BE F889 R				mov     si, offset SD_CMD58
- F81B  E8 FE95					call    sdcmd8T
- F81E  B1 04					mov     cl, 4
- F820  2B E1					sub     sp, cx
- F822  8B FC					mov     di, sp
- F824  16					push    ss
- F825  1F					pop     ds
- F826  E8 FE49					call    sdrblk
- F829  58					pop     ax
- F82A  A8 40					test    al, 40h     ; test OCR bit 30 (CCS)
- F82C  58					pop     ax
- F82D  74 28					jz      short sdexit; no SDHC
+ F83A  BE F8AB R				mov     si, offset SD_CMD58
+ F83D  E8 FE95					call    sdcmd8T
+ F840  B1 04					mov     cl, 4
+ F842  2B E1					sub     sp, cx
+ F844  8B FC					mov     di, sp
+ F846  16					push    ss
+ F847  1F					pop     ds
+ F848  E8 FE49					call    sdrblk
+ F84B  58					pop     ax
+ F84C  A8 40					test    al, 40h     ; test OCR bit 30 (CCS)
+ F84E  58					pop     ax
+ F84F  74 28					jz      short sdexit; no SDHC
 
- F82F  BE F871 R				mov     si, offset SD_CMD9 ; get size info
- F832  0E					push    cs
- F833  1F					pop     ds
- F834  E8 FE7C					call    sdcmd8T
- F837  0A E4					or      ah, ah
- F839  75 1C					jnz     short sdexit
- F83B  E8 FE7E					call    sdresp     ; wait for 0feh token
- F83E  80 FC FE					cmp     ah, 0feh
- F841  75 14					jne     short sdexit
- F843  B1 12					mov     cl, 18       ; 16bytes + 2bytes CRC
- F845  2B E1					sub     sp, cx
- F847  8B FC					mov     di, sp
- F849  16					push    ss
- F84A  1F					pop     ds
- F84B  E8 FE24					call    sdrblk
- F84E  8B 4D F6					mov     cx, [di-10]
- F851  C1 C1 08					rol     cx, 8
- F854  41					inc     cx
- F855  8B E7					mov     sp, di
- F857				sdexit: 
- F857  33 C0					xor     ax, ax       ; raise CS
- F859  EF					out     dx, ax
- F85A  E8 FDC8					call    sdrb
- F85D  5F					pop     di
- F85E  5E					pop     si
- F85F  5A					pop     dx
- F860  8B C1					mov     ax, cx       
- F862  59					pop     cx
- F863  1F					pop     ds
- F864  C3					ret
- F865				sdinit endp
+ F851  BE F893 R				mov     si, offset SD_CMD9 ; get size info
+ F854  0E					push    cs
+ F855  1F					pop     ds
+ F856  E8 FE7C					call    sdcmd8T
+ F859  0A E4					or      ah, ah
+ F85B  75 1C					jnz     short sdexit
+ F85D  E8 FE7E					call    sdresp     ; wait for 0feh token
+ F860  80 FC FE					cmp     ah, 0feh
+ F863  75 14					jne     short sdexit
+ F865  B1 12					mov     cl, 18       ; 16bytes + 2bytes CRC
+ F867  2B E1					sub     sp, cx
+ F869  8B FC					mov     di, sp
+ F86B  16					push    ss
+ F86C  1F					pop     ds
+ F86D  E8 FE24					call    sdrblk
+ F870  8B 4D F6					mov     cx, [di-10]
+ F873  C1 C1 08					rol     cx, 8
+ F876  41					inc     cx
+ F877  8B E7					mov     sp, di
+ F879				sdexit: 
+ F879  33 C0					xor     ax, ax       ; raise CS
+ F87B  EF					out     dx, ax
+ F87C  E8 FDC8					call    sdrb
+ F87F  5F					pop     di
+ F880  5E					pop     si
+ F881  5A					pop     dx
+ F882  8B C1					mov     ax, cx       
+ F884  59					pop     cx
+ F885  1F					pop     ds
+ F886  C3					ret
+ F887				sdinit endp
 					
- F865 40 00 00 00 00 95		SD_CMD0     db  40h, 0, 0, 0, 0, 95h
- F86B 48 00 00 01 AA 87		SD_CMD8     db  48h, 0, 0, 1, 0aah, 087h
- F871 49 00 00 00 00 FF		SD_CMD9     db  49h, 0, 0, 0, 0, 0ffh
- F877 4C 00 00 00 00 FF		SD_CMD12    db  4ch, 0, 0, 0, 0, 0ffh
- F87D 69 40 00 00 00 FF		SD_CMD41    db  69h, 40h, 0, 0, 0, 0ffh
- F883 77 00 00 00 00 FF		SD_CMD55    db  77h, 0, 0, 0, 0, 0ffh
- F889 7A 00 00 00 00 FF		SD_CMD58    db  7ah, 0, 0, 0, 0, 0ffh
+ F887 40 00 00 00 00 95		SD_CMD0     db  40h, 0, 0, 0, 0, 95h
+ F88D 48 00 00 01 AA 87		SD_CMD8     db  48h, 0, 0, 1, 0aah, 087h
+ F893 49 00 00 00 00 FF		SD_CMD9     db  49h, 0, 0, 0, 0, 0ffh
+ F899 4C 00 00 00 00 FF		SD_CMD12    db  4ch, 0, 0, 0, 0, 0ffh
+ F89F 69 40 00 00 00 FF		SD_CMD41    db  69h, 40h, 0, 0, 0, 0ffh
+ F8A5 77 00 00 00 00 FF		SD_CMD55    db  77h, 0, 0, 0, 0, 0ffh
+ F8AB 7A 00 00 00 00 FF		SD_CMD58    db  7ah, 0, 0, 0, 0, 0ffh
 
 
- F88F				Pal256:
- F88F  00 00 00 00 00 2A			db  00h,00h,00h, 00h,00h,2ah, 00h,2ah,00h, 00h,2ah,2ah, 2ah,00h,00h, 2ah,00h,2ah, 2ah,15h,00h, 2ah,2ah,2ah 
+ F8B1				Pal256:
+ F8B1  00 00 00 00 00 2A			db  00h,00h,00h, 00h,00h,2ah, 00h,2ah,00h, 00h,2ah,2ah, 2ah,00h,00h, 2ah,00h,2ah, 2ah,15h,00h, 2ah,2ah,2ah 
        00 2A 00 00 2A 2A
        2A 00 00 2A 00 2A
        2A 15 00 2A 2A 2A
- F8A7  15 15 15 15 15 3F			db  15h,15h,15h, 15h,15h,3fh, 15h,3fh,15h, 15h,3fh,3fh, 3fh,15h,15h, 3fh,15h,3fh, 3fh,3fh,15h, 3fh,3fh,3fh 
+ F8C9  15 15 15 15 15 3F			db  15h,15h,15h, 15h,15h,3fh, 15h,3fh,15h, 15h,3fh,3fh, 3fh,15h,15h, 3fh,15h,3fh, 3fh,3fh,15h, 3fh,3fh,3fh 
        15 3F 15 15 3F 3F
        3F 15 15 3F 15 3F
        3F 3F 15 3F 3F 3F
- F8BF  00 00 00 05 05 05			db  00h,00h,00h, 05h,05h,05h, 08h,08h,08h, 0bh,0bh,0bh, 0eh,0eh,0eh, 11h,11h,11h, 14h,14h,14h, 18h,18h,18h 
+ F8E1  00 00 00 05 05 05			db  00h,00h,00h, 05h,05h,05h, 08h,08h,08h, 0bh,0bh,0bh, 0eh,0eh,0eh, 11h,11h,11h, 14h,14h,14h, 18h,18h,18h 
        08 08 08 0B 0B 0B
        0E 0E 0E 11 11 11
        14 14 14 18 18 18
- F8D7  1C 1C 1C 20 20 20			db  1ch,1ch,1ch, 20h,20h,20h, 24h,24h,24h, 28h,28h,28h, 2dh,2dh,2dh, 32h,32h,32h, 38h,38h,38h, 3fh,3fh,3fh 
+ F8F9  1C 1C 1C 20 20 20			db  1ch,1ch,1ch, 20h,20h,20h, 24h,24h,24h, 28h,28h,28h, 2dh,2dh,2dh, 32h,32h,32h, 38h,38h,38h, 3fh,3fh,3fh 
        24 24 24 28 28 28
        2D 2D 2D 32 32 32
        38 38 38 3F 3F 3F
- F8EF  00 00 3F 10 00 3F			db  00h,00h,3fh, 10h,00h,3fh, 1fh,00h,3fh, 2fh,00h,3fh, 3fh,00h,3fh, 3fh,00h,2fh, 3fh,00h,1fh, 3fh,00h,10h 
+ F911  00 00 3F 10 00 3F			db  00h,00h,3fh, 10h,00h,3fh, 1fh,00h,3fh, 2fh,00h,3fh, 3fh,00h,3fh, 3fh,00h,2fh, 3fh,00h,1fh, 3fh,00h,10h 
        1F 00 3F 2F 00 3F
        3F 00 3F 3F 00 2F
        3F 00 1F 3F 00 10
- F907  3F 00 00 3F 10 00			db  3fh,00h,00h, 3fh,10h,00h, 3fh,1fh,00h, 3fh,2fh,00h, 3fh,3fh,00h, 2fh,3fh,00h, 1fh,3fh,00h, 10h,3fh,00h 
+ F929  3F 00 00 3F 10 00			db  3fh,00h,00h, 3fh,10h,00h, 3fh,1fh,00h, 3fh,2fh,00h, 3fh,3fh,00h, 2fh,3fh,00h, 1fh,3fh,00h, 10h,3fh,00h 
        3F 1F 00 3F 2F 00
        3F 3F 00 2F 3F 00
        1F 3F 00 10 3F 00
- F91F  00 3F 00 00 3F 10			db  00h,3fh,00h, 00h,3fh,10h, 00h,3fh,1fh, 00h,3fh,2fh, 00h,3fh,3fh, 00h,2fh,3fh, 00h,1fh,3fh, 00h,10h,3fh 
+ F941  00 3F 00 00 3F 10			db  00h,3fh,00h, 00h,3fh,10h, 00h,3fh,1fh, 00h,3fh,2fh, 00h,3fh,3fh, 00h,2fh,3fh, 00h,1fh,3fh, 00h,10h,3fh 
        00 3F 1F 00 3F 2F
        00 3F 3F 00 2F 3F
        00 1F 3F 00 10 3F
- F937  1F 1F 3F 27 1F 3F			db  1fh,1fh,3fh, 27h,1fh,3fh, 2fh,1fh,3fh, 37h,1fh,3fh, 3fh,1fh,3fh, 3fh,1fh,37h, 3fh,1fh,2fh, 3fh,1fh,27h
+ F959  1F 1F 3F 27 1F 3F			db  1fh,1fh,3fh, 27h,1fh,3fh, 2fh,1fh,3fh, 37h,1fh,3fh, 3fh,1fh,3fh, 3fh,1fh,37h, 3fh,1fh,2fh, 3fh,1fh,27h
        2F 1F 3F 37 1F 3F
        3F 1F 3F 3F 1F 37
        3F 1F 2F 3F 1F 27
- F94F  00 01 02 03 04 05			db	00h, 01h, 02h, 03h, 04h, 05h, 06h, 07h, 08h, 09h, 0ah, 0bh, 0ch, 0dh, 0eh, 0fh	; EGA palette registers
+ F971  00 01 02 03 04 05			db	00h, 01h, 02h, 03h, 04h, 05h, 06h, 07h, 08h, 09h, 0ah, 0bh, 0ch, 0dh, 0eh, 0fh	; EGA palette registers
        06 07 08 09 0A 0B
        0C 0D 0E 0F
 
@@ -3981,302 +4011,302 @@ BIOS_Next186.asm					     Page 1 - 1
 				;		db  0bh,10h,0bh, 0bh,10h,0ch, 0bh,10h,0dh, 0bh,10h,0fh, 0bh,10h,10h, 0bh,0fh,10h, 0bh,0dh,10h, 0bh,0ch,10h 
 				;		db  00h,00h,00h, 00h,00h,00h, 00h,00h,00h, 00h,00h,00h, 00h,00h,00h, 00h,00h,00h, 00h,00h,00h, 00h,00h,00h
 
- F95F				PalEGA:
- F95F  00 00 00 00 00 2A			db	00h,00h,00h, 00h,00h,2ah, 00h,2ah,00h, 00h,2ah,2ah, 2ah,00h,00h, 2ah,00h,2ah, 2ah,15h,00h, 2ah,2ah,2ah
+ F981				PalEGA:
+ F981  00 00 00 00 00 2A			db	00h,00h,00h, 00h,00h,2ah, 00h,2ah,00h, 00h,2ah,2ah, 2ah,00h,00h, 2ah,00h,2ah, 2ah,15h,00h, 2ah,2ah,2ah
        00 2A 00 00 2A 2A
        2A 00 00 2A 00 2A
        2A 15 00 2A 2A 2A
- F977  00 00 00 00 00 2A			db	00h,00h,00h, 00h,00h,2ah, 00h,2ah,00h, 00h,2ah,2ah, 2ah,00h,00h, 2ah,00h,2ah, 2ah,15h,00h, 2ah,2ah,2ah
+ F999  00 00 00 00 00 2A			db	00h,00h,00h, 00h,00h,2ah, 00h,2ah,00h, 00h,2ah,2ah, 2ah,00h,00h, 2ah,00h,2ah, 2ah,15h,00h, 2ah,2ah,2ah
        00 2A 00 00 2A 2A
        2A 00 00 2A 00 2A
        2A 15 00 2A 2A 2A
- F98F  15 15 15 15 15 3F			db	15h,15h,15h, 15h,15h,3fh, 15h,3fh,15h, 15h,3fh,3fh, 3fh,15h,15h, 3fh,15h,3fh, 3fh,3fh,15h, 3fh,3fh,3fh
+ F9B1  15 15 15 15 15 3F			db	15h,15h,15h, 15h,15h,3fh, 15h,3fh,15h, 15h,3fh,3fh, 3fh,15h,15h, 3fh,15h,3fh, 3fh,3fh,15h, 3fh,3fh,3fh
        15 3F 15 15 3F 3F
        3F 15 15 3F 15 3F
        3F 3F 15 3F 3F 3F
- F9A7  15 15 15 15 15 3F			db	15h,15h,15h, 15h,15h,3fh, 15h,3fh,15h, 15h,3fh,3fh, 3fh,15h,15h, 3fh,15h,3fh, 3fh,3fh,15h, 3fh,3fh,3fh
+ F9C9  15 15 15 15 15 3F			db	15h,15h,15h, 15h,15h,3fh, 15h,3fh,15h, 15h,3fh,3fh, 3fh,15h,15h, 3fh,15h,3fh, 3fh,3fh,15h, 3fh,3fh,3fh
        15 3F 15 15 3F 3F
        3F 15 15 3F 15 3F
        3F 3F 15 3F 3F 3F
- F9BF  00 00 00 00 00 2A			db	00h,00h,00h, 00h,00h,2ah, 00h,2ah,00h, 00h,2ah,2ah, 2ah,00h,00h, 2ah,00h,2ah, 2ah,15h,00h, 2ah,2ah,2ah
+ F9E1  00 00 00 00 00 2A			db	00h,00h,00h, 00h,00h,2ah, 00h,2ah,00h, 00h,2ah,2ah, 2ah,00h,00h, 2ah,00h,2ah, 2ah,15h,00h, 2ah,2ah,2ah
        00 2A 00 00 2A 2A
        2A 00 00 2A 00 2A
        2A 15 00 2A 2A 2A
- F9D7  00 00 00 00 00 2A			db	00h,00h,00h, 00h,00h,2ah, 00h,2ah,00h, 00h,2ah,2ah, 2ah,00h,00h, 2ah,00h,2ah, 2ah,15h,00h, 2ah,2ah,2ah
+ F9F9  00 00 00 00 00 2A			db	00h,00h,00h, 00h,00h,2ah, 00h,2ah,00h, 00h,2ah,2ah, 2ah,00h,00h, 2ah,00h,2ah, 2ah,15h,00h, 2ah,2ah,2ah
        00 2A 00 00 2A 2A
        2A 00 00 2A 00 2A
        2A 15 00 2A 2A 2A
- F9EF  15 15 15 15 15 3F			db	15h,15h,15h, 15h,15h,3fh, 15h,3fh,15h, 15h,3fh,3fh, 3fh,15h,15h, 3fh,15h,3fh, 3fh,3fh,15h, 3fh,3fh,3fh
+ FA11  15 15 15 15 15 3F			db	15h,15h,15h, 15h,15h,3fh, 15h,3fh,15h, 15h,3fh,3fh, 3fh,15h,15h, 3fh,15h,3fh, 3fh,3fh,15h, 3fh,3fh,3fh
        15 3F 15 15 3F 3F
        3F 15 15 3F 15 3F
        3F 3F 15 3F 3F 3F
- FA07  15 15 15 15 15 3F			db	15h,15h,15h, 15h,15h,3fh, 15h,3fh,15h, 15h,3fh,3fh, 3fh,15h,15h, 3fh,15h,3fh, 3fh,3fh,15h, 3fh,3fh,3fh
+ FA29  15 15 15 15 15 3F			db	15h,15h,15h, 15h,15h,3fh, 15h,3fh,15h, 15h,3fh,3fh, 3fh,15h,15h, 3fh,15h,3fh, 3fh,3fh,15h, 3fh,3fh,3fh
        15 3F 15 15 3F 3F
        3F 15 15 3F 15 3F
        3F 3F 15 3F 3F 3F
- FA1F  00 01 02 03 04 05			db	00h, 01h, 02h, 03h, 04h, 05h, 06h, 07h, 10h, 11h, 12h, 13h, 14h, 15h, 16h, 17h	; EGA palette registers
+ FA41  00 01 02 03 04 05			db	00h, 01h, 02h, 03h, 04h, 05h, 06h, 07h, 10h, 11h, 12h, 13h, 14h, 15h, 16h, 17h	; EGA palette registers
        06 07 10 11 12 13
        14 15 16 17
 
- FA2F				PalVGA:
- FA2F  00 00 00 00 00 2A			db	00h,00h,00h, 00h,00h,2ah, 00h,2ah,00h, 00h,2ah,2ah, 2ah,00h,00h, 2ah,00h,2ah, 2ah,2ah,00h, 2ah,2ah,2ah
+ FA51				PalVGA:
+ FA51  00 00 00 00 00 2A			db	00h,00h,00h, 00h,00h,2ah, 00h,2ah,00h, 00h,2ah,2ah, 2ah,00h,00h, 2ah,00h,2ah, 2ah,2ah,00h, 2ah,2ah,2ah
        00 2A 00 00 2A 2A
        2A 00 00 2A 00 2A
        2A 2A 00 2A 2A 2A
- FA47  00 00 15 00 00 3F			db	00h,00h,15h, 00h,00h,3fh, 00h,2ah,15h, 00h,2ah,3fh, 2ah,00h,15h, 2ah,00h,3fh, 2ah,2ah,15h, 2ah,2ah,3fh
+ FA69  00 00 15 00 00 3F			db	00h,00h,15h, 00h,00h,3fh, 00h,2ah,15h, 00h,2ah,3fh, 2ah,00h,15h, 2ah,00h,3fh, 2ah,2ah,15h, 2ah,2ah,3fh
        00 2A 15 00 2A 3F
        2A 00 15 2A 00 3F
        2A 2A 15 2A 2A 3F
- FA5F  00 15 00 00 15 2A			db	00h,15h,00h, 00h,15h,2ah, 00h,3fh,00h, 00h,3fh,2ah, 2ah,15h,00h, 2ah,15h,2ah, 2ah,3fh,00h, 2ah,3fh,2ah
+ FA81  00 15 00 00 15 2A			db	00h,15h,00h, 00h,15h,2ah, 00h,3fh,00h, 00h,3fh,2ah, 2ah,15h,00h, 2ah,15h,2ah, 2ah,3fh,00h, 2ah,3fh,2ah
        00 3F 00 00 3F 2A
        2A 15 00 2A 15 2A
        2A 3F 00 2A 3F 2A
- FA77  00 15 15 00 15 3F			db	00h,15h,15h, 00h,15h,3fh, 00h,3fh,15h, 00h,3fh,3fh, 2ah,15h,15h, 2ah,15h,3fh, 2ah,3fh,15h, 2ah,3fh,3fh
+ FA99  00 15 15 00 15 3F			db	00h,15h,15h, 00h,15h,3fh, 00h,3fh,15h, 00h,3fh,3fh, 2ah,15h,15h, 2ah,15h,3fh, 2ah,3fh,15h, 2ah,3fh,3fh
        00 3F 15 00 3F 3F
        2A 15 15 2A 15 3F
        2A 3F 15 2A 3F 3F
- FA8F  15 00 00 15 00 2A			db	15h,00h,00h, 15h,00h,2ah, 15h,2ah,00h, 15h,2ah,2ah, 3fh,00h,00h, 3fh,00h,2ah, 3fh,2ah,00h, 3fh,2ah,2ah
+ FAB1  15 00 00 15 00 2A			db	15h,00h,00h, 15h,00h,2ah, 15h,2ah,00h, 15h,2ah,2ah, 3fh,00h,00h, 3fh,00h,2ah, 3fh,2ah,00h, 3fh,2ah,2ah
        15 2A 00 15 2A 2A
        3F 00 00 3F 00 2A
        3F 2A 00 3F 2A 2A
- FAA7  15 00 15 15 00 3F			db	15h,00h,15h, 15h,00h,3fh, 15h,2ah,15h, 15h,2ah,3fh, 3fh,00h,15h, 3fh,00h,3fh, 3fh,2ah,15h, 3fh,2ah,3fh
+ FAC9  15 00 15 15 00 3F			db	15h,00h,15h, 15h,00h,3fh, 15h,2ah,15h, 15h,2ah,3fh, 3fh,00h,15h, 3fh,00h,3fh, 3fh,2ah,15h, 3fh,2ah,3fh
        15 2A 15 15 2A 3F
        3F 00 15 3F 00 3F
        3F 2A 15 3F 2A 3F
- FABF  15 15 00 15 15 2A			db	15h,15h,00h, 15h,15h,2ah, 15h,3fh,00h, 15h,3fh,2ah, 3fh,15h,00h, 3fh,15h,2ah, 3fh,3fh,00h, 3fh,3fh,2ah
+ FAE1  15 15 00 15 15 2A			db	15h,15h,00h, 15h,15h,2ah, 15h,3fh,00h, 15h,3fh,2ah, 3fh,15h,00h, 3fh,15h,2ah, 3fh,3fh,00h, 3fh,3fh,2ah
        15 3F 00 15 3F 2A
        3F 15 00 3F 15 2A
        3F 3F 00 3F 3F 2A
- FAD7  15 15 15 15 15 3F			db	15h,15h,15h, 15h,15h,3fh, 15h,3fh,15h, 15h,3fh,3fh, 3fh,15h,15h, 3fh,15h,3fh, 3fh,3fh,15h, 3fh,3fh,3fh
+ FAF9  15 15 15 15 15 3F			db	15h,15h,15h, 15h,15h,3fh, 15h,3fh,15h, 15h,3fh,3fh, 3fh,15h,15h, 3fh,15h,3fh, 3fh,3fh,15h, 3fh,3fh,3fh
        15 3F 15 15 3F 3F
        3F 15 15 3F 15 3F
        3F 3F 15 3F 3F 3F
- FAEF  00 01 02 03 04 05			db	00h, 01h, 02h, 03h, 04h, 05h, 14h, 07h, 38h, 39h, 3ah, 3bh, 3ch, 3dh, 3eh, 3fh	; EGA palette registers
+ FB11  00 01 02 03 04 05			db	00h, 01h, 02h, 03h, 04h, 05h, 14h, 07h, 38h, 39h, 3ah, 3bh, 3ch, 3dh, 3eh, 3fh	; EGA palette registers
        14 07 38 39 3A 3B
        3C 3D 3E 3F
 
 				IFDEF SCANCODE1 ; use SCANCODE1
- FAFF				KeyIndex:
- FAFF  00 52 31 32 34 33			db	0, 82, 49, 50, 52, 51, 54, 55    ;0-7
+ FB21				KeyIndex:
+ FB21  00 52 31 32 34 33			db	0, 82, 49, 50, 52, 51, 54, 55    ;0-7
        36 37
- FB07  38 39 3C 3B 41 44			db 56, 57, 60, 59, 65, 68, 72, 47    ;8-f
+ FB29  38 39 3C 3B 41 44			db 56, 57, 60, 59, 65, 68, 72, 47    ;8-f
        48 2F
- FB0F  01 05 09 0D 0C 12			db	1,  5,  9, 13, 12, 18, 21, 23    ;10-17
+ FB31  01 05 09 0D 0C 12			db	1,  5,  9, 13, 12, 18, 21, 23    ;10-17
        15 17
- FB17  18 1A 43 46 45 00			db 24, 26, 67, 70, 69,  0,  4,  3    ;18-1f
+ FB39  18 1A 43 46 45 00			db 24, 26, 67, 70, 69,  0,  4,  3    ;18-1f
        04 03
- FB1F  08 0B 11 10 14 16			db	8, 11, 17, 16, 20, 22, 25, 64    ;20-27
+ FB41  08 0B 11 10 14 16			db	8, 11, 17, 16, 20, 22, 25, 64    ;20-27
        19 40
- FB27  42 30 00 47 02 07			db 66, 48,  0, 71,  2,  7,  6, 10    ;28-2f
+ FB49  42 30 00 47 02 07			db 66, 48,  0, 71,  2,  7,  6, 10    ;28-2f
        06 0A
- FB2F  0F 0E 13 3A 3D 3E			db 15, 14, 19, 58, 61, 62,  0, 87    ;30-37
+ FB51  0F 0E 13 3A 3D 3E			db 15, 14, 19, 58, 61, 62,  0, 87    ;30-37
        00 57
- FB37  00 35 00 28 29 27			db	0, 53,  0, 40, 41, 39, 46, 38    ;38-3f
+ FB59  00 35 00 28 29 27			db	0, 53,  0, 40, 41, 39, 46, 38    ;38-3f
        2E 26
- FB3F  2D 5A 2C 4F 2B 00			db 45, 90, 44, 79, 43,  0, 89, 29    ;40-47
+ FB61  2D 5A 2C 4F 2B 00			db 45, 90, 44, 79, 43,  0, 89, 29    ;40-47
        59 1D
- FB47  22 24 56 1C 25 21			db 34, 36, 86, 28, 37, 33, 84, 27    ;48-4f
+ FB69  22 24 56 1C 25 21			db 34, 36, 86, 28, 37, 33, 84, 27    ;48-4f
        54 1B
- FB4F  20 23 1E 1F 00 00			db 32, 35, 30, 31,  0,  0,	0, 83    ;50-57  
+ FB71  20 23 1E 1F 00 00			db 32, 35, 30, 31,  0,  0,	0, 83    ;50-57  
        00 53
- FB57  2A					db 42
- FB58				E0KeyList:
- FB58  35 1C 4F 4B 47 52		db	35h, 1ch, 4fh, 4bh, 47h, 52h, 53h, 50h, 4dh, 48h, 51h, 49h 
+ FB79  2A					db 42
+ FB7A				E0KeyList:
+ FB7A  35 1C 4F 4B 47 52		db	35h, 1ch, 4fh, 4bh, 47h, 52h, 53h, 50h, 4dh, 48h, 51h, 49h 
        53 50 4D 48 51 49
 
 				ELSE    ; use SCANCODE2
 				ENDIF
 
- FB64				E0KeyIndex:
- FB64  3F 45 49 4A 4B 4C		db	63,  69,  73,  74,  75,  76,  77,  78,  80,  81,  85,  88
+ FB86				E0KeyIndex:
+ FB86  3F 45 49 4A 4B 4C		db	63,  69,  73,  74,  75,  76,  77,  78,  80,  81,  85,  88
        4D 4E 50 51 55 58
 
- FB70				KeyCode:	  
+ FB92				KeyCode:	  
 				; Keys affected by CapsLock
 				;		norm   shft   ctrl   alt
- FB70  0000 0000 0000				dw	0000h, 0000h, 0000h, 0000h ;17 - <0>
+ FB92  0000 0000 0000				dw	0000h, 0000h, 0000h, 0000h ;17 - <0>
        0000
- FB78  1071 1051 1011				dw	1071h, 1051h, 1011h, 1000h ;15 - Q, (E0)PrevTrack <1>
+ FB9A  1071 1051 1011				dw	1071h, 1051h, 1011h, 1000h ;15 - Q, (E0)PrevTrack <1>
        1000
- FB80  2C7A 2C5A 2C1A				dw	2c7ah, 2c5ah, 2c1ah, 2c00h ;1a - Z <2>
+ FBA2  2C7A 2C5A 2C1A				dw	2c7ah, 2c5ah, 2c1ah, 2c00h ;1a - Z <2>
        2C00
- FB88  1F73 1F53 1F13				dw	1f73h, 1f53h, 1f13h, 1f00h ;1b - S <3>
+ FBAA  1F73 1F53 1F13				dw	1f73h, 1f53h, 1f13h, 1f00h ;1b - S <3>
        1F00
- FB90  1E61 1E41 1E01				dw	1e61h, 1e41h, 1e01h, 1e00h ;1c - A <4>
+ FBB2  1E61 1E41 1E01				dw	1e61h, 1e41h, 1e01h, 1e00h ;1c - A <4>
        1E00
- FB98  1177 1157 1117				dw	1177h, 1157h, 1117h, 1100h ;1d - W <5>
+ FBBA  1177 1157 1117				dw	1177h, 1157h, 1117h, 1100h ;1d - W <5>
        1100
- FBA0  2E63 2E43 2E03				dw	2e63h, 2e43h, 2e03h, 2e00h ;21 - C, (E0)Volume Down <6>
+ FBC2  2E63 2E43 2E03				dw	2e63h, 2e43h, 2e03h, 2e00h ;21 - C, (E0)Volume Down <6>
        2E00
- FBA8  2D78 2D58 2D18				dw	2d78h, 2d58h, 2d18h, 2d00h ;22 - X <7>
+ FBCA  2D78 2D58 2D18				dw	2d78h, 2d58h, 2d18h, 2d00h ;22 - X <7>
        2D00
- FBB0  2064 2044 2004				dw	2064h, 2044h, 2004h, 2000h ;23 - D, (E0)Mute <8>
+ FBD2  2064 2044 2004				dw	2064h, 2044h, 2004h, 2000h ;23 - D, (E0)Mute <8>
        2000
- FBB8  1265 1245 1205				dw	1265h, 1245h, 1205h, 1200h ;24 - E <9>
+ FBDA  1265 1245 1205				dw	1265h, 1245h, 1205h, 1200h ;24 - E <9>
        1200
- FBC0  2F76 2F56 2F16				dw	2f76h, 2f56h, 2f16h, 2f00h ;2a - V <10>
+ FBE2  2F76 2F56 2F16				dw	2f76h, 2f56h, 2f16h, 2f00h ;2a - V <10>
        2F00
- FBC8  2166 2146 2106				dw	2166h, 2146h, 2106h, 2100h ;2b - F, (E0)Calculator <11>
+ FBEA  2166 2146 2106				dw	2166h, 2146h, 2106h, 2100h ;2b - F, (E0)Calculator <11>
        2100
- FBD0  1474 1454 1414				dw	1474h, 1454h, 1414h, 1400h ;2c - T <12>
+ FBF2  1474 1454 1414				dw	1474h, 1454h, 1414h, 1400h ;2c - T <12>
        1400
- FBD8  1372 1352 1312				dw	1372h, 1352h, 1312h, 1300h ;2d - R <13>
+ FBFA  1372 1352 1312				dw	1372h, 1352h, 1312h, 1300h ;2d - R <13>
        1300
- FBE0  316E 314E 310E				dw	316eh, 314eh, 310eh, 3100h ;31 - N <14>
+ FC02  316E 314E 310E				dw	316eh, 314eh, 310eh, 3100h ;31 - N <14>
        3100
- FBE8  3062 3042 3002				dw	3062h, 3042h, 3002h, 3000h ;32 - B, (E0)Volume Up <15>
+ FC0A  3062 3042 3002				dw	3062h, 3042h, 3002h, 3000h ;32 - B, (E0)Volume Up <15>
        3000
- FBF0  2368 2348 2308				dw	2368h, 2348h, 2308h, 2300h ;33 - H <16>
+ FC12  2368 2348 2308				dw	2368h, 2348h, 2308h, 2300h ;33 - H <16>
        2300
- FBF8  2267 2247 2207				dw	2267h, 2247h, 2207h, 2200h ;34 - G, (E0)Play/Pause <17>
+ FC1A  2267 2247 2207				dw	2267h, 2247h, 2207h, 2200h ;34 - G, (E0)Play/Pause <17>
        2200
- FC00  1579 1559 1519				dw	1579h, 1559h, 1519h, 1500h ;35 - Y <18>
+ FC22  1579 1559 1519				dw	1579h, 1559h, 1519h, 1500h ;35 - Y <18>
        1500
- FC08  326D 324D 320D				dw	326dh, 324dh, 320dh, 3200h ;3a - M, (E0)WWW Home <19>
+ FC2A  326D 324D 320D				dw	326dh, 324dh, 320dh, 3200h ;3a - M, (E0)WWW Home <19>
        3200
- FC10  246A 244A 240A				dw	246ah, 244ah, 240ah, 2400h ;3b - J, (E0)Stop <20>
+ FC32  246A 244A 240A				dw	246ah, 244ah, 240ah, 2400h ;3b - J, (E0)Stop <20>
        2400
- FC18  1675 1655 1615				dw	1675h, 1655h, 1615h, 1600h ;3c - U <21>
+ FC3A  1675 1655 1615				dw	1675h, 1655h, 1615h, 1600h ;3c - U <21>
        1600
- FC20  256B 254B 250B				dw	256bh, 254bh, 250bh, 2500h ;42 - K <22>
+ FC42  256B 254B 250B				dw	256bh, 254bh, 250bh, 2500h ;42 - K <22>
        2500
- FC28  1769 1749 1709				dw	1769h, 1749h, 1709h, 1700h ;43 - I <23>
+ FC4A  1769 1749 1709				dw	1769h, 1749h, 1709h, 1700h ;43 - I <23>
        1700
- FC30  186F 184F 180F				dw	186fh, 184fh, 180fh, 1800h ;44 - O <24>
+ FC52  186F 184F 180F				dw	186fh, 184fh, 180fh, 1800h ;44 - O <24>
        1800
- FC38  266C 264C 260C				dw	266ch, 264ch, 260ch, 2600h ;4b - L <25>
+ FC5A  266C 264C 260C				dw	266ch, 264ch, 260ch, 2600h ;4b - L <25>
        2600
- FC40  1970 1950 1910				dw	1970h, 1950h, 1910h, 1900h ;4d - P, (E0)Next Track <26>
+ FC62  1970 1950 1910				dw	1970h, 1950h, 1910h, 1900h ;4d - P, (E0)Next Track <26>
        1900
 				; keys affected by NumLock	
- FC48  4F00 4F31 7500				dw	4f00h, 4f31h, 7500h, 0002h ;69 - KP1 <27>
+ FC6A  4F00 4F31 7500				dw	4f00h, 4f31h, 7500h, 0002h ;69 - KP1 <27>
        0002
- FC50  4B00 4B34 7300				dw	4b00h, 4b34h, 7300h, 0005h ;6b - KP4 <28>
+ FC72  4B00 4B34 7300				dw	4b00h, 4b34h, 7300h, 0005h ;6b - KP4 <28>
        0005
- FC58  4700 4737 7700				dw	4700h, 4737h, 7700h, 0008h ;6c - KP7 <29>
+ FC7A  4700 4737 7700				dw	4700h, 4737h, 7700h, 0008h ;6c - KP7 <29>
        0008
- FC60  5200 5230 9200				dw	5200h, 5230h, 9200h, 0001h ;70 - KP0 <30>
+ FC82  5200 5230 9200				dw	5200h, 5230h, 9200h, 0001h ;70 - KP0 <30>
        0001
- FC68  5300 532E 9300				dw	5300h, 532eh, 9300h, 0000h ;71 - KP. <31>
+ FC8A  5300 532E 9300				dw	5300h, 532eh, 9300h, 0000h ;71 - KP. <31>
        0000
- FC70  5000 5032 9100				dw	5000h, 5032h, 9100h, 0003h ;72 - KP2 <32>
+ FC92  5000 5032 9100				dw	5000h, 5032h, 9100h, 0003h ;72 - KP2 <32>
        0003
- FC78  4D00 4D36 7400				dw	4d00h, 4d36h, 7400h, 0007h ;74 - KP6 <33>
+ FC9A  4D00 4D36 7400				dw	4d00h, 4d36h, 7400h, 0007h ;74 - KP6 <33>
        0007
- FC80  4800 4838 8D00				dw	4800h, 4838h, 8d00h, 0009h ;75 - KP8 <34>
+ FCA2  4800 4838 8D00				dw	4800h, 4838h, 8d00h, 0009h ;75 - KP8 <34>
        0009
- FC88  5100 5133 7600				dw	5100h, 5133h, 7600h, 0004h ;7a - KP3 <35>
+ FCAA  5100 5133 7600				dw	5100h, 5133h, 7600h, 0004h ;7a - KP3 <35>
        0004
- FC90  4900 4939 8400				dw	4900h, 4939h, 8400h, 000ah ;7d - KP9 <36>
+ FCB2  4900 4939 8400				dw	4900h, 4939h, 8400h, 000ah ;7d - KP9 <36>
        000A
- FC98  4C00 4C35 8F00				dw	4c00h, 4c35h, 8f00h, 0006h ;73 - KP5 --- on VMWare, it does not send 4c00 <37>
+ FCBA  4C00 4C35 8F00				dw	4c00h, 4c35h, 8f00h, 0006h ;73 - KP5 --- on VMWare, it does not send 4c00 <37>
        0006
 				; keys unaffected by CapsLock or N
- FCA0  3F00 5800 6200				dw	3f00h, 5800h, 6200h, 6c00h ;03 - F5 <38>
+ FCC2  3F00 5800 6200				dw	3f00h, 5800h, 6200h, 6c00h ;03 - F5 <38>
        6C00
- FCA8  3D00 5600 6000				dw	3d00h, 5600h, 6000h, 6a00h ;04 - F3 <39>
+ FCCA  3D00 5600 6000				dw	3d00h, 5600h, 6000h, 6a00h ;04 - F3 <39>
        6A00
- FCB0  3B00 5400 5E00				dw	3b00h, 5400h, 5e00h, 6800h ;05 - F1 <40>
+ FCD2  3B00 5400 5E00				dw	3b00h, 5400h, 5e00h, 6800h ;05 - F1 <40>
        6800
- FCB8  3C00 5500 5F00				dw	3c00h, 5500h, 5f00h, 6900h ;06 - F2 <41>
+ FCDA  3C00 5500 5F00				dw	3c00h, 5500h, 5f00h, 6900h ;06 - F2 <41>
        6900
- FCC0  8600 8800 8A00				dw	8600h, 8800h, 8a00h, 8c00h ;07 - F12 <42>	
+ FCE2  8600 8800 8A00				dw	8600h, 8800h, 8a00h, 8c00h ;07 - F12 <42>	
        8C00
- FCC8  4400 5D00 6700				dw	4400h, 5d00h, 6700h, 7100h ;09 - F10 <43>
+ FCEA  4400 5D00 6700				dw	4400h, 5d00h, 6700h, 7100h ;09 - F10 <43>
        7100
- FCD0  4200 5B00 6500				dw	4200h, 5b00h, 6500h, 6f00h ;0a - F8 <44>
+ FCF2  4200 5B00 6500				dw	4200h, 5b00h, 6500h, 6f00h ;0a - F8 <44>
        6F00
- FCD8  4000 5900 6300				dw	4000h, 5900h, 6300h, 6d00h ;0b - F6 <45>
+ FCFA  4000 5900 6300				dw	4000h, 5900h, 6300h, 6d00h ;0b - F6 <45>
        6D00
- FCE0  3E00 5700 6100				dw	3e00h, 5700h, 6100h, 6b00h ;0c - F4 <46>
+ FD02  3E00 5700 6100				dw	3e00h, 5700h, 6100h, 6b00h ;0c - F4 <46>
        6B00
- FCE8  0F09 0F00 9400				dw	0f09h, 0f00h, 9400h, 0000h ;0d - TAB <47>	
+ FD0A  0F09 0F00 9400				dw	0f09h, 0f00h, 9400h, 0000h ;0d - TAB <47>	
        0000
- FCF0  2960 297E 0000				dw	2960h, 297eh, 0000h, 2900h ;0e - ` ~ <48>	
+ FD12  2960 297E 0000				dw	2960h, 297eh, 0000h, 2900h ;0e - ` ~ <48>	
        2900
- FCF8  0231 0221 0000				dw	0231h, 0221h, 0000h, 7800h ;16 - 1 ! <49>	
+ FD1A  0231 0221 0000				dw	0231h, 0221h, 0000h, 7800h ;16 - 1 ! <49>	
        7800
- FD00  0332 0340 0300				dw	0332h, 0340h, 0300h, 7900h ;1e - 2 @ <50>	
+ FD22  0332 0340 0300				dw	0332h, 0340h, 0300h, 7900h ;1e - 2 @ <50>	
        7900
- FD08  0534 0524 0000				dw	0534h, 0524h, 0000h, 7b00h ;25 - 4 $ <51>
+ FD2A  0534 0524 0000				dw	0534h, 0524h, 0000h, 7b00h ;25 - 4 $ <51>
        7B00
- FD10  0433 0423 0000				dw	0433h, 0423h, 0000h, 7a00h ;26 - 3 # <52>
+ FD32  0433 0423 0000				dw	0433h, 0423h, 0000h, 7a00h ;26 - 3 # <52>
        7A00
- FD18  3920 3920 3920				dw	3920h, 3920h, 3920h, 3920h ;29 - SPC <53>	
+ FD3A  3920 3920 3920				dw	3920h, 3920h, 3920h, 3920h ;29 - SPC <53>	
        3920
- FD20  0635 0625 0000				dw	0635h, 0625h, 0000h, 7c00h ;2e - 5 % <54>
+ FD42  0635 0625 0000				dw	0635h, 0625h, 0000h, 7c00h ;2e - 5 % <54>
        7C00
- FD28  0736 075E 071E				dw	0736h, 075eh, 071eh, 7d00h ;36 - 6 ^ <55>
+ FD4A  0736 075E 071E				dw	0736h, 075eh, 071eh, 7d00h ;36 - 6 ^ <55>
        7D00
- FD30  0837 0826 0000				dw	0837h, 0826h, 0000h, 7e00h ;3d - 7 & <56>
+ FD52  0837 0826 0000				dw	0837h, 0826h, 0000h, 7e00h ;3d - 7 & <56>
        7E00
- FD38  0938 092A 0000				dw	0938h, 092ah, 0000h, 7f00h ;3e - 8 * <57>
+ FD5A  0938 092A 0000				dw	0938h, 092ah, 0000h, 7f00h ;3e - 8 * <57>
        7F00
- FD40  332C 333C 0000				dw	332ch, 333ch, 0000h, 3300h ;41 - , < <58>
+ FD62  332C 333C 0000				dw	332ch, 333ch, 0000h, 3300h ;41 - , < <58>
        3300
- FD48  0B30 0B29 0000				dw	0b30h, 0b29h, 0000h, 8100h ;45 - 0 ) <59>
+ FD6A  0B30 0B29 0000				dw	0b30h, 0b29h, 0000h, 8100h ;45 - 0 ) <59>
        8100
- FD50  0A39 0A28 0000				dw	0a39h, 0a28h, 0000h, 8000h ;46 - 9 ( <60>
+ FD72  0A39 0A28 0000				dw	0a39h, 0a28h, 0000h, 8000h ;46 - 9 ( <60>
        8000
- FD58  342E 343E 0000				dw	342eh, 343eh, 0000h, 3400h ;49 - . > <61>
+ FD7A  342E 343E 0000				dw	342eh, 343eh, 0000h, 3400h ;49 - . > <61>
        3400
- FD60  352F 353F 0000				dw	352fh, 353fh, 0000h, 3500h ;4a - / ? <62>
+ FD82  352F 353F 0000				dw	352fh, 353fh, 0000h, 3500h ;4a - / ? <62>
        3500
- FD68  E02F E02F 9500				dw	0e02fh, 0e02fh, 9500h, 0a400h ;4a - (e0)KP/ <63>
+ FD8A  E02F E02F 9500				dw	0e02fh, 0e02fh, 9500h, 0a400h ;4a - (e0)KP/ <63>
        A400
- FD70  273B 273A 0000				dw	273bh, 273ah, 0000h, 2700h ;4c - ; : <64>
+ FD92  273B 273A 0000				dw	273bh, 273ah, 0000h, 2700h ;4c - ; : <64>
        2700
- FD78  0C2D 0C5F 0C1F				dw	0c2dh, 0c5fh, 0c1fh, 8200h ;4e - - _ <65>
+ FD9A  0C2D 0C5F 0C1F				dw	0c2dh, 0c5fh, 0c1fh, 8200h ;4e - - _ <65>
        8200
- FD80  2827 2822 0000				dw	2827h, 2822h, 0000h, 2800h ;52 - ’ “ <66>
+ FDA2  2827 2822 0000				dw	2827h, 2822h, 0000h, 2800h ;52 - ’ “ <66>
        2800
- FD88  1A5B 1A7B 1A1B				dw	1a5bh, 1a7bh, 1a1bh, 1a00h ;54 - [ { <67>
+ FDAA  1A5B 1A7B 1A1B				dw	1a5bh, 1a7bh, 1a1bh, 1a00h ;54 - [ { <67>
        1A00
- FD90  0D3D 0D2B 0000				dw	0d3dh, 0d2bh, 0000h, 8300h ;55 - = + <68>	
+ FDB2  0D3D 0D2B 0000				dw	0d3dh, 0d2bh, 0000h, 8300h ;55 - = + <68>	
        8300
- FD98  1C0D 1C0D 1C0A				dw	1c0dh, 1c0dh, 1c0ah, 1c00h ;5a - Enter, (E0)KPEnter <69>
+ FDBA  1C0D 1C0D 1C0A				dw	1c0dh, 1c0dh, 1c0ah, 1c00h ;5a - Enter, (E0)KPEnter <69>
        1C00
- FDA0  1B5D 1B7D 1B1D				dw	1b5dh, 1b7dh, 1b1dh, 1b00h ;5b - ] } <70>
+ FDC2  1B5D 1B7D 1B1D				dw	1b5dh, 1b7dh, 1b1dh, 1b00h ;5b - ] } <70>
        1B00
- FDA8  2B5C 2B7C 2B1C				dw	2b5ch, 2b7ch, 2b1ch, 2b00h ;5d - \ | <71>
+ FDCA  2B5C 2B7C 2B1C				dw	2b5ch, 2b7ch, 2b1ch, 2b00h ;5d - \ | <71>
        2B00
- FDB0  0E08 0E08 0E7F				dw	0e08h, 0e08h, 0e7fh, 0e00h ;66 - BKSP <72>
+ FDD2  0E08 0E08 0E7F				dw	0e08h, 0e08h, 0e7fh, 0e00h ;66 - BKSP <72>
        0E00
- FDB8  4F00 4F00 7500				dw	4f00h, 4f00h, 7500h, 9f00h ;69 - (E0)END <73>
+ FDDA  4F00 4F00 7500				dw	4f00h, 4f00h, 7500h, 9f00h ;69 - (E0)END <73>
        9F00
- FDC0  4B00 4B00 7300				dw	4b00h, 4b00h, 7300h, 9b00h ;6b - (E0)LEFT <74>
+ FDE2  4B00 4B00 7300				dw	4b00h, 4b00h, 7300h, 9b00h ;6b - (E0)LEFT <74>
        9B00
- FDC8  4700 4700 7700				dw	4700h, 4700h, 7700h, 9700h ;6c - (E0)HOME <75>
+ FDEA  4700 4700 7700				dw	4700h, 4700h, 7700h, 9700h ;6c - (E0)HOME <75>
        9700
- FDD0  5200 5200 9200				dw	5200h, 5200h, 9200h, 0a200h ;70 - (E0)INS <76>
+ FDF2  5200 5200 9200				dw	5200h, 5200h, 9200h, 0a200h ;70 - (E0)INS <76>
        A200
- FDD8  5300 5300 9300				dw	5300h, 5300h, 9300h, 0a300h ;71 - (E0)DEL <77>
+ FDFA  5300 5300 9300				dw	5300h, 5300h, 9300h, 0a300h ;71 - (E0)DEL <77>
        A300
- FDE0  5000 5000 9100				dw	5000h, 5000h, 9100h, 0a000h ;72 - (E0)DOWN <78>
+ FE02  5000 5000 9100				dw	5000h, 5000h, 9100h, 0a000h ;72 - (E0)DOWN <78>
        A000
- FDE8  4300 5C00 6600				dw	4300h, 5c00h, 6600h, 7000h ;01 - F9 <79>
+ FE0A  4300 5C00 6600				dw	4300h, 5c00h, 6600h, 7000h ;01 - F9 <79>
        7000
- FDF0  4D00 4D00 7400				dw	4d00h, 4d00h, 7400h, 9d00h ;74 - (E0)RIGHT <80>
+ FE12  4D00 4D00 7400				dw	4d00h, 4d00h, 7400h, 9d00h ;74 - (E0)RIGHT <80>
        9D00
- FDF8  4800 4800 8D00				dw	4800h, 4800h, 8d00h, 9800h ;75 - (E0)UP <81>
+ FE1A  4800 4800 8D00				dw	4800h, 4800h, 8d00h, 9800h ;75 - (E0)UP <81>
        9800
- FE00  011B 011B 011B				dw	011bh, 011bh, 011bh, 0100h ;76 - ESC <82>
+ FE22  011B 011B 011B				dw	011bh, 011bh, 011bh, 0100h ;76 - ESC <82>
        0100
- FE08  8500 8700 8900				dw	8500h, 8700h, 8900h, 8b00h ;78 - F11 <83>
+ FE2A  8500 8700 8900				dw	8500h, 8700h, 8900h, 8b00h ;78 - F11 <83>
        8B00
- FE10  4E2B 4E2B 9000				dw	4e2bh, 4e2bh, 9000h, 4e00h ;79 - KP+ <84>
+ FE32  4E2B 4E2B 9000				dw	4e2bh, 4e2bh, 9000h, 4e00h ;79 - KP+ <84>
        4E00
- FE18  5100 5100 7600				dw	5100h, 5100h, 7600h, 0a100h ;7a - (E0)PGDN <85>
+ FE3A  5100 5100 7600				dw	5100h, 5100h, 7600h, 0a100h ;7a - (E0)PGDN <85>
        A100
- FE20  4A2D 4A2D 8E00				dw	4a2dh, 4a2dh, 8e00h, 4a00h ;7b - KP- <86>
+ FE42  4A2D 4A2D 8E00				dw	4a2dh, 4a2dh, 8e00h, 4a00h ;7b - KP- <86>
        4A00
- FE28  372A 372A 9600				dw	372ah, 372ah, 9600h, 3700h ;7c - KP* --- on VMWare, it does not send 3710h with CTL <87>
+ FE4A  372A 372A 9600				dw	372ah, 372ah, 9600h, 3700h ;7c - KP* --- on VMWare, it does not send 3710h with CTL <87>
        3700
- FE30  4900 4900 8400				dw	4900h, 4900h, 8400h, 9900h ;7d - (E0)PGUP <88>
+ FE52  4900 4900 8400				dw	4900h, 4900h, 8400h, 9900h ;7d - (E0)PGUP <88>
        9900
- FE38  4600 4600 4600				dw	4600h, 4600h, 4600h, 4600h ;7e - SCRL <89>
+ FE5A  4600 4600 4600				dw	4600h, 4600h, 4600h, 4600h ;7e - SCRL <89>
        4600
- FE40  4100 5A00 6400				dw	4100h, 5a00h, 6400h, 6e00h ;83 - F7 <90>
+ FE62  4100 5A00 6400				dw	4100h, 5a00h, 6400h, 6e00h ;83 - F7 <90>
        6E00
 
 				; ------------------------- POWER ON RESET -----------------------
@@ -4288,7 +4318,7 @@ BIOS_Next186.asm					     Page 1 - 1
        31 37
  FFFD  FF FF 00					db      0ffh, 0ffh, 0
 				end bios
-Microsoft (R) Macro Assembler Version 6.14.8444		    07/23/21 23:28:29
+Microsoft (R) Macro Assembler Version 6.14.8444		    08/01/21 01:44:48
 BIOS_Next186.asm					     Symbols 2 - 1
 
 
@@ -4317,12 +4347,12 @@ Procedures,  parameters and locals:
 KeyLock  . . . . . . . . . . . .	P Near	 E58D	  _TEXT	Length= 0016 Public
   s2 . . . . . . . . . . . . . .	L Near	 E59A	  _TEXT	
   exit . . . . . . . . . . . . .	L Near	 E5A2	  _TEXT	
-defint . . . . . . . . . . . . .	P Near	 F5D9	  _TEXT	Length= 0001 Public
-enableKbIfPresent  . . . . . . .	P Near	 F5CD	  _TEXT	Length= 000C Public
-  noenablekb . . . . . . . . . .	L Near	 F5D8	  _TEXT	
-getps2byte . . . . . . . . . . .	P Near	 F5A2	  _TEXT	Length= 001A Public
-  gps2b2 . . . . . . . . . . . .	L Near	 F5A7	  _TEXT	
-  gps2b1 . . . . . . . . . . . .	L Near	 F5B7	  _TEXT	
+defint . . . . . . . . . . . . .	P Near	 F5FB	  _TEXT	Length= 0001 Public
+enableKbIfPresent  . . . . . . .	P Near	 F5EF	  _TEXT	Length= 000C Public
+  noenablekb . . . . . . . . . .	L Near	 F5FA	  _TEXT	
+getps2byte . . . . . . . . . . .	P Near	 F5C4	  _TEXT	Length= 001A Public
+  gps2b2 . . . . . . . . . . . .	L Near	 F5C9	  _TEXT	
+  gps2b1 . . . . . . . . . . . .	L Near	 F5D9	  _TEXT	
 int07  . . . . . . . . . . . . .	P Near	 E2FA	  _TEXT	Length= 0030 Public
   int07_pfx  . . . . . . . . . .	L Near	 E303	  _TEXT	
   int072 . . . . . . . . . . . .	L Near	 E31C	  _TEXT	
@@ -4550,56 +4580,56 @@ int14  . . . . . . . . . . . . .	P Near	 F031	  _TEXT	Length= 0081 Public
   STr2 . . . . . . . . . . . . .	L Near	 F0A3	  _TEXT	
   SReceive . . . . . . . . . . .	L Near	 F0A6	  _TEXT	
   SReceive1  . . . . . . . . . .	L Near	 F0A7	  _TEXT	
-int16  . . . . . . . . . . . . .	P Near	 F31A	  _TEXT	Length= 00EB Public
-  kbfunc . . . . . . . . . . . .	L Near	 F342	  _TEXT	
-  Exit . . . . . . . . . . . . .	L Near	 F344	  _TEXT	
-  GetKey1  . . . . . . . . . . .	L Near	 F347	  _TEXT	
-  GetKey . . . . . . . . . . . .	L Near	 F348	  _TEXT	
-  noWrap . . . . . . . . . . . .	L Near	 F35E	  _TEXT	
-  TestKey  . . . . . . . . . . .	L Near	 F364	  _TEXT	
-  StoreKey . . . . . . . . . . .	L Near	 F373	  _TEXT	
-  NoWrap1  . . . . . . . . . . .	L Near	 F385	  _TEXT	
-  ExtStatus  . . . . . . . . . .	L Near	 F394	  _TEXT	
-  NoSysReq . . . . . . . . . . .	L Near	 F39F	  _TEXT	
-  GetStatus  . . . . . . . . . .	L Near	 F3A8	  _TEXT	
-  Exit1  . . . . . . . . . . . .	L Near	 F3AB	  _TEXT	
-  SetAutoRpt . . . . . . . . . .	L Near	 F3AD	  _TEXT	
-  timeout1 . . . . . . . . . . .	L Near	 F3E3	  _TEXT	
-  timeout  . . . . . . . . . . .	L Near	 F3E8	  _TEXT	
-  WaitFlag . . . . . . . . . . .	L Near	 F3EB	  _TEXT	
-  wf_loop  . . . . . . . . . . .	L Near	 F3F0	  _TEXT	
-  wf_ok  . . . . . . . . . . . .	L Near	 F404	  _TEXT	
-int18  . . . . . . . . . . . . .	P Near	 F405	  _TEXT	Length= 007F Public
-  sloop  . . . . . . . . . . . .	L Near	 F42F	  _TEXT	
-int19  . . . . . . . . . . . . .	P Near	 F484	  _TEXT	Length= 001A Public
-  int19err . . . . . . . . . . .	L Near	 F49C	  _TEXT	
-int1a  . . . . . . . . . . . . .	P Near	 F49E	  _TEXT	Length= 002C Public
-  clockexit1 . . . . . . . . . .	L Near	 F4B4	  _TEXT	
-  clockexit  . . . . . . . . . .	L Near	 F4B9	  _TEXT	
-  setclock . . . . . . . . . . .	L Near	 F4BF	  _TEXT	
-int70  . . . . . . . . . . . . .	P Near	 F4CA	  _TEXT	Length= 0038 Public
-  exit1  . . . . . . . . . . . .	L Near	 F4F0	  _TEXT	
-  exit . . . . . . . . . . . . .	L Near	 F4F6	  _TEXT	
-int74  . . . . . . . . . . . . .	P Near	 F502	  _TEXT	Length= 004F Public
-  docall . . . . . . . . . . . .	L Near	 F527	  _TEXT	
-  nocall . . . . . . . . . . . .	L Near	 F546	  _TEXT	
-sdinit . . . . . . . . . . . . .	P Near	 F7C8	  _TEXT	Length= 009D Public
-  sdinit1  . . . . . . . . . . .	L Near	 F7D3	  _TEXT	
-  repinit  . . . . . . . . . . .	L Near	 F803	  _TEXT	
-  sdexit . . . . . . . . . . . .	L Near	 F857	  _TEXT	
-sdrblk . . . . . . . . . . . . .	P Near	 F672	  _TEXT	Length= 0030 Public
-  sdrblk1  . . . . . . . . . . .	L Near	 F67A	  _TEXT	
-  sdrblk2  . . . . . . . . . . .	L Near	 F67F	  _TEXT	
-sdwblk . . . . . . . . . . . . .	P Near	 F63F	  _TEXT	Length= 0033 Public
-  sdwblk1  . . . . . . . . . . .	L Near	 F641	  _TEXT	
-sendcmd  . . . . . . . . . . . .	P Near	 F5BC	  _TEXT	Length= 0011 Public
-  retry  . . . . . . . . . . . .	L Near	 F5C3	  _TEXT	
-  exit . . . . . . . . . . . . .	L Near	 F5CC	  _TEXT	
-sendps2byte  . . . . . . . . . .	P Near	 F57D	  _TEXT	Length= 0025 Public
-  sps2b2 . . . . . . . . . . . .	L Near	 F583	  _TEXT	
-  sps2b1 . . . . . . . . . . . .	L Near	 F594	  _TEXT	
-  sps2_kb  . . . . . . . . . . .	L Near	 F59C	  _TEXT	
-  exit . . . . . . . . . . . . .	L Near	 F5A0	  _TEXT	
+int16  . . . . . . . . . . . . .	P Near	 F33C	  _TEXT	Length= 00EB Public
+  kbfunc . . . . . . . . . . . .	L Near	 F364	  _TEXT	
+  Exit . . . . . . . . . . . . .	L Near	 F366	  _TEXT	
+  GetKey1  . . . . . . . . . . .	L Near	 F369	  _TEXT	
+  GetKey . . . . . . . . . . . .	L Near	 F36A	  _TEXT	
+  noWrap . . . . . . . . . . . .	L Near	 F380	  _TEXT	
+  TestKey  . . . . . . . . . . .	L Near	 F386	  _TEXT	
+  StoreKey . . . . . . . . . . .	L Near	 F395	  _TEXT	
+  NoWrap1  . . . . . . . . . . .	L Near	 F3A7	  _TEXT	
+  ExtStatus  . . . . . . . . . .	L Near	 F3B6	  _TEXT	
+  NoSysReq . . . . . . . . . . .	L Near	 F3C1	  _TEXT	
+  GetStatus  . . . . . . . . . .	L Near	 F3CA	  _TEXT	
+  Exit1  . . . . . . . . . . . .	L Near	 F3CD	  _TEXT	
+  SetAutoRpt . . . . . . . . . .	L Near	 F3CF	  _TEXT	
+  timeout1 . . . . . . . . . . .	L Near	 F405	  _TEXT	
+  timeout  . . . . . . . . . . .	L Near	 F40A	  _TEXT	
+  WaitFlag . . . . . . . . . . .	L Near	 F40D	  _TEXT	
+  wf_loop  . . . . . . . . . . .	L Near	 F412	  _TEXT	
+  wf_ok  . . . . . . . . . . . .	L Near	 F426	  _TEXT	
+int18  . . . . . . . . . . . . .	P Near	 F427	  _TEXT	Length= 007F Public
+  sloop  . . . . . . . . . . . .	L Near	 F451	  _TEXT	
+int19  . . . . . . . . . . . . .	P Near	 F4A6	  _TEXT	Length= 001A Public
+  int19err . . . . . . . . . . .	L Near	 F4BE	  _TEXT	
+int1a  . . . . . . . . . . . . .	P Near	 F4C0	  _TEXT	Length= 002C Public
+  clockexit1 . . . . . . . . . .	L Near	 F4D6	  _TEXT	
+  clockexit  . . . . . . . . . .	L Near	 F4DB	  _TEXT	
+  setclock . . . . . . . . . . .	L Near	 F4E1	  _TEXT	
+int70  . . . . . . . . . . . . .	P Near	 F4EC	  _TEXT	Length= 0038 Public
+  exit1  . . . . . . . . . . . .	L Near	 F512	  _TEXT	
+  exit . . . . . . . . . . . . .	L Near	 F518	  _TEXT	
+int74  . . . . . . . . . . . . .	P Near	 F524	  _TEXT	Length= 004F Public
+  docall . . . . . . . . . . . .	L Near	 F549	  _TEXT	
+  nocall . . . . . . . . . . . .	L Near	 F568	  _TEXT	
+sdinit . . . . . . . . . . . . .	P Near	 F7EA	  _TEXT	Length= 009D Public
+  sdinit1  . . . . . . . . . . .	L Near	 F7F5	  _TEXT	
+  repinit  . . . . . . . . . . .	L Near	 F825	  _TEXT	
+  sdexit . . . . . . . . . . . .	L Near	 F879	  _TEXT	
+sdrblk . . . . . . . . . . . . .	P Near	 F694	  _TEXT	Length= 0030 Public
+  sdrblk1  . . . . . . . . . . .	L Near	 F69C	  _TEXT	
+  sdrblk2  . . . . . . . . . . .	L Near	 F6A1	  _TEXT	
+sdwblk . . . . . . . . . . . . .	P Near	 F661	  _TEXT	Length= 0033 Public
+  sdwblk1  . . . . . . . . . . .	L Near	 F663	  _TEXT	
+sendcmd  . . . . . . . . . . . .	P Near	 F5DE	  _TEXT	Length= 0011 Public
+  retry  . . . . . . . . . . . .	L Near	 F5E5	  _TEXT	
+  exit . . . . . . . . . . . . .	L Near	 F5EE	  _TEXT	
+sendps2byte  . . . . . . . . . .	P Near	 F59F	  _TEXT	Length= 0025 Public
+  sps2b2 . . . . . . . . . . . .	L Near	 F5A5	  _TEXT	
+  sps2b1 . . . . . . . . . . . .	L Near	 F5B6	  _TEXT	
+  sps2_kb  . . . . . . . . . . .	L Near	 F5BE	  _TEXT	
+  exit . . . . . . . . . . . . .	L Near	 F5C2	  _TEXT	
 
 
 Symbols:
@@ -4636,8 +4666,8 @@ DLH  . . . . . . . . . . . . . .	Number	 0001h
 DLL  . . . . . . . . . . . . . .	Number	 0000h	 
 DataBuffer . . . . . . . . . . .	Text   	 ds:[0a5h]
 DataCounter  . . . . . . . . . .	Text   	 ds:[067h]
-E0KeyIndex . . . . . . . . . . .	L Near	 FB64	  _TEXT	
-E0KeyList  . . . . . . . . . . .	L Near	 FB58	  _TEXT	
+E0KeyIndex . . . . . . . . . . .	L Near	 FB86	  _TEXT	
+E0KeyList  . . . . . . . . . . .	L Near	 FB7A	  _TEXT	
 EgaMiscInfo2 . . . . . . . . . .	Text   	 ds:[88h]
 EgaMiscInfo  . . . . . . . . . .	Text   	 ds:[87h]
 EndBuf . . . . . . . . . . . . .	Text   	 ds:[82h]
@@ -4659,8 +4689,8 @@ KbdFlags1  . . . . . . . . . . .	Text   	 ds:[17h]
 KbdFlags2  . . . . . . . . . . .	Text   	 ds:[18h]
 KbdFlags3  . . . . . . . . . . .	Text   	 ds:[96h]
 KbdFlags4  . . . . . . . . . . .	Text   	 ds:[97h]
-KeyCode  . . . . . . . . . . . .	L Near	 FB70	  _TEXT	
-KeyIndex . . . . . . . . . . . .	L Near	 FAFF	  _TEXT	
+KeyCode  . . . . . . . . . . . .	L Near	 FB92	  _TEXT	
+KeyIndex . . . . . . . . . . . .	L Near	 FB21	  _TEXT	
 LAltDown . . . . . . . . . . . .	Number	 0002h	 
 LCR  . . . . . . . . . . . . . .	Number	 0003h	 
 LCtrDown . . . . . . . . . . . .	Number	 0001h	 
@@ -4686,10 +4716,10 @@ NumLockLED . . . . . . . . . . .	Number	 0002h
 NumLock  . . . . . . . . . . . .	Number	 0020h	 
 PacketSize . . . . . . . . . . .	Text   	 ds:[068h]
 PageOffset . . . . . . . . . . .	Text   	 ds:[4eh]
-Pal256 . . . . . . . . . . . . .	L Near	 F88F	  _TEXT	
-PalEGA . . . . . . . . . . . . .	L Near	 F95F	  _TEXT	
+Pal256 . . . . . . . . . . . . .	L Near	 F8B1	  _TEXT	
+PalEGA . . . . . . . . . . . . .	L Near	 F981	  _TEXT	
 PalOffset  . . . . . . . . . . .	Text   	 ds:[69h]
-PalVGA . . . . . . . . . . . . .	L Near	 FA2F	  _TEXT	
+PalVGA . . . . . . . . . . . . .	L Near	 FA51	  _TEXT	
 Pause  . . . . . . . . . . . . .	Number	 0008h	 
 PortAddress  . . . . . . . . . .	Text   	 ds:[63h]
 RAMSize  . . . . . . . . . . . .	Number	 0200h	 
@@ -4699,13 +4729,13 @@ RCtrDown . . . . . . . . . . . .	Number	 0004h
 RShfDown . . . . . . . . . . . .	Number	 0001h	 
 RegenLength  . . . . . . . . . .	Text   	 ds:[4ch]
 SCANCODE1  . . . . . . . . . . .	Number	 0001h	 
-SD_CMD0  . . . . . . . . . . . .	Byte	 F865	  _TEXT	
-SD_CMD12 . . . . . . . . . . . .	Byte	 F877	  _TEXT	
-SD_CMD41 . . . . . . . . . . . .	Byte	 F87D	  _TEXT	
-SD_CMD55 . . . . . . . . . . . .	Byte	 F883	  _TEXT	
-SD_CMD58 . . . . . . . . . . . .	Byte	 F889	  _TEXT	
-SD_CMD8  . . . . . . . . . . . .	Byte	 F86B	  _TEXT	
-SD_CMD9  . . . . . . . . . . . .	Byte	 F871	  _TEXT	
+SD_CMD0  . . . . . . . . . . . .	Byte	 F887	  _TEXT	
+SD_CMD12 . . . . . . . . . . . .	Byte	 F899	  _TEXT	
+SD_CMD41 . . . . . . . . . . . .	Byte	 F89F	  _TEXT	
+SD_CMD55 . . . . . . . . . . . .	Byte	 F8A5	  _TEXT	
+SD_CMD58 . . . . . . . . . . . .	Byte	 F8AB	  _TEXT	
+SD_CMD8  . . . . . . . . . . . .	Byte	 F88D	  _TEXT	
+SD_CMD9  . . . . . . . . . . . .	Byte	 F893	  _TEXT	
 ScanLinesChar  . . . . . . . . .	Text   	 ds:[85h]
 ScrLockDown  . . . . . . . . . .	Number	 0010h	 
 ScrLockLED . . . . . . . . . . .	Number	 0001h	 
@@ -4718,7 +4748,7 @@ SetSeg1  . . . . . . . . . . . .	L Near	 F0D8	  _TEXT
 SetSeg2  . . . . . . . . . . . .	L Near	 F0D0	  _TEXT	
 SetSegExit . . . . . . . . . . .	L Near	 F0D9	  _TEXT	
 SetSeg . . . . . . . . . . . . .	L Near	 F0C5	  _TEXT	
-SysParams  . . . . . . . . . . .	Byte	 F310	  _TEXT	
+SysParams  . . . . . . . . . . .	Byte	 F332	  _TEXT	
 SysReqDown . . . . . . . . . . .	Number	 0004h	 
 THR  . . . . . . . . . . . . . .	Number	 0000h	 
 TailPtr  . . . . . . . . . . . .	Text   	 ds:[1ch]
@@ -4731,50 +4761,52 @@ VgaFlags2  . . . . . . . . . . .	Text   	 ds:[8ah]
 VgaFlags . . . . . . . . . . . .	Text   	 ds:[89h]
 Wait1  . . . . . . . . . . . . .	L Near	 F1F1	  _TEXT	
 WaitCount  . . . . . . . . . . .	Text   	 ds:[9ch]
-badparam . . . . . . . . . . . .	L Near	 F29D	  _TEXT	
+badparam . . . . . . . . . . . .	L Near	 F299	  _TEXT	
 bioscont . . . . . . . . . . . .	Byte	 E27E	  _TEXT	
 biosmsg  . . . . . . . . . . . .	Byte	 E000	  _TEXT	
 bios . . . . . . . . . . . . . .	L Near	 E000	  _TEXT	
-booterrmsg . . . . . . . . . . .	Byte	 F43D	  _TEXT	
+booterrmsg . . . . . . . . . . .	Byte	 F45F	  _TEXT	
 busy . . . . . . . . . . . . . .	L Near	 F1ED	  _TEXT	
 cancel . . . . . . . . . . . . .	L Near	 F1E6	  _TEXT	
 coldboot . . . . . . . . . . . .	L Near	 E05B	  _TEXT	
 dccval . . . . . . . . . . . . .	Word	 ED83	  _TEXT	
+disablemouseinterrupt  . . . . .	L Near	 F318	  _TEXT	
 disktbl  . . . . . . . . . . . .	Word	 EE8F	  _TEXT	
-dispAX1  . . . . . . . . . . . .	L Near	 F60E	  _TEXT	
-dispAX . . . . . . . . . . . . .	L Near	 F5FF	  _TEXT	
-dly1 . . . . . . . . . . . . . .	L Near	 F574	  _TEXT	
-dlybit . . . . . . . . . . . . .	L Near	 F570	  _TEXT	
+dispAX1  . . . . . . . . . . . .	L Near	 F630	  _TEXT	
+dispAX . . . . . . . . . . . . .	L Near	 F621	  _TEXT	
+dly1 . . . . . . . . . . . . . .	L Near	 F596	  _TEXT	
+dlybit . . . . . . . . . . . . .	L Near	 F592	  _TEXT	
 done . . . . . . . . . . . . . .	L Near	 F1B3	  _TEXT	
-en_dis . . . . . . . . . . . . .	L Near	 F270	  _TEXT	
+en_dis . . . . . . . . . . . . .	L Near	 F26C	  _TEXT	
+enablemouseinterrupt . . . . . .	L Near	 F305	  _TEXT	
 errexit  . . . . . . . . . . . .	L Near	 F229	  _TEXT	
 exit15 . . . . . . . . . . . . .	L Near	 F1B4	  _TEXT	
 exit_ax  . . . . . . . . . . . .	L Near	 F1B7	  _TEXT	
 exit_iret  . . . . . . . . . . .	L Near	 F1BB	  _TEXT	
-exit_success1  . . . . . . . . .	L Near	 F285	  _TEXT	
-exit_success . . . . . . . . . .	L Near	 F280	  _TEXT	
+exit_success1  . . . . . . . . .	L Near	 F281	  _TEXT	
+exit_success . . . . . . . . . .	L Near	 F27C	  _TEXT	
 exitok . . . . . . . . . . . . .	L Near	 F22A	  _TEXT	
-extend . . . . . . . . . . . . .	L Near	 F2DB	  _TEXT	
-flush1 . . . . . . . . . . . . .	L Near	 F5E7	  _TEXT	
-flush_nostack  . . . . . . . . .	L Near	 F5DF	  _TEXT	
-flushbh  . . . . . . . . . . . .	Word	 F5FD	  _TEXT	
-flushret . . . . . . . . . . . .	Word	 F5FB	  _TEXT	
-flush  . . . . . . . . . . . . .	L Near	 F5DA	  _TEXT	
+extend . . . . . . . . . . . . .	L Near	 F2D7	  _TEXT	
+flush1 . . . . . . . . . . . . .	L Near	 F609	  _TEXT	
+flush_nostack  . . . . . . . . .	L Near	 F601	  _TEXT	
+flushbh  . . . . . . . . . . . .	Word	 F61F	  _TEXT	
+flushret . . . . . . . . . . . .	Word	 F61D	  _TEXT	
+flush  . . . . . . . . . . . . .	L Near	 F5FC	  _TEXT	
 font8x14 . . . . . . . . . . . .	Text   	 font8x16 - 0e00h
 font8x16 . . . . . . . . . . . .	Text   	 font8x8 - 1000h
 font8x8  . . . . . . . . . . . .	Text   	 bios - 800h
 fontinfo . . . . . . . . . . . .	Word	 ED11	  _TEXT	
-gettype  . . . . . . . . . . . .	L Near	 F2C3	  _TEXT	
-if_err1  . . . . . . . . . . . .	L Near	 F27E	  _TEXT	
+gettype  . . . . . . . . . . . .	L Near	 F2BF	  _TEXT	
+if_err1  . . . . . . . . . . . .	L Near	 F27A	  _TEXT	
 if_err . . . . . . . . . . . . .	L Near	 F224	  _TEXT	
 int15  . . . . . . . . . . . . .	L Near	 F182	  _TEXT	
 kbi1 . . . . . . . . . . . . . .	L Near	 E17A	  _TEXT	
 kbi2 . . . . . . . . . . . . . .	L Near	 E189	  _TEXT	
 kbok . . . . . . . . . . . . . .	L Near	 E1BD	  _TEXT	
-l1 . . . . . . . . . . . . . . .	L Near	 F565	  _TEXT	
+l1 . . . . . . . . . . . . . . .	L Near	 F587	  _TEXT	
 mapi1  . . . . . . . . . . . . .	L Near	 E0A8	  _TEXT	
 mapi . . . . . . . . . . . . . .	L Near	 E09F	  _TEXT	
-mouse_present  . . . . . . . . .	L Near	 F23A	  _TEXT	
+mouse_present  . . . . . . . . .	L Near	 F239	  _TEXT	
 mousei0  . . . . . . . . . . . .	L Near	 E1C5	  _TEXT	
 mousei1  . . . . . . . . . . . .	L Near	 E1D3	  _TEXT	
 mouseok  . . . . . . . . . . . .	L Near	 E1EF	  _TEXT	
@@ -4788,46 +4820,46 @@ nomouse  . . . . . . . . . . . .	L Near	 E1E6	  _TEXT
 nowait . . . . . . . . . . . . .	L Near	 F1EE	  _TEXT	
 p3c0r10  . . . . . . . . . . . .	Byte	 E6A9	  _TEXT	
 paltable . . . . . . . . . . . .	Word	 EA5E	  _TEXT	
-prtse  . . . . . . . . . . . . .	L Near	 F624	  _TEXT	
-prts . . . . . . . . . . . . . .	L Near	 F618	  _TEXT	
+prtse  . . . . . . . . . . . . .	L Near	 F646	  _TEXT	
+prts . . . . . . . . . . . . . .	L Near	 F63A	  _TEXT	
 raligned . . . . . . . . . . . .	L Near	 F14A	  _TEXT	
-reset  . . . . . . . . . . . . .	L Near	 F289	  _TEXT	
-resolution . . . . . . . . . . .	L Near	 F2B9	  _TEXT	
-sample_tbl . . . . . . . . . . .	Byte	 F309	  _TEXT	
-sampling . . . . . . . . . . . .	L Near	 F29A	  _TEXT	
+reset  . . . . . . . . . . . . .	L Near	 F285	  _TEXT	
+resolution . . . . . . . . . . .	L Near	 F2B5	  _TEXT	
+sample_tbl . . . . . . . . . . .	Byte	 F32B	  _TEXT	
+sampling . . . . . . . . . . . .	L Near	 F296	  _TEXT	
 savesp . . . . . . . . . . . . .	Word	 F0DC	  _TEXT	
 savess . . . . . . . . . . . . .	Word	 F0DA	  _TEXT	
-sdcmd1 . . . . . . . . . . . . .	L Near	 F6C9	  _TEXT	
-sdcmd8T  . . . . . . . . . . . .	L Near	 F6B3	  _TEXT	
-sdcmd  . . . . . . . . . . . . .	L Near	 F6B6	  _TEXT	
-sdr11  . . . . . . . . . . . . .	L Near	 F73E	  _TEXT	
-sdr1s  . . . . . . . . . . . . .	L Near	 F6DE	  _TEXT	
-sdr1 . . . . . . . . . . . . . .	L Near	 F73F	  _TEXT	
-sdr2 . . . . . . . . . . . . . .	L Near	 F735	  _TEXT	
-sdr3 . . . . . . . . . . . . . .	L Near	 F728	  _TEXT	
-sdrb . . . . . . . . . . . . . .	L Near	 F625	  _TEXT	
-sdread1  . . . . . . . . . . . .	L Near	 F6D2	  _TEXT	
-sdread . . . . . . . . . . . . .	L Near	 F6CF	  _TEXT	
-sdresp1  . . . . . . . . . . . .	L Near	 F6BE	  _TEXT	
-sdresp . . . . . . . . . . . . .	L Near	 F6BC	  _TEXT	
-sdrms  . . . . . . . . . . . . .	L Near	 F6FF	  _TEXT	
-sdsb . . . . . . . . . . . . . .	L Near	 F627	  _TEXT	
-sdvblk1  . . . . . . . . . . . .	L Near	 F6A5	  _TEXT	
-sdvblk . . . . . . . . . . . . .	L Near	 F6A2	  _TEXT	
-sdverify . . . . . . . . . . . .	L Near	 F6CA	  _TEXT	
-sdw1s1 . . . . . . . . . . . . .	L Near	 F78E	  _TEXT	
-sdw1s  . . . . . . . . . . . . .	L Near	 F756	  _TEXT	
-sdwms  . . . . . . . . . . . . .	L Near	 F777	  _TEXT	
-sdwrite  . . . . . . . . . . . .	L Near	 F74A	  _TEXT	
-sdwwait1 . . . . . . . . . . . .	L Near	 F7BE	  _TEXT	
-sdwwait  . . . . . . . . . . . .	L Near	 F7A7	  _TEXT	
-send1c . . . . . . . . . . . . .	L Near	 F2B3	  _TEXT	
-send2c . . . . . . . . . . . . .	L Near	 F2AC	  _TEXT	
-setscaling . . . . . . . . . . .	L Near	 F2FE	  _TEXT	
-srecb  . . . . . . . . . . . . .	L Near	 F551	  _TEXT	
-srstb  . . . . . . . . . . . . .	L Near	 F559	  _TEXT	
+sdcmd1 . . . . . . . . . . . . .	L Near	 F6EB	  _TEXT	
+sdcmd8T  . . . . . . . . . . . .	L Near	 F6D5	  _TEXT	
+sdcmd  . . . . . . . . . . . . .	L Near	 F6D8	  _TEXT	
+sdr11  . . . . . . . . . . . . .	L Near	 F760	  _TEXT	
+sdr1s  . . . . . . . . . . . . .	L Near	 F700	  _TEXT	
+sdr1 . . . . . . . . . . . . . .	L Near	 F761	  _TEXT	
+sdr2 . . . . . . . . . . . . . .	L Near	 F757	  _TEXT	
+sdr3 . . . . . . . . . . . . . .	L Near	 F74A	  _TEXT	
+sdrb . . . . . . . . . . . . . .	L Near	 F647	  _TEXT	
+sdread1  . . . . . . . . . . . .	L Near	 F6F4	  _TEXT	
+sdread . . . . . . . . . . . . .	L Near	 F6F1	  _TEXT	
+sdresp1  . . . . . . . . . . . .	L Near	 F6E0	  _TEXT	
+sdresp . . . . . . . . . . . . .	L Near	 F6DE	  _TEXT	
+sdrms  . . . . . . . . . . . . .	L Near	 F721	  _TEXT	
+sdsb . . . . . . . . . . . . . .	L Near	 F649	  _TEXT	
+sdvblk1  . . . . . . . . . . . .	L Near	 F6C7	  _TEXT	
+sdvblk . . . . . . . . . . . . .	L Near	 F6C4	  _TEXT	
+sdverify . . . . . . . . . . . .	L Near	 F6EC	  _TEXT	
+sdw1s1 . . . . . . . . . . . . .	L Near	 F7B0	  _TEXT	
+sdw1s  . . . . . . . . . . . . .	L Near	 F778	  _TEXT	
+sdwms  . . . . . . . . . . . . .	L Near	 F799	  _TEXT	
+sdwrite  . . . . . . . . . . . .	L Near	 F76C	  _TEXT	
+sdwwait1 . . . . . . . . . . . .	L Near	 F7E0	  _TEXT	
+sdwwait  . . . . . . . . . . . .	L Near	 F7C9	  _TEXT	
+send1c . . . . . . . . . . . . .	L Near	 F2AF	  _TEXT	
+send2c . . . . . . . . . . . . .	L Near	 F2A8	  _TEXT	
+setscaling . . . . . . . . . . .	L Near	 F2FA	  _TEXT	
+srecb  . . . . . . . . . . . . .	L Near	 F573	  _TEXT	
+srstb  . . . . . . . . . . . . .	L Near	 F57B	  _TEXT	
 staticfunctable  . . . . . . . .	Byte	 EDE8	  _TEXT	
-ten  . . . . . . . . . . . . . .	Word	 F616	  _TEXT	
+ten  . . . . . . . . . . . . . .	Word	 F638	  _TEXT	
 vidtbl . . . . . . . . . . . . .	Word	 EDF8	  _TEXT	
 warmboot . . . . . . . . . . . .	L Near	 E05B	  _TEXT	
 wbusy  . . . . . . . . . . . . .	L Near	 F206	  _TEXT	

@@ -3068,9 +3068,10 @@ errexit:
 		stc                 ; error
 exitok:        
 		pushf               ; save CF
-		in      al, 0a1h
-		and     al, not 10h     
-		out     0a1h, al    ; enable mouse interrupts
+		push    ax
+		call    enablemouseinterrupt
+		pop     ax
+
 		call    enableKbIfPresent
 		popf
 		pop     dx
@@ -3082,9 +3083,9 @@ mouse_present:
 		cmp     al, 7
 		ja      short errexit
 		push    ax
-		in      al, 0a1h
-		or      al, 10h     
-		out     0a1h, al    ; disable mouse interrupts
+
+		call    disablemouseinterrupt
+
 		sti                 ; allow interrupts for a short time, to flush possible pending KB/mouse requests
 		mov     al, 0adh
 		out     64h, al     ; disable kb interface
@@ -3200,6 +3201,29 @@ setscaling:
 		mov     ah, 0e5h    ; set scaling 1:1 or 2:1
 		add     ah, bh
 		jmp     short send1c
+
+enablemouseinterrupt:
+		mov     al, 20h
+		out     064h, al
+		in      al, 060h    ; read 8042 config byte
+		or      al, 02h     ; set enable mouse interrupt
+		mov     ah, al
+		mov     al, 60h
+		out     064h, al
+		mov     al, ah
+		out     060h, al    ; send 8042 config byte
+		ret
+disablemouseinterrupt:
+		mov     al, 20h
+		out     064h, al
+		in      al, 060h    ; read 8042 config byte
+		and     al, 0fdh     ; set disable mouse interrupt
+		mov     ah, al
+		mov     al, 60h
+		out     064h, al
+		mov     al, ah
+		out     060h, al    ; send 8042 config byte
+		ret
 
 sample_tbl  db  10, 20, 40, 60, 80, 100, 200
 SysParams   db  8, 0, 0fch, 0, 0

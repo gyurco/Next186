@@ -73,11 +73,13 @@ assign dout = A ? (slave ? {3'b000, IMR[3], 3'b000, IMR[2]} : {3'b000, IMR[4], 2
             RIS ? (slave ? {3'b000, ISR[3], 3'b000, ISR[2]} : {3'b000, ISR[4], 2'b00, ISR[1:0]}) :
 			      (slave ? {3'b000, IRR[3], 3'b000, IRR[2]} : {3'b000, IRR[4], 2'b00, IRR[1:0]});
 
-assign ivect = IRR[0] ? 8'h08 :
-               IRR[1] ? 8'h09 :
-               IRR[2] ? 8'h70 :
-               IRR[3] ? 8'h74 :
-               IRR[4] ? 8'h0c : 8'h00;
+wire [4:0] IRQ = IRR & ~IMR;
+
+assign ivect = IRQ[0] ? 8'h08 :
+               IRQ[1] ? 8'h09 :
+               IRQ[2] ? 8'h70 :
+               IRQ[3] ? 8'h74 :
+               IRQ[4] ? 8'h0c : 8'h00;
 
 always @ (posedge clk) begin
 	if (RST) begin
@@ -92,34 +94,34 @@ always @ (posedge clk) begin
 	end else begin
 		ss_I <= I;
 		s_I <= ss_I;
-		IRR <= (IRR | (~s_I & ss_I)) & ~IMR;	// front edge detection
+		IRR <= (IRR | (~s_I & ss_I));	// front edge detection
 		if(~INT) begin
-			if(IRR[0] && !ISR[0]) begin //timer
+			if(IRQ[0] && !ISR[0]) begin //timer
 				INT <= 1'b1; 
-			end	else if(IRR[1] && ISR[1:0] == 0) begin  // keyboard
+			end else if(IRQ[1] && ISR[1:0] == 0) begin  // keyboard
 				INT <= 1'b1; 
-			end else if(IRR[2] && ISR[2:0] == 0) begin  // RTC
+			end else if(IRQ[2] && ISR[2:0] == 0) begin  // RTC
 				INT <= 1'b1; 
-			end else if(IRR[3] && ISR[3:0] == 0) begin // mouse
+			end else if(IRQ[3] && ISR[3:0] == 0) begin // mouse
 				INT <= 1'b1; 
-			end else if(IRR[4] && ISR[4:0] == 0) begin // COM1
+			end else if(IRQ[4] && ISR[4:0] == 0) begin // COM1
 				INT <= 1'b1;
 			end
 		end else if(IACK) begin
 			INT <= 1'b0;
-			if (IRR[0]) begin
+			if (IRQ[0]) begin
 				IRR[0] <= 0;
 				ISR[0] <= !AEOI;
-			end else if (IRR[1]) begin
+			end else if (IRQ[1]) begin
 				IRR[1] <= 0;
 				ISR[1] <= !AEOI;
-			end else if (IRR[2]) begin
+			end else if (IRQ[2]) begin
 				IRR[2] <= 0;
 				ISR[2] <= !AEOI;
-			end else if (IRR[3]) begin
+			end else if (IRQ[3]) begin
 				IRR[3] <= 0;
 				ISR[3] <= !AEOI;
-			end else if (IRR[4]) begin
+			end else if (IRQ[4]) begin
 				IRR[4] <= 0;
 				ISR[4] <= !AEOI;
 			end
