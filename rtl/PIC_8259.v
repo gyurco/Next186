@@ -58,18 +58,25 @@ module PIC_8259(
 	input clk,		// cpu CLK
 	output reg INT = 0,
 	input IACK,
-	input [4:0]I	// 0:timer, 1:keyboard, 2:RTC, 3:mouse, 4:COM1
+	input [4:0]I,	// 0:timer, 1:keyboard, 2:RTC, 3:mouse, 4:COM1
+	output reg dbg_slave,
+	output reg dbg_a,
+	output reg dbg_wr,
+	output reg [7:0] dbg_din
 );
 
 reg [4:0]ss_I = 0;
 reg [4:0]s_I = 0;
-reg [4:0]IMR = 5'b11111;
+reg [7:0]IMR_m = 8'hFF;
+reg [7:0]IMR_s = 8'hFF;
 reg [4:0]IRR = 0;
 reg [4:0]ISR = 0;
 reg      RIS; // Read ISR
 reg      AEOI;
 
-assign dout = A ? (slave ? {3'b000, IMR[3], 3'b000, IMR[2]} : {3'b000, IMR[4], 2'b00, IMR[1:0]}) :
+wire [4:0]IMR = {IMR_m[4],IMR_s[4],IMR_s[0],IMR_m[1:0]};
+
+assign dout = A ? (slave ? IMR_s : IMR_m) :
             RIS ? (slave ? {3'b000, ISR[3], 3'b000, ISR[2]} : {3'b000, ISR[4], 2'b00, ISR[1:0]}) :
 			      (slave ? {3'b000, IRR[3], 3'b000, IRR[2]} : {3'b000, IRR[4], 2'b00, IRR[1:0]});
 
@@ -85,7 +92,8 @@ always @ (posedge clk) begin
 	if (RST) begin
 		ss_I <= 0;
 		s_I <= 0;
-		IMR <= 5'b11111;
+		IMR_m <= 8'hFF;
+		IMR_s <= 8'hFF;
 		IRR <= 0;
 		ISR <= 0;
 		INT <= 0;
@@ -126,7 +134,13 @@ always @ (posedge clk) begin
 				ISR[4] <= !AEOI;
 			end
 		end
+		if(CS) begin
+			dbg_a <= A;
+			dbg_wr <= WR;
+			dbg_slave <= slave;
+		end
 		if(CS & WR) begin
+			dbg_din <= din;
 			if (!A) begin
 				if (!din[4]) begin
 					// OCW
@@ -149,8 +163,7 @@ always @ (posedge clk) begin
 				end
 			end else begin
 				// OCW1
-				if(slave) IMR[3:2] <= {din[4], din[0]};
-				else {IMR[4], IMR[1:0]} <= {din[4], din[1:0]};
+				if(slave) IMR_s <= din; else IMR_m <= din;
 			end
 		end
 	end
