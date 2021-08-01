@@ -785,7 +785,7 @@ module system (
 	wire rx_empty, tx_full;
 	reg mpu_read_ack;
 	reg mpu_dumb;
-	wire mpu_cs = MPU_PORT & ~PORT_ADDR[0] & ((!WR & ~mpu_read_ack) | WR) & (mpu_dumb ? (IORQ && CPU_CE):1'b1 );
+	wire mpu_cs = MPU_PORT & IORQ & CPU_CE & ~PORT_ADDR[0] & ((!WR & ~mpu_read_ack) | WR);
 
 	gh_uart_16550 #(1'b1) mpu_uart
 	(
@@ -976,7 +976,8 @@ module system (
 				end
 			end
 			else if(!WR) begin
-				mpu_data <= mpu_read_ack ? 8'hFE : mpu_uart_data;
+				// We never read MIDI IN so ACK any command requests even ones not supported.
+				mpu_data <= 8'hFE;
 				mpu_read_ack <= 0;
 			end
 		end
