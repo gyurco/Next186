@@ -1368,13 +1368,13 @@ setmode:
 		mov     bx, 0b800h  ; segment
 		mov     cx, 4000h   ; video len/2
 		mov     si, 0720h   ; clear value
-		mov		di, 08f14h  ; 400lines, 14h offset
+		mov		di, 0c814h  ; 200lines, 14h offset
 		mov		word ptr PalOffset, offset PalVGA
 		jmp     setmode2
 setmode1:
 		cmp		al,	0dh*2
 		jne		short setmode12
-		mov		di, 08f14h	; 400 lines, 14h offset
+		mov		di, 0c814h	; 200 lines, 14h offset
 		mov		ah, 11h		; graphic, 640x480x16, half -> 320x200x16
 		mov     word ptr ScreenWidth, 40
 		mov     word ptr RegenLength, 2000h
@@ -1384,7 +1384,7 @@ setmode12:
 		cmp		al, 0eh*2	; 640x200x16
 		jne		short setmode122
 		mov		word ptr PalOffset, offset PalEGA
-		mov		di, 8f28h	; 400lines, 28h offset
+		mov		di, 0c828h	; 200lines, 28h offset
 setmode1221:
 		mov		ah, 1		; graphic, 640x400
 		mov     word ptr ScreenWidth, 80
@@ -1416,7 +1416,7 @@ setmode13:
 		mov     ah, 41h     ; graphic mode, 320x200, 256 colors
 		mov     word ptr ScreenWidth, 40
 		mov     word ptr RegenLength, 0000h
-		mov		di, 08f28h	; 400 lines, 28h offset
+		mov		di, 0c828h	; 400 lines, 28h offset
 		mov		word ptr PalOffset, offset Pal256
 		jmp     short setmode21
 setmode3:
@@ -1451,12 +1451,18 @@ setmode2:
 		mov		ah, al
 		mov		al, 13h
 		out		dx, ax		; set offset
-        mov     ax, 1207h   ; lcr8, vde8
-        out     dx, ax
-        pop		ax			;	mov     ax, 4009h   ; lcr9
-        out     dx, ax
-        mov     ax, 0ff18h  ; lcr7..0
-        out     dx,ax
+
+		pop     ax          ; mov     ax, 4009h   ; lcr9
+		out     dx, ax
+		shl     ah, 1       ; repln(not the real one, but bit 0 is (ab)used for this purpose in this BIOS) -> vde8
+		not     ah
+		and     ah, 02h
+		or      ah, 10h     ; lcr8
+		mov     al, 07h;
+		;mov     ax, 1207h   ; lcr8, vde8
+		out     dx, ax
+		mov     ax, 0ff18h  ; lcr7..0
+		out     dx,ax
 		xor     ax, ax
 		mov     di, offset CursorPos
 		mov     cx, 8

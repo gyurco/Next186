@@ -375,7 +375,7 @@ module system (
 	wire ppm; 			// pixel panning mode
 	wire [9:0]lcr; 		// line compare register
 	wire [9:0]vde;		// vertical display end
-	wire sdon = s_displ_on[17+vgatext[1]] & (vcount <= vde);
+	wire sdon = s_displ_on[17+vgatext[1]] & (vcount <= (vde << replnreq));
 
 // Com interface
 	reg [1:0]ComSel = 2'b00; // 00:COM1=RS232_DCE, 01: COM1=RS232_EXT, 1x: COM1=RS232_HOST
