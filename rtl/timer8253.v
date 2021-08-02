@@ -195,22 +195,22 @@ module counter(
 						if(c1) mode[6] <= 1;
 					end
 				3'b010, 3'b110: begin
-					mode[6] <= ~c2;
-					if(c1 | newcmd) begin
-						if (!newcmd | newdata) begin
+					mode[6] <= ~c2 | ~gate;
+					if(c1 | newcmd | gate_r) begin
+						if (!newcmd | newdata | gate_r) begin
 							newcmd <= 0;
 							count <= init;
 						end
-					end else count <= count - 1'd1;
+					end else if (gate) count <= count - 1'd1;
 				end
 				3'b011, 3'b111:
-					if(c1 | c2 | newcmd) begin
-						mode[6] <= {~mode[6] | newcmd};
-						if (!newcmd | newdata) begin
+					if(c1 | c2 | newcmd | gate_r) begin
+						mode[6] <= {~mode[6] | newcmd | ~gate};
+						if (!newcmd | newdata | gate_r) begin
 							newcmd <= 0;
 							count <= {init[15:1], (~mode[6] | newcmd) & init[0]};
 						end
-					end else count <= count - 2'd2;
+					end else if (gate) count <= count - 2'd2; else mode[6] <= 1;
 				3'b100:
 					if (newdata) begin
 						newcmd <= 0;
