@@ -527,7 +527,6 @@ module system (
 		 .color(DAC_COLOR),
 		 .vgatext(vgatextreq),
 		 .vga13(vga13req),
-		 .half(halfreq),
 		 .vgaflash(vgaflash),
 		 .setindex(INPUT_STATUS_OE && IORQ && CPU_CE),
 		 .hrzpan(vga_hrzpan_req),
@@ -565,6 +564,7 @@ module system (
 		.dout(VGA_SC_DATA),
 		.addr(PORT_ADDR[0]),
 		.CLK(clk_cpu),
+		.half(halfreq),
 		.planarreq(planarreq),
 		.wplane(vga_wplane)
     );

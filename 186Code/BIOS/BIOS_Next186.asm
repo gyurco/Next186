@@ -1503,6 +1503,10 @@ setmode4:
 		out 	dx, al
 		mov		al, 0
 		out		dx, al		; 0 pan
+		mov     dx, 3c4h    ; SC
+		mov     al, 01h
+		shr     ah, 1       ; set half dot clock
+		out     dx, ax
 
 		mov     ax, 1114h
 		int     10h         ; set 8x16 ROM font

@@ -156,7 +156,6 @@ module VGA_DAC(
 	 output reg vgatext = 1'b1,
 	 output reg vga13 = 1'b1,
 	 output reg vgaflash = 0,
-	 output reg half = 0,
 	 output reg [3:0]hrzpan = 0,
 	 output reg ppm = 0, // pixel panning mode
 	 input [3:0]ega_attr,
@@ -215,7 +214,7 @@ module VGA_DAC(
 					if(a0data) begin
 						if(!a0index[4]) egapal[a0index[3:0]] <= din[5:0];
 						else case(a0index[3:0]) 
-							4'h0: {p54s, vga13, ppm, half, vgaflash, vgatext} <= {din[7:3], ~din[0]};
+							4'h0: {p54s, vga13, ppm, vgaflash, vgatext} <= {din[7:5], din[3], ~din[0]};
 							4'h3: hrzpan <= din[3:0];
 							4'h4: colsel <= din[3:0];
 						endcase 
@@ -254,41 +253,48 @@ module VGA_CRT(
 	 output reg [7:0]offset = 8'h28,
 	 output reg [9:0]lcr = 10'h3ff, // line compare register
 	 output reg repln = 1'b0,		// line repeat count - 1 for graphics mode only
-	 output reg [9:0]vde = 10'h18f	// last display visible scan line (i.e. 399 in text mode)
+	 output reg [9:0]vde = 10'h0c7, // last display visible scan line (i.e. 199 in text mode)
+	 output reg [7:0]htotal,
+	 output reg [7:0]hde,
+	 output reg [7:0]hblank_start,
+	 output reg [7:0]hblank_end
     );
 	
 	initial offset = 8'h28;
 	initial lcr = 10'h3ff;
-	initial vde = 10'h18f;	// 400 lines
+	initial vde = 10'h0c7;	// 200 lines
 	
 	reg [4:0]idx_buf = 0;
-	reg [7:0]store[5'h18:0];
+	reg [7:0]regs[5'h18:0];
 	wire [4:0]index = addr ? idx_buf : din[4:0];
 	wire [7:0]data = addr ? din[7:0] : din[15:8];
 	reg [7:0]dout1;
 	assign dout = addr ? dout1 : {3'b000, idx_buf};
-	 
+
+	always @(*) begin
+		htotal = regs[5'h0];
+		hde = regs[5'h1];
+		hblank_start = regs[5'h2];
+		hblank_end = regs[5'h3];
+		//vtotal = {store[5'h7][5], store[5'h7][0], store[5'h6]};
+		vde = {regs[5'h7][6], regs[5'h7][1], regs[5'h12]};
+		lcr = {regs[5'h9][6], regs[5'h7][4], regs[5'h18]};
+		repln = regs[5'h9][0] | regs[5'h9][7];
+		{oncursor, cursorstart} = regs[5'ha][5:0];
+		cursorend = regs[5'hb][4:0];
+		cursorpos = {regs[5'he][3:0], regs[5'hf]};
+		scraddr = {regs[5'hc], regs[5'hd]};
+		offset = regs[5'h13];
+	end
+
 	always @(posedge CLK) begin
 		if(CE && WR) begin
 			if(!addr) idx_buf <= din[4:0];
 			if(addr || WORD) begin
-				store[index] <= data;
-				case(index)
-					5'h7: {vde[9:8], lcr[8]} <= {data[6], data[1], data[4]};
-					5'h9: {lcr[9], repln} <= {data[6], data[0] | data[7]};
-					5'ha: {oncursor, cursorstart} <= data[5:0];
-					5'hb: cursorend <= data[4:0];
-					5'hc: scraddr[15:8] <= data;
-					5'hd: scraddr[7:0] <= data;
-					5'he: cursorpos[11:8] <= data[3:0];
-					5'hf: cursorpos[7:0] <= data;
-					5'h12: vde[7:0] <= data;
-					5'h13: offset <= data;
-					5'h18: lcr[7:0] <= data;
-				endcase
+				regs[index] <= data;
 			end
 		end
-		dout1 <= store[idx_buf];
+		dout1 <= regs[idx_buf];
 	end
 endmodule
 
@@ -301,22 +307,29 @@ module VGA_SC(
 	 output [7:0]dout,
 	 input addr,
 	 input CLK,
+	 output reg half,
 	 output reg planarreq,
 	 output reg[3:0]wplane
     );
 	
 	reg [2:0]idx_buf = 0;
+	reg [7:0]regs[4:0];
 	wire [2:0]index = addr ? idx_buf : din[2:0];
 	wire [7:0]data = addr ? din[7:0] : din[15:8];
 	reg [7:0]dout1;
 	assign dout = addr ? dout1 : {5'b00000, idx_buf};
-	 
+
+	always @(*) begin
+		half = regs[1][3];
+		wplane = regs[2][3:0];
+		planarreq = ~regs[4][3];
+	end
+
 	always @(posedge CLK) begin 
 		if(CE && WR) begin
 			if(!addr) idx_buf <= din[2:0];
 			if(addr || WORD) begin
-				if(index == 2) wplane <= data[3:0];
-				if(index == 4) planarreq <= ~data[3];
+				regs[index] <= data;
 			end
 		end
 		dout1 <= {4'b0000, idx_buf == 2 ? wplane : {~planarreq, 3'b000}};
