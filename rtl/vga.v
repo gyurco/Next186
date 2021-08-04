@@ -266,6 +266,7 @@ module VGA_CRT(
 	
 	reg [4:0]idx_buf = 0;
 	reg [7:0]regs[5'h18:0];
+	reg protect = 0;
 	wire [4:0]index = addr ? idx_buf : din[4:0];
 	wire [7:0]data = addr ? din[7:0] : din[15:8];
 	reg [7:0]dout1;
@@ -284,6 +285,7 @@ module VGA_CRT(
 		cursorend = regs[5'hb][4:0];
 		cursorpos = {regs[5'he][3:0], regs[5'hf]};
 		scraddr = {regs[5'hc], regs[5'hd]};
+		protect = regs[5'h11][7];
 		offset = regs[5'h13];
 	end
 
@@ -291,7 +293,10 @@ module VGA_CRT(
 		if(CE && WR) begin
 			if(!addr) idx_buf <= din[4:0];
 			if(addr || WORD) begin
-				regs[index] <= data;
+				if (!protect || index > 5'h7)
+					regs[index] <= data;
+				else if (index == 5'h7)
+					regs[5'h7][4] <= data[4]; // LCR bit 8 is not protected
 			end
 		end
 		dout1 <= regs[idx_buf];

@@ -1337,6 +1337,9 @@ setmode:
 		ror     byte ptr EgaMiscInfo, 1
 
 		push	ax
+		mov     dx,3d4h
+		mov     ax,0011h   ; unset register protect
+		out     dx,ax
 		mov		dx, 3c4h
 		mov		ax, 0f02h
 		out		dx, ax		; enable all write planes
@@ -1525,6 +1528,10 @@ setmode4:
 		mov		bx, 0001h		; select page0
 		int		10h
 setmodeexit:
+		mov     dx,3d4h
+		mov     ax,8011h   ; set register protect
+		out     dx,ax
+
 		pop     es
 		popa
 nullproc:
