@@ -51,71 +51,64 @@
 
 module soundwave(
 		input CLK,
-		input CLK44100x256,
+		input clk_en,
 		input [15:0]data,
 		input we,
 		input word,
 		input speaker,
 		input [15:0]opl3left,
 		input [15:0]opl3right,
-		output stb44100,
 		output full,	// when not full, write max 2x1152 16bit samples
 		output dss_full,
 		output reg AUDIO_L,
 		output reg AUDIO_R
 	);
 
-	 reg [31:0]wdata;
-	 reg lr = 1'b0;
-	 reg [2:0]write = 3'b000;
-	 wire qempty;
-	 wire [31:0]sample;
-	 wire [31:0]sample1 = qempty ? 32'hc000c000 : sample;
-	 reg [31:0]lval = 0; 
-	 reg [31:0]rval = 0;
-	 reg [8:0]clkdiv = 0;
-	 reg [15:0]r_opl3left = 0;
-	 reg [15:0]r_opl3right = 0;
-	 wire [16:0]lmix = {sample1[15], sample1[15:0]} + {r_opl3left[15], r_opl3left} + (speaker << `SPKVOL); // signed mixer left
-	 wire [16:0]rmix = {sample1[31], sample1[31:16]} + {r_opl3right[15], r_opl3right} + (speaker << `SPKVOL); // signed mixer right
-	 wire [15:0]lclamp = (~|lmix[16:15] | &lmix[16:15]) ? {!lmix[15], lmix[14:0]} : {16{!lmix[16]}}; // clamp to [-32768..32767] and add 32878
-	 wire [15:0]rclamp = (~|rmix[16:15] | &rmix[16:15]) ? {!rmix[15], rmix[14:0]} : {16{!rmix[16]}};
-	 wire lsign = lval[31:16] < lclamp;
-	 wire rsign = rval[31:16] < rclamp;
-	 wire [11:0]wrusedw;
-	 wire [11:0]rdusedw;
-	 assign full = wrusedw >= 12'd2940;
-	 assign dss_full = rdusedw > 12'd90;	// Disney sound source queue full
-	 assign stb44100 = clkdiv[8];
+	reg [31:0]wdata;
+	reg lr = 1'b0;
+	reg [2:0]write = 3'b000;
+	wire qempty;
+	wire [31:0]sample;
+	wire [31:0]sample1 = qempty ? 32'hc000c000 : sample;
+	reg [31:0]lval = 0; 
+	reg [31:0]rval = 0;
+	reg [15:0]r_opl3left = 0;
+	reg [15:0]r_opl3right = 0;
+	wire [16:0]lmix = {sample1[15], sample1[15:0]} + {r_opl3left[15], r_opl3left} + (speaker << `SPKVOL); // signed mixer left
+	wire [16:0]rmix = {sample1[31], sample1[31:16]} + {r_opl3right[15], r_opl3right} + (speaker << `SPKVOL); // signed mixer right
+	wire [15:0]lclamp = (~|lmix[16:15] | &lmix[16:15]) ? {!lmix[15], lmix[14:0]} : {16{!lmix[16]}}; // clamp to [-32768..32767] and add 32878
+	wire [15:0]rclamp = (~|rmix[16:15] | &rmix[16:15]) ? {!rmix[15], rmix[14:0]} : {16{!rmix[16]}};
+	wire lsign = lval[31:16] < lclamp;
+	wire rsign = rval[31:16] < rclamp;
+	wire [11:0]wrusedw;
+	wire [11:0]rdusedw;
+	assign full = wrusedw >= 12'd2940;
+	assign dss_full = rdusedw > 12'd90;	// Disney sound source queue full
 	 
-	 sndfifo sndfifo_inst 
-	 (
-	  .wrclk(CLK), // input wr_clk
-	  .rdclk(CLK44100x256), // input rd_clk
-	  .data(wdata), // input [31 : 0] din
-	  .wrreq(|write), // input wr_en
-	  .rdreq(clkdiv[8]), // input rd_en
-	  .q(sample), // output [31 : 0] dout
-	  .wrusedw(wrusedw),
-	  .rdusedw(rdusedw),
-	  .rdempty(qempty) // output empty
+	sndfifo sndfifo_inst 
+	(
+		.wrclk(CLK), // input wr_clk
+		.rdclk(CLK), // input rd_clk
+		.data(wdata), // input [31 : 0] din
+		.wrreq(|write), // input wr_en
+		.rdreq(clk_en), // input rd_en
+		.q(sample), // output [31 : 0] dout
+		.wrusedw(wrusedw),
+		.rdusedw(rdusedw),
+		.rdempty(qempty) // output empty
 	);
-	 
 
-	 always @(posedge CLK44100x256) begin
-		clkdiv[8:0] <= clkdiv[7:0] + 1'b1;
-		if(clkdiv[8]) begin
-	       r_opl3left <= opl3left;
-           r_opl3right <= opl3right;
-		end
-		
+
+	always @(posedge CLK) begin
+		r_opl3left <= opl3left;
+		r_opl3right <= opl3right;
+
 		lval <= lval - lval[31:7] + (lsign << 25);
 		AUDIO_L <= lsign;
 
 		rval <= rval - rval[31:7] + (rsign << 25);
 		AUDIO_R <= rsign;
-	 end
-
+	end
 
 	always @(posedge CLK) begin
 		if(we) 

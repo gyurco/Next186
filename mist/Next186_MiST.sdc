@@ -36,7 +36,7 @@ set sdram_clk "dcm_system|altpll_component|auto_generated|pll1|clk[2]"
 set mem_clk   "dcm_system|altpll_component|auto_generated|pll1|clk[1]"
 set sys_clk   "dcm_system|altpll_component|auto_generated|pll1|clk[0]"
 
-set snd_clk   "dcm_misc|altpll_component|auto_generated|pll1|clk[0]"
+set snd_clk   "dcm_cpu_inst|altpll_component|auto_generated|pll1|clk[0]"
 set uart_clk  "dcm_misc|altpll_component|auto_generated|pll1|clk[1]"
 
 set cpu_clk   "dcm_cpu_inst|altpll_component|auto_generated|pll1|clk[0]"
@@ -55,9 +55,6 @@ set_multicycle_path -from [get_registers {sys_inst|CPUUnit|cpu*}] -to [get_regis
 set_output_delay -clock [get_clocks $sys_clk] -max 0 [get_ports {VGA_*}]
 set_output_delay -clock [get_clocks $sys_clk] -min -5 [get_ports {VGA_*}]
 
-set_multicycle_path -to {VGA_*[*]} -setup 2
-set_multicycle_path -to {VGA_*[*]} -hold 1
-
 # SDRAM delays
 set_input_delay -clock [get_clocks $sdram_clk] -reference_pin [get_ports {SDRAM_CLK}] -max 6.4 [get_ports SDRAM_DQ[*]]
 set_input_delay -clock [get_clocks $sdram_clk] -reference_pin [get_ports {SDRAM_CLK}] -min 3.5 [get_ports SDRAM_DQ[*]]
@@ -67,8 +64,6 @@ set_output_delay -clock [get_clocks $sdram_clk] -reference_pin [get_ports {SDRAM
 
 set_false_path -from [get_clocks $uart_clk] -to [get_clocks $cpu_clk]
 set_false_path -from [get_clocks $cpu_clk] -to [get_clocks $uart_clk]
-set_false_path -from [get_clocks $snd_clk] -to [get_clocks $cpu_clk]
-set_false_path -from [get_clocks $cpu_clk] -to [get_clocks $snd_clk]
 set_false_path -from [get_clocks $cpu_clk] -to [get_clocks $mem_clk]
 set_false_path -from [get_clocks $dsp_clk] -to [get_clocks $mem_clk]
 

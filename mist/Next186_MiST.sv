@@ -42,24 +42,26 @@ module Next186_MiST
 
 parameter CONF_STR = {
 	"NEXT186;;",
-	"O12,CPU Speed,Maximum,/2,/3,/4;",
-	"O4,Swap Joysticks,Off,On;",
-	"O5,MIDI,MPU401,COM1;",
-	"T3,NMI;",
+	"O23,CPU Speed,Maximum,/2,/3,/4;",
+	"O45,ISA Bus Wait,1us,2us,3us,4us;",
+	"O6,Swap Joysticks,Off,On;",
+	"O7,MIDI,MPU401,COM1;",
+	"T1,NMI;",
 	"T0,Reset;",
 	"V,",`BUILD_DATE
 };
 
-wire  [1:0] cpu_speed = status[2:1];
-wire        btn_nmi = status[3];
-wire        joyswap = status[4];
-wire        midi = ~status[5];
+wire        btn_nmi = status[1];
+wire  [1:0] cpu_speed = status[3:2];
+wire        isawait = status[5:4];
+wire        joyswap = status[6];
+wire        midi = ~status[7];
 
 // core's raw video 
 wire  [5:0] core_r, core_g, core_b;
 wire        core_hs, core_vs;
 
-wire        clk_25, clk_sdr, clk_50, CLK44100x256, CLK14745600;
+wire        clk_25, clk_sdr, clk_50, CLK14745600;
 wire        clk_mpu; //3MHz MIDI, (31250Hz * 32)*3
 wire        clk_sys = clk_25;
 
@@ -75,7 +77,7 @@ dcm dcm_system (
 
 dcm_misc dcm_misc (
 	.inclk0(CLOCK_27),
-	.c0(CLK44100x256),
+	.c0(),
 	.c1(CLK14745600),
 	.c2(clk_mpu)
 );
@@ -370,18 +372,45 @@ assign UART_TX = midi ? mpu_Tx : com1_Tx;
 assign com1_Rx = midi ? 1'b1 : UART_RX;
 assign mpu_Rx = midi ? UART_RX : 1'b1;
 
+reg         cen_opl2; // 3.58MHz
+reg  [15:0] cen_opl2_cnt;
+wire [15:0] cen_opl2_cnt_next = cen_opl2_cnt + 16'd358;
+always @(posedge clk_cpu) begin
+	cen_opl2 <= 0;
+	cen_opl2_cnt <= cen_opl2_cnt_next;
+	if (cen_opl2_cnt_next >= 16'd5000) begin
+		cen_opl2 <= 1;
+		cen_opl2_cnt <= cen_opl2_cnt_next - 16'd5000;
+	end
+end
+
+reg         cen_44100;
+reg  [31:0] cen_44100_cnt;
+wire [31:0] cen_44100_cnt_next = cen_44100_cnt + 16'd44100;
+always @(posedge clk_cpu) begin
+	cen_44100 <= 0;
+	cen_44100_cnt <= cen_44100_cnt_next;
+	if (cen_44100_cnt_next >= 31'd50000000) begin
+		cen_44100 <= 1;
+		cen_44100_cnt <= cen_44100_cnt_next - 31'd50000000;
+	end
+end
+
 system sys_inst (
 	.clk_25(clk_25),
 	.clk_sdr(clk_sdr),
-	.CLK44100x256(CLK44100x256),
 	.CLK14745600(CLK14745600),
-	.clk_50(clk_50),
 	.clk_mpu(clk_mpu),
 
 	.clk_cpu(clk_cpu),
+	.clk_en_opl2(cen_opl2),
+	.clk_en_44100(cen_44100),
 	.clk_dsp(clk_dsp),
 
 	.cpu_speed(cpu_speed),
+	.waitstates(isawait == 0 ? 8'd50 :
+	            isawait == 1 ? 8'd100 :
+	            isawait == 2 ? 8'd166 : 8'd200),
 
 	.VGA_R(core_r),
 	.VGA_G(core_g),

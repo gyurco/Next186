@@ -150,12 +150,15 @@ module system (
 	input  clk_sdr, // SDRAM
 	input  CLK44100x256, // Soundwave
 	input  CLK14745600, // RS232 clk
-	input  clk_50, // OPL3
  	input  clk_mpu, // MPU401 clock 
-
-	input  clk_cpu,
 	input  clk_dsp,
+	input  clk_cpu,
+
+	input  clk_en_opl2,  // OPL2 clock enable (3.58 MHz)
+	input  clk_en_44100, // COVOX/DSS clock enable
+
 	input  [1:0] cpu_speed, // CPU speed control, 0 - maximum
+	input  [7:0] waitstates,  // ISA Bus wait states (for Adlib), in clk_cpu periods
 
 	output [3:0]sdr_n_CS_WE_RAS_CAS,
 	output [1:0]sdr_BA,
@@ -225,6 +228,8 @@ module system (
 	wire [15:0]PORT_ADDR;
 	wire [31:0] DRAM_dout;
 	wire [20:0] ADDR;
+	wire LOCK;
+	wire MREQ;
 	wire IORQ;
 	wire WR;
 	wire INTA;
@@ -246,6 +251,8 @@ module system (
 	wire CPU_CE;	// CPU clock enable
 	wire CE;
 	wire CE_186;
+	wire cache_ce;
+	wire io_ready;
 	wire ddr_rd; 
 	wire ddr_wr;
 	wire TIMER_OE = PORT_ADDR[15:2] == 14'b00000000010000;	//   40h..43h
@@ -268,7 +275,7 @@ module system (
 	wire PARALLEL_PORT_CTL = PORT_ADDR[15:0] == 16'h0379;
 	wire CPU32_PORT = PORT_ADDR[15:1] == (16'h0002 >> 1); // port 1 for data and 3 for instructions
 	wire COM1_PORT = PORT_ADDR[15:3] == (16'h03f8 >> 3);
-	wire OPL3_PORT = PORT_ADDR[15:2] == (16'h0388 >> 2); // 0x388 .. 0x38b
+	wire OPL2_PORT = PORT_ADDR[15:1] == (16'h0388 >> 1); // 0x388 .. 0x389
 	wire NMI_IORQ_PORT = PORT_ADDR[15:1] == (16'h0006 >> 1); // 6, 7
 	wire MPU_PORT = PORT_ADDR[15:1] == (16'h0330 >> 1); // 0x330, 0x331
  	wire [7:0]VGA_DAC_DATA;
@@ -407,7 +414,6 @@ module system (
     wire [7:0]opl32_data;
     wire [15:0]opl3left;
     wire [15:0]opl3right;
-    wire stb44100;
 
 // NMI on IORQ
 	reg [15:0]NMIonIORQ_LO = 16'h0001;
@@ -439,7 +445,7 @@ module system (
 							 ({8{PARALLEL_PORT_CTL}} & {1'bx, dss_full, 6'bxxxxxx}) |
 							 ({8{CPU32_PORT}} & cpu32_data[7:0]) | 
 							 ({8{COM1_PORT}} & COM1_DOUT) | 
-							 ({8{OPL3_PORT}} & opl32_data)  |
+							 ({8{OPL2_PORT}} & opl32_data)  |
 							 ({8{MPU_PORT}} & mpu_data)  ;
 
 
@@ -602,6 +608,8 @@ module system (
 		.q_b(VGA_FONT_DATA) // output [7 : 0] doutb
 	);
 
+	assign CE = cache_ce & io_ready;
+
 	cache_controller cache_ctl 
 	(
 		 .addr({memmap_mux, ADDR[15:0]}),
@@ -610,7 +618,7 @@ module system (
 		 .clk(clk_cpu), 
 		 .mreq(MREQ), 
 		 .wmask(RAM_WMASK),
-		 .ce(CE),
+		 .ce(cache_ce),
 		 .cpu_speed(cpu_speed),
 		 .ddr_din(sys_DOUT), 
 		 .ddr_dout(cntrl0_user_input_data), 
@@ -739,20 +747,19 @@ module system (
 	soundwave sound_gen
 	(
 		.CLK(clk_cpu),
-		.CLK44100x256(CLK44100x256),
+		.clk_en(clk_en_44100),
 		.data(CPU_DOUT),
 		.we(IORQ & CPU_CE & WR & PARALLEL_PORT),
 		.word(WORD),
 		.speaker(timer_spk & speaker_on[1]),
 		.opl3left(opl3left),
 		.opl3right(opl3right),
-		.stb44100(stb44100),
 		.full(sq_full), // when not full, write max 2x1152 16bit samples
 		.dss_full(dss_full),
 		.AUDIO_L(AUD_L),
 		.AUDIO_R(AUD_R)
 	);
-/*
+
 	DSP32 DSP32_inst
 	(
 		.clkcpu(clk_cpu),
@@ -764,7 +771,7 @@ module system (
 		.dout(cpu32_data),
 		.halt(cpu32_halt)
 	);
-*/
+
 	UART_8250 UART(
 		.CLK_18432000(CLK14745600),
 		.RS232_DCE_RXD(RX),
@@ -809,18 +816,40 @@ module system (
 		.RX_Empty(rx_empty)
 	);
 
-    opl3 opl3_inst (
-		.clk(clk_50), // 50Mhz (min 45Mhz)
-		.cpu_clk(clk_cpu),
-		.addr(PORT_ADDR[1:0]),
+    wire signed [15:0] jtopl2_snd;
+    assign opl3left = jtopl2_snd;
+    assign opl3right = jtopl2_snd;
+
+    wire [7:0] jtopl2_dout;
+    assign opl32_data = PORT_ADDR[1:0] == 2'b00 ? {jtopl2_dout[7:5], 5'd0} : 8'd0;
+
+	wire      jtopl2_cs = IORQ & OPL2_PORT & CPU_CE;
+	reg [7:0] jtopl2_ready;
+
+	assign io_ready = jtopl2_ready == 0;
+
+	always @(posedge clk_cpu) begin
+		if (!rstcount[18])
+			jtopl2_ready <= 0;
+		else begin
+			if (jtopl2_cs) jtopl2_ready <= waitstates;
+			if (|jtopl2_ready) jtopl2_ready <= jtopl2_ready - 1'd1;
+		end
+	end
+
+	jtopl2 jtopl2_inst
+	(
+		.rst(!rstcount[18]),
+		.clk(clk_cpu),
+		.cen(clk_en_opl2),
 		.din(CPU_DOUT[7:0]),
-		.dout(opl32_data),
-		.ce(IORQ & CPU_CE & OPL3_PORT),
-		.wr(WR),
-		.left(opl3left),
-		.right(opl3right),
-		.stb44100(stb44100),
-		.reset(!rstcount[18])
+		.dout(jtopl2_dout),
+		.addr(PORT_ADDR[0]),
+		.cs_n(~jtopl2_cs),
+		.wr_n(~WR),
+		.irq_n(),
+		.snd(jtopl2_snd),
+		.sample()
 	);
 
 	i2c_master_byte i2cmb
