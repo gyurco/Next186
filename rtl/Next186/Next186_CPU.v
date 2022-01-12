@@ -64,7 +64,6 @@
 ///////////////////////////////////////////////////////////////////////////////////
 `timescale 1ns / 1ps
 
-// cambios jepalza para unamiga, 2018
 module Next186_CPU(
     output [20:0]ADDR,			// mem address
 	 output [15:0]PORT_ADDR,	// port address
@@ -160,11 +159,13 @@ module Next186_CPU(
 	reg DIVIRQ;
 	reg AAMIRQ;
 	reg RCOUT;
+	reg FFLUSH_REQ = 0;
+	reg FFLUSH = 0;
 
 // signals
 //	assign IORQ = &EAC;
 	assign LOCK = CPUStatus[5];
-	assign FLUSH = ~IPWSEL || (ISIZE == 3'b000);
+	assign FLUSH = FFLUSH || ~IPWSEL || (ISIZE == 3'b000);	
 	assign PORT_ADDR = FETCH[0][3] ? DX : {8'h00, FETCH[1]};
 	wire [15:0]IPADD = ISIZE == 3'b000 ? CRTIP : IP + ISIZE;
 	wire [15:0]IPIN = IPWSEL ? IPADD : ALUOUTA;
@@ -179,6 +180,7 @@ module Next186_CPU(
 	wire [2:0]ISIZES = DISP16 ? 4 : AEXT ? 3 : 2;
 	reg  [2:0]ISIZEW;
 	reg  [2:0]ISIZEI;	// ise imm
+	reg  PUSH_SP;
 	wire [1:0]WRBIT = WR ? 2'b00 : WBIT;
 	wire RCXZ = CPUStatus[4] && ~|CXZ;
 	wire NRORCXLE1 = ~CPUStatus[4] || ~CXZ[1];
@@ -242,7 +244,7 @@ module Next186_CPU(
 
 	Next186_ALU ALU16 (
 	 .RA(DOSEL == 2'b01 ? IPADD : RA), 
-	 .RB(RB),
+	 .RB(PUSH_SP ? RB - 2 : RB), // Same behavior as an 8086/80186 with PUSH SP
 	 .TMP16(TMP16),
 	 .FETCH23({FETCH[3], FETCH[2]}),
 	 .FIN(FLAGS), 
@@ -282,6 +284,7 @@ module Next186_CPU(
 
 	 always @(posedge CLK)
 		if(CE) begin
+			FFLUSH <= FFLUSH_REQ;
 			if(SRST) begin		// reset
 //				FETCH[0] <= 8'h0f;
 				FETCH[0][0] <= 1'b1; // for word=1
@@ -395,6 +398,9 @@ module Next186_CPU(
 		NULLSEG = 1'b0;
 		DIVOP = 1'b0;
 		
+		FFLUSH_REQ = 0;
+		PUSH_SP = 1'b0;
+				
 		case(ICODE1) // one hot synthesis
 // --------------------------------  mov R/M to/from R/SR  --------------------------------
 			0: begin				
@@ -446,6 +452,7 @@ module Next186_CPU(
 				WE[1:0] = WRBIT;		// IP, RASEL_HI/RASEL_LO
 				ISIZE = 3;
 				NOBP = 1'b1;
+				FFLUSH_REQ = 1;
 			end
 // --------------------------------  segment override prefix --------------------------------
 			4: begin	
@@ -593,6 +600,7 @@ module Next186_CPU(
 				ALUOP = 31;				// PASS B
 				WR = 1'b1;
 				ISIZE = 1;
+				PUSH_SP = (FETCH[0][6] && (FETCH[0][2:0] == 3'b100)) ? 1 : 0;
 			end
 // --------------------------------  push Imm --------------------------------
 			9: begin		
@@ -1644,7 +1652,7 @@ module Next186_CPU(
 					endcase
 				end else begin
 					MREQ = 1'b0;
-					ISIZE = 1; // jepalza, antes "0", sirve para engañar a algunos programas que detectan CPU y se cuelgan
+					ISIZE = 0;
 					IRQ = 1'b1;
 				end
 // --------------------------------  SALC --------------------------------
@@ -1830,4 +1838,3 @@ function [5:0]ICODE;
 endfunction
 
 endmodule
-
