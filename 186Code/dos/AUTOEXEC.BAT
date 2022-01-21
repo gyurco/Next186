@@ -6,7 +6,7 @@ MD G:\TMP
 SET WATTCP.CFG=c:
 date 12-9-2016
 rem time
-rem lh ctmouse 
+lh ctmouse
 lh smartdrv
 font
 call slip8250.bat
