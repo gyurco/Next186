@@ -1439,11 +1439,12 @@ setmode2:
 		mov     ActiveVideoMode, al
 		push    ax
 		push    cx
-		and		al, 0bh		
-		cmp		al, 3
-		mov		ax, 4009h	; build the reg 09h data (lcr9 and repln) of VGA port 3d4h
-		sbb		ah, -1		; repln count (1 for graphic modes 0dh, 0eh, 13h)
-		push	ax
+		and     al, 0bh
+		cmp     al, 3
+		mov     ax, 8009h ; build the reg 09h data (lcr9 and repln) of VGA port 3d4h
+		sbb     ah, -1    ; repln count (1 for graphic modes 0dh, 0eh, 13h)
+		ror     ah, 1
+		push    ax
 		push    ds
 		pop     es
 		mov		dx, 3d4h
