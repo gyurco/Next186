@@ -44,8 +44,9 @@ parameter CONF_STR = {
 	"NEXT186;;",
 	"O23,CPU Speed,Maximum,/2,/3,/4;",
 	"O45,ISA Bus Wait,1us,2us,3us,4us;",
-	"O6,Swap Joysticks,Off,On;",
-	"O7,MIDI,MPU401,COM1;",
+	"O6,Fake 286,Off,On;",
+	"O7,Swap Joysticks,Off,On;",
+	"O8,MIDI,MPU401,COM1;",
 	"T1,NMI;",
 	"T0,Reset;",
 	"V,",`BUILD_DATE
@@ -53,9 +54,10 @@ parameter CONF_STR = {
 
 wire        btn_nmi = status[1];
 wire  [1:0] cpu_speed = status[3:2];
-wire        isawait = status[5:4];
-wire        joyswap = status[6];
-wire        midi = ~status[7];
+wire  [1:0] isawait = status[5:4];
+wire        fake286 = status[6];
+wire        joyswap = status[7];
+wire        midi = ~status[8];
 
 // core's raw video 
 wire  [5:0] core_r, core_g, core_b;
@@ -396,6 +398,9 @@ always @(posedge clk_cpu) begin
 	end
 end
 
+reg fake286_r, fake286_r2;
+always @(posedge clk_cpu) { fake286_r, fake286_r2 } <= { fake286, fake286_r };
+
 system sys_inst (
 	.clk_25(clk_25),
 	.clk_sdr(clk_sdr),
@@ -407,6 +412,7 @@ system sys_inst (
 	.clk_en_44100(cen_44100),
 	.clk_dsp(clk_dsp),
 
+	.fake286(fake286_r2),
 	.cpu_speed(cpu_speed),
 	.waitstates(isawait == 0 ? 8'd50 :
 	            isawait == 1 ? 8'd100 :

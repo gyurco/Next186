@@ -70,6 +70,7 @@ module Next186_CPU(
     input [15:0]DIN,		// mem/port data in
     output [15:0]DOUT,	// mem data out
     output [15:0]POUT,	// port data out
+	input FAKE286,
 	 input CLK,
 	 input CE,
 	 input INTR,
@@ -244,7 +245,7 @@ module Next186_CPU(
 
 	Next186_ALU ALU16 (
 	 .RA(DOSEL == 2'b01 ? IPADD : RA), 
-	 .RB(PUSH_SP ? RB - 2 : RB), // Same behavior as an 8086/80186 with PUSH SP
+	 .RB((PUSH_SP & ~FAKE286) ? RB - 2 : RB), // Same behavior as an 8086/80186 with PUSH SP
 	 .TMP16(TMP16),
 	 .FETCH23({FETCH[3], FETCH[2]}),
 	 .FIN(FLAGS), 

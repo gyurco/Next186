@@ -157,6 +157,7 @@ module system (
 	input  clk_en_opl2,  // OPL2 clock enable (3.58 MHz)
 	input  clk_en_44100, // COVOX/DSS clock enable
 
+	input  fake286,
 	input  [1:0] cpu_speed, // CPU speed control, 0 - maximum
 	input  [7:0] waitstates,  // ISA Bus wait states (for Adlib), in clk_cpu periods
 
@@ -679,6 +680,7 @@ module system (
 	wire vga_planar_seg;
 	unit186 CPUUnit
 	(
+		 .FAKE286(fake286),
 		 .INPORT(INTA ? {8'h00, PIC_IVECT} : PORT_IN), 
 		 .DIN(DRAM_dout), 
 		 .CPU_DOUT(CPU_DOUT),

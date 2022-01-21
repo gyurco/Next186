@@ -51,6 +51,9 @@ set_multicycle_path -from [get_registers {sys_inst|CPUUnit|cpu*}] -hold -start 1
 set_multicycle_path -from [get_registers {sys_inst|CPUUnit|cpu*}] -to [get_registers {sys_inst|seg_mapper|*addr*}] -setup -start 1
 set_multicycle_path -from [get_registers {sys_inst|CPUUnit|cpu*}] -to [get_registers {sys_inst|seg_mapper|*addr*}] -hold -start 0
 
+set_multicycle_path -from [get_registers {fake286_r2}] -setup -start 2
+set_multicycle_path -from [get_registers {fake286_r2}] -hold -start 1
+
 # Some relaxed constrain to the VGA pins. The signals should arrive together, the delay is not really important.
 set_output_delay -clock [get_clocks $sys_clk] -max 0 [get_ports {VGA_*}]
 set_output_delay -clock [get_clocks $sys_clk] -min -5 [get_ports {VGA_*}]
