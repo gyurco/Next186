@@ -98,14 +98,13 @@
 		index 10h:
 			bit0 = graphic(1)/text(0)
 			bit3 = text mode flash enabled(1)
-			bit4 = half mode (EGA)
 			bit5 = ppm - pixel panning mode
 			bit6 = vga mode 13h(1)
 			bit7 = P54S - 1 to use color select 5-4 from reg 14h
 		index 13h: bit[3:0] = hrz pan
 		index 14h: bit[3:2] = color select 7-6, bit[1:0] = color select 5-4
 
-03C4, 03C5 (Sequencer registers) - idx2[3:0] = write plane, idx4[3]=0 for planar (rw)
+03C4, 03C5 (Sequencer registers) - idx1[3] = half pixel clock, idx2[3:0] = write plane, idx4[3]=0 for planar (rw)
 
 03C6 - DAC mask (rw)
 03C7 - DAC read index (rw)
