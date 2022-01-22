@@ -38,6 +38,7 @@ set sys_clk   "dcm_system|altpll_component|auto_generated|pll1|clk[0]"
 
 set snd_clk   "dcm_cpu_inst|altpll_component|auto_generated|pll1|clk[0]"
 set uart_clk  "dcm_misc|altpll_component|auto_generated|pll1|clk[1]"
+set mpu_clk   "dcm_misc|altpll_component|auto_generated|pll1|clk[2]"
 
 set cpu_clk   "dcm_cpu_inst|altpll_component|auto_generated|pll1|clk[0]"
 set dsp_clk   "dcm_cpu_inst|altpll_component|auto_generated|pll1|clk[1]"
@@ -45,6 +46,8 @@ set dsp_clk   "dcm_cpu_inst|altpll_component|auto_generated|pll1|clk[1]"
 # Clock groups
 set_clock_groups -asynchronous -group [get_clocks {SPI_SCK}] -group [get_clocks dcm_system|altpll_component|auto_generated|pll1|clk[*]]
 set_clock_groups -asynchronous -group [get_clocks {SPI_SCK}] -group [get_clocks dcm_cpu_inst|altpll_component|auto_generated|pll1|clk[*]]
+
+
 
 set_multicycle_path -from [get_registers {sys_inst|CPUUnit|cpu*}] -setup -start 2
 set_multicycle_path -from [get_registers {sys_inst|CPUUnit|cpu*}] -hold -start 1
@@ -65,10 +68,10 @@ set_input_delay -clock [get_clocks $sdram_clk] -reference_pin [get_ports {SDRAM_
 set_output_delay -clock [get_clocks $sdram_clk] -reference_pin [get_ports {SDRAM_CLK}] -max 1.5 [get_ports {SDRAM_D* SDRAM_A* SDRAM_BA* SDRAM_n* SDRAM_CKE}]
 set_output_delay -clock [get_clocks $sdram_clk] -reference_pin [get_ports {SDRAM_CLK}] -min -0.8 [get_ports {SDRAM_D* SDRAM_A* SDRAM_BA* SDRAM_n* SDRAM_CKE}]
 
-set_false_path -from [get_clocks $uart_clk] -to [get_clocks $cpu_clk]
-set_false_path -from [get_clocks $cpu_clk] -to [get_clocks $uart_clk]
-set_false_path -from [get_clocks $cpu_clk] -to [get_clocks $mem_clk]
-set_false_path -from [get_clocks $dsp_clk] -to [get_clocks $mem_clk]
+set_clock_groups -asynchronous -group [get_clocks $mpu_clk]  -group [get_clocks $cpu_clk]
+set_clock_groups -asynchronous -group [get_clocks $uart_clk] -group [get_clocks $cpu_clk]
+set_clock_groups -asynchronous -group [get_clocks $cpu_clk]  -group [get_clocks $mem_clk]
+set_clock_groups -asynchronous -group [get_clocks $dsp_clk]  -group [get_clocks $mem_clk]
 
 set_false_path -to [get_ports {SDRAM_CLK}]
 set_false_path -to [get_ports {AUDIO_L}]
