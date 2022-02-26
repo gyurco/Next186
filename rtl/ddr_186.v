@@ -383,6 +383,7 @@ module system (
 	wire [9:0]lcr; 		// line compare register
 	wire [9:0]vde;		// vertical display end
 	wire sdon = s_displ_on[17+vgatextreq] & (vcount <= vde);
+	wire vga_in_cache;
 
 // Com interface
 	reg [1:0]ComSel = 2'b00; // 00:COM1=RS232_DCE, 01: COM1=RS232_EXT, 1x: COM1=RS232_HOST
@@ -613,23 +614,27 @@ module system (
 
 	cache_controller cache_ctl 
 	(
-		 .addr({memmap_mux, ADDR[15:0]}),
-		 .dout(DRAM_dout), 
-		 .din(DOUT), 
-		 .clk(clk_cpu), 
-		 .mreq(MREQ), 
-		 .wmask(RAM_WMASK),
-		 .ce(cache_ce),
-		 .cpu_speed(cpu_speed),
-		 .ddr_din(sys_DOUT), 
-		 .ddr_dout(cntrl0_user_input_data), 
-		 .ddr_clk(clk_sdr), 
-		 .ddr_rd(ddr_rd), 
-		 .ddr_wr(ddr_wr),
-		 .hiaddr(cache_hi_addr),
-		 .cache_write_data(crw && sys_rd_data_valid), // read DDR, write to cache
-		 .cache_read_data(crw && sys_wr_data_valid),
-		 .flush(auto_flush == 3'b101) // rising edge of hblank
+		.clk(clk_cpu), 
+		.addr({memmap_mux, ADDR[15:0]}),
+		.dout(DRAM_dout), 
+		.din(DOUT), 
+		.mreq(MREQ), 
+		.wmask(RAM_WMASK),
+		.ce(cache_ce),
+		.cpu_speed(cpu_speed),
+
+		.vga_addr({6'b000001, vga_ddr_row_col + vga_lnbytecount, 2'b00}),
+		.vga_in_cache(vga_in_cache),
+
+		.ddr_clk(clk_sdr), 
+		.ddr_din(sys_DOUT), 
+		.ddr_dout(cntrl0_user_input_data), 
+		.ddr_rd(ddr_rd), 
+		.ddr_wr(ddr_wr),
+		.hiaddr(cache_hi_addr),
+		.cache_write_data(crw && sys_rd_data_valid), // read DDR, write to cache
+		.cache_read_data(crw && sys_wr_data_valid),
+		.flush(1'b0/*auto_flush == 3'b101*/) // rising edge of hblank (Upd: disabled forced flush)
 	);
 
 	wire I_KB;
@@ -869,6 +874,7 @@ module system (
 
 	reg nop;
 	reg fifo_fill = 1;
+	wire fifo_req = fifo_fill & !vga_in_cache;
 	always @ (posedge clk_sdr) begin
 		s_prog_full <= fifo_wr_used_words > 350; // AlmostFull;
 		if(fifo_wr_used_words < 64) s_prog_empty <= 1'b1; //AlmostEmpty;
@@ -884,17 +890,17 @@ module system (
 		nop <= sys_cmd_ack == 2'b00;
 
 		sdraddr <= BIOS_WR ? BIOS_BASE + (BIOS_ADDR >> 1) : 
-		           (fifo_fill & (s_prog_empty || !(s_ddr_wr || s_ddr_rd))) ? {6'b000001, vga_ddr_row_col + vga_lnbytecount} : {cache_hi_addr[18:0], 4'b0000};
+		           (fifo_req & (s_prog_empty || !(s_ddr_wr || s_ddr_rd))) ? {6'b000001, vga_ddr_row_col + vga_lnbytecount} : {cache_hi_addr[18:0], 4'b0000};
 		max_read <= &sdraddr[7:3] ? ~sdraddr[2:0] : 3'b111;	// SDRAM row size = 512 words
 
 		BIOS_data_valid <= BIOS_WR;
 		BIOS_data <= BIOS_DIN;
 
 		if(BIOS_WR) cntrl0_user_command_register <= 2'b01;
-		else if(s_prog_empty & fifo_fill) cntrl0_user_command_register <= 2'b10;	// read 32 bytes VGA
+		else if(s_prog_empty & fifo_req) cntrl0_user_command_register <= 2'b10;	// read 32 bytes VGA
 		else if(s_ddr_wr) cntrl0_user_command_register <= 2'b01;		// write 256 bytes cache
 		else if(s_ddr_rd) cntrl0_user_command_register <= 2'b11;		// read 256 bytes cache
-		else if(~s_prog_full & fifo_fill) cntrl0_user_command_register <= 2'b10;	// read 32 bytes VGA
+		else if(~s_prog_full & fifo_req) cntrl0_user_command_register <= 2'b10;	// read 32 bytes VGA
 		else cntrl0_user_command_register <= 2'b00;
 
 		if(!crw && sys_rd_data_valid) col_counter <= col_counter - 1'b1;
