@@ -42,22 +42,35 @@ module Next186_MiST
 
 parameter CONF_STR = {
 	"NEXT186;;",
-	"O23,CPU Speed,Maximum,/2,/3,/4;",
-	"O45,ISA Bus Wait,1us,2us,3us,4us;",
-	"O6,Fake 286,Off,On;",
-	"O7,Swap Joysticks,Off,On;",
-	"O8,MIDI,MPU401,COM1;",
+	"O24,CPU Speed,Maximum,/2,/3,/4,/8,/16;",
+	"O56,ISA Bus Wait,1us,2us,3us,4us;",
+	"O7,Fake 286,Off,On;",
+	"O8,Swap Joysticks,Off,On;",
+	"O9,MIDI,MPU401,COM1;",
 	"T1,NMI;",
 	"T0,Reset;",
 	"V,",`BUILD_DATE
 };
 
 wire        btn_nmi = status[1];
-wire  [1:0] cpu_speed = status[3:2];
-wire  [1:0] isawait = status[5:4];
-wire        fake286 = status[6];
-wire        joyswap = status[7];
-wire        midi = ~status[8];
+wire  [2:0] speed = status[4:2];
+wire  [1:0] isawait = status[6:5];
+wire        fake286 = status[7];
+wire        joyswap = status[8];
+wire        midi = ~status[9];
+
+reg   [3:0] cpu_speed;
+
+always @(*) begin
+	case (speed)
+		1: cpu_speed = 1; // /2
+		2: cpu_speed = 2; // /3
+		3: cpu_speed = 3; // /4
+		4: cpu_speed = 7; // /8
+		5: cpu_speed = 15;// /16
+		default: cpu_speed = 0;
+	endcase
+end
 
 // core's raw video 
 wire  [5:0] core_r, core_g, core_b;
@@ -323,7 +336,7 @@ end
 reg   [7:0] joy = 8'hFF;
 wire        joy_wr;
 reg   [7:0] joy_cnt = 8'hFF;
-reg   [5:0] joy_cnt_ce_cnt;
+reg   [7:0] joy_cnt_ce_cnt;
 reg         joy_cnt_ce;
 wire [15:0] joy0 = joyswap ? joystick_analog_1: joystick_analog_0;
 wire [15:0] joy1 = joyswap ? joystick_analog_0: joystick_analog_1;
