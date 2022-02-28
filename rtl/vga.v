@@ -342,7 +342,7 @@ module VGA_SC(
 				regs[index] <= data;
 			end
 		end
-		dout1 <= {4'b0000, idx_buf == 2 ? wplane : {~planarreq, 3'b000}};
+		dout1 <= regs[idx_buf];
 	end
 endmodule
 
