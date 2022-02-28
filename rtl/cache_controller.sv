@@ -59,7 +59,7 @@ module cache_controller(
 	output reg ce = 1'b1,	// clock enable for CPU
 	input [3:0] cpu_speed, // 0 - Maximum 1,2,3...15 - divide by 1,2,3...16
 
-	// VGA side
+	// VGA snoop
 	input [`ADDR-1:0] vga_addr,
 	output vga_in_cache,
 
@@ -71,8 +71,7 @@ module cache_controller(
 	input cache_read_data, // 1 when data must be read from cache, on posedge ddr_clk
 	output reg ddr_rd = 0,
 	output reg ddr_wr = 0,
-	output reg [`ADDR-`LINE-1:0]hiaddr,
-	input flush
+	output reg [`ADDR-`LINE-1:0]hiaddr
 	);
 
 	initial ce = 1'b1;
@@ -92,9 +91,6 @@ module cache_controller(
 	wire [`SETS-1:0]index = r_flush ? flushcount[`SETS-1:0] : maddr[`LINE+`SETS-1:`LINE];
 	wire [(1<<`WAYS)-1:0]fit;
 	wire [(1<<`WAYS)-1:0]free;
-
-	wire [(1<<`WAYS)-1:0]vga_fit;
-	wire [`SETS-1:0]vga_index = vga_addr[`LINE+`SETS-1:`LINE];
 	
 	reg [(1<<`WAYS)-1:0]cache_dirty[0:(1<<`SETS)-1] = 
 //		'{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}; // enable bootloader
@@ -126,7 +122,7 @@ module cache_controller(
 			assign free[i] = r_flush ? (flushcount[`WAYS+`SETS-1:`SETS] == i) : ~|cache_lru[i][index];
 			assign lru[i] = {`WAYS{fit[i]}} & cache_lru[i][index];
 
-			assign vga_fit[i] = cache_addr[i][vga_index] == vga_addr[`ADDR-1:`LINE+`SETS];
+			assign vga_fit[i] = cache_addr[i][vga_index] == vga_addr_r[`ADDR-1:`LINE+`SETS];
 		end
 	endgenerate
 
@@ -134,8 +130,12 @@ module cache_controller(
 
 	wire st0 = STATE == 3'b000;
 //	assign ce = st0 && (~mreq || hit);
-	wire dirty = |(free & cache_dirty[index]);	
+	wire dirty = |(free & cache_dirty[index]);
 
+	reg  [`ADDR-1:0] vga_addr_r;
+	always @(posedge clk) vga_addr_r <= vga_addr;
+	wire [(1<<`WAYS)-1:0]vga_fit;
+	wire [`SETS-1:0]vga_index = vga_addr_r[`LINE+`SETS-1:`LINE];
 	wire vga_dirty = |cache_dirty[vga_index] /* synthesis keep */;
 	wire vga_hit = |vga_fit /* synthesis keep */;
 	assign vga_in_cache = vga_dirty & vga_hit;
@@ -170,11 +170,14 @@ module cache_controller(
 	generate
 		for(i=0; i<(1<<`WAYS); i=i+1) begin: gen2
 			always @(posedge clk) 
-				if(st0 && mmreq)
+				if(st0 && mmreq) begin
 					if(hit) begin
 						cache_lru[i][index] <= fit[i] ? {`WAYS{1'b1}} : cache_lru[i][index] - (cache_lru[i][index] > csblk); 
 						if(fit[i]) cache_dirty[index][i] <= cache_dirty[index][i] || (|mwmask);
-					end else if(free[i]) cache_dirty[index][i] <= 1'b0;
+					end
+					else if(free[i]) cache_dirty[index][i] <= 1'b0;
+				end
+				else if(st0 && r_flush && free[i]) cache_dirty[index][i] <= 1'b0;
 		end
 	endgenerate
 
@@ -183,7 +186,8 @@ module cache_controller(
 		if (ce_div == cpu_speed) ce_div <= 0;
 
 		s_lowaddr5 <= lowaddr[`LINE-2];
-		flushreq <= ~flushcount[`WAYS+`SETS] & (flushreq | flush | vga_in_cache);
+		flushreq <= ~r_flush & (flushreq | vga_in_cache);
+		if (~r_flush & vga_in_cache) flushcount[`WAYS+`SETS-1:0] <= vga_index;
 		if(ce) begin
 			raddr <= addr;
 			rdin <= din;
@@ -195,13 +199,13 @@ module cache_controller(
 			3'b000: begin
 				ce <= 1'b0;
 				hiaddr <= dirty ? {cache_addr[fblk][index], index} : maddr[`ADDR-1:`LINE];
-				if(mmreq && !hit) begin	// cache miss
+				if(r_flush || (mmreq && !hit)) begin // cache miss or flush
 					if(!r_flush) cache_addr[fblk][index] <= maddr[`ADDR-1:`LINE+`SETS];
 					ddr_rd <= ~dirty & ~r_flush;
 					ddr_wr <= dirty;
 					STATE <= dirty ? 3'b011 : 3'b100;
 				end else begin
-					flushcount[`WAYS+`SETS] <= flushcount[`WAYS+`SETS] | flushreq;
+					flushcount[`WAYS+`SETS] <= r_flush | flushreq;
 					ce <= ce_div == 0;
 				end
 			end
@@ -218,7 +222,7 @@ module cache_controller(
 			end
 			3'b100: begin	
 				if(r_flush) begin
-					flushcount <= flushcount + 1'b1;
+					flushcount[`WAYS+`SETS:`SETS] <= flushcount[`WAYS+`SETS:`SETS] + 1'b1;
 					STATE <= 3'b000;
 				end else if(s_lowaddr5) begin
 					ddr_rd <= 1'b0;

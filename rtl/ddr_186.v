@@ -378,7 +378,6 @@ module system (
 	wire [3:0]vga_color_dont_care;
 	wire [2:0]vga_rotate_count;
 	wire [7:0]vga_offset;
-	reg [2:0]auto_flush = 3'b000;
 	wire ppm; 			// pixel panning mode
 	wire [9:0]lcr; 		// line compare register
 	wire [9:0]vde;		// vertical display end
@@ -633,8 +632,7 @@ module system (
 		.ddr_wr(ddr_wr),
 		.hiaddr(cache_hi_addr),
 		.cache_write_data(crw && sys_rd_data_valid), // read DDR, write to cache
-		.cache_read_data(crw && sys_wr_data_valid),
-		.flush(1'b0/*auto_flush == 3'b101*/) // rising edge of hblank (Upd: disabled forced flush)
+		.cache_read_data(crw && sys_wr_data_valid)
 	);
 
 	wire I_KB;
@@ -874,7 +872,7 @@ module system (
 
 	reg nop;
 	reg fifo_fill = 1;
-	wire fifo_req = fifo_fill & !vga_in_cache;
+	wire fifo_req = fifo_fill && !vga_in_cache;
 	always @ (posedge clk_sdr) begin
 		s_prog_full <= fifo_wr_used_words > 350; // AlmostFull;
 		if(fifo_wr_used_words < 64) s_prog_empty <= 1'b1; //AlmostEmpty;
@@ -943,8 +941,7 @@ module system (
 		s_RS232_HOST_RXD <= RS232_HOST_RXD;
 		if(IORQ & CPU_CE) begin
 			if(WR & AUX_OE) begin
-				if(WORD) auto_flush[2] <= CPU_DOUT[0];
-				else {COMBRShift[1:0], RS232_HOST_RST, ComSel[1:0]} <= CPU_DOUT[4:0];
+				if(!WORD) {COMBRShift[1:0], RS232_HOST_RST, ComSel[1:0]} <= CPU_DOUT[4:0];
 			end
 			if(VGA_FONT_OE) vga_font_counter <= WR && WORD ? {CPU_DOUT[7:0], 4'b0000} : vga_font_counter + 1'b1; 
 			if(WR & SPEAKER_PORT) speaker_on <= CPU_DOUT[1:0];
@@ -989,8 +986,6 @@ module system (
 
 // I2C
 		if(CPU_CE && IORQ && WR && WORD && I2C_SELECT) i2c_cd <= CPU_DOUT[11:0];
-
-		auto_flush[1:0] <= {auto_flush[0], hblnk};
 
 // MPU
 		//MPU starts intelligent mode but we only support UART/dumb mode
