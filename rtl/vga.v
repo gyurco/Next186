@@ -260,7 +260,8 @@ module VGA_CRT(
 	output reg [7:0]hsync_end,
 	output reg [7:0]hblank_start,
 	output reg [7:0]hblank_end,
-	output reg [9:0]vtotal
+	output reg [9:0]vtotal,
+	output reg modecomp // CGA compatible addressing (odd/even lines)
 	);
 
 	initial offset = 8'h28;
@@ -292,6 +293,7 @@ module VGA_CRT(
 		scraddr = {regs[5'hc], regs[5'hd]};
 		protect = regs[5'h11][7];
 		offset = regs[5'h13];
+		modecomp = regs[5'h17][0];
 	end
 
 	always @(posedge CLK) begin
@@ -318,6 +320,7 @@ module VGA_SC(
 	input addr,
 	input CLK,
 	output reg half,
+	output reg oddeven,
 	output reg planarreq,
 	output reg[3:0]wplane
 	);
@@ -332,6 +335,7 @@ module VGA_SC(
 	always @(*) begin
 		half = regs[1][3];
 		wplane = regs[2][3:0];
+		oddeven = ~regs[4][2];
 		planarreq = ~regs[4][3];
 	end
 
@@ -363,9 +367,10 @@ module VGA_GC(
 	output reg [1:0]logop = 2'b00,
 	output reg [3:0]color_compare = 4'b0000,
 	output reg [3:0]color_dont_care = 4'b1111,
-	output reg [2:0]rotate_count = 3'b000
+	output reg [2:0]rotate_count = 3'b000,
+	output reg shiftload
 	);
-	
+
 	initial bitmask = 8'b11111111;
 	initial color_dont_care = 4'b1111;
 	
@@ -383,7 +388,8 @@ module VGA_GC(
 		{logop, rotate_count} = regs[5'h3][4:0];
 		rplane = regs[5'h4][1:0];
 		rwmode = {regs[5'h5][3], regs[5'h5][1:0]};
-		color_dont_care <= regs[5'h7][3:0];
+		shiftload = regs[5'h5][5];
+		color_dont_care = regs[5'h7][3:0];
 		bitmask = regs[5'h8];
 	end
 

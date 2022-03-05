@@ -1328,6 +1328,15 @@ VESAModeInfo:
 		dw  64, 64, 0a000h, 0b000h, VESAMemControlCB, 0f000h, 640
 
 p3c0r10	db		0	; port 3c0h reg 10h mirror
+
+ModeTab:
+;           0     1     2     3     4     5     6     7     8     9     a     b     c     d     e     f     10    11    12    13    25
+crtc9   db 04dh, 04dh, 04dh, 04dh, 0c0h, 0c0h, 0c0h, 04dh, 0c0h, 0c0h, 0c0h, 0c0h, 0c0h, 0c0h, 0c0h, 040h, 040h, 040h, 040h, 0c0h, 040h ; repln, lcr[9]
+crtc12  db 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 05dh, 05dh, 0dfh, 0dfh, 08fh, 0dfh ; vde
+crtc13  db 014h, 014h, 014h, 014h, 014h, 014h, 014h, 028h, 028h, 028h, 028h, 028h, 028h, 014h, 028h, 028h, 028h, 028h, 028h, 028h, 050h ; offset
+dac10   db 008h, 008h, 008h, 008h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 00bh, 001h, 00bh, 001h, 041h, 001h ; mode ctrl
+sc1     db 001h, 001h, 001h, 001h, 00bh, 00bh, 001h, 000h, 000h, 000h, 000h, 000h, 000h, 00bh, 001h, 001h, 001h, 001h, 001h, 001h, 001h ; clocking mode (half)
+
 ; --------------- fn 00h, set video mode
 setmode:
 		pusha
@@ -1337,15 +1346,17 @@ setmode:
 		ror     byte ptr EgaMiscInfo, 1
 
 		push	ax
-		mov     dx,3d4h
-		mov     ax,0011h   ; unset register protect
+		mov     dx,3d4h    ; CRTC
+		mov     ax,0011h   ; unset register protect
 		out     dx,ax
-		mov		dx, 3c4h
+		mov     ax,8017h   ; mode control
+		out     dx,ax
+		mov		dx, 3c4h ; SC
 		mov		ax, 0f02h
 		out		dx, ax		; enable all write planes
-		mov		ax, 0804h
-		out		dx, ax		; clear planar mode
-		mov		dl, 0ceh
+		mov		ax, 0c04h
+		out		dx, ax		; clear planar and odd/even mode
+		mov		dl, 0ceh	; GC
 		mov		ax, 0001h
 		out		dx, ax		; disable set/reset
 		mov		al, 03h
@@ -1353,8 +1364,8 @@ setmode:
 		mov		al, 05h
 		out		dx, ax		; set write mode to 00 (CPU access)
 		mov		ax, 0ff07h
-        out     dx, ax      ; set color don't care to 0Fh
-        inc     ax
+		out     dx, ax      ; set color don't care to 0Fh
+		inc     ax
 		out		dx, ax		; set bitmask to CPU access
 		pop		ax
 
@@ -1371,62 +1382,81 @@ setmode:
 		mov     bx, 0b800h  ; segment
 		mov     cx, 4000h   ; video len/2
 		mov     si, 0720h   ; clear value
-		mov		di, 08f14h  ; 400lines, 14h offset
 		mov		word ptr PalOffset, offset PalVGA
 		jmp     setmode2
 setmode1:
+		; CGA modes
+		cmp     al,6*2
+		ja      setmode11
+
+		push    ax
+		mov     dx, 3d4h    ; CRTC
+		mov     ax, 8117h   ; mode control
+		out     dx, ax
+		mov     dx, 3c4h   ; SC
+		mov     ax, 0804h
+		out     dx, ax     ; set odd/even mode
+		pop     ax
+
+		cmp     al,6*2
+		je      setmode1a
+		push    ax         ; save AL
+		mov     dl, 0ceh   ; GC
+		mov     ax, 3005h
+		out     dx,ax      ; set shift-load
+		pop     ax         ; restore AL
+		mov     ah, 11h    ; half -> 320x200x4
+setmode1a:
+		mov     bx, 0b800h  ; segment
+		mov     cx, 2000h   ; video len/2
+		mov     si, 0000h   ; clear value
+		mov     word ptr ScreenWidth, 80
+		mov     word ptr RegenLength, 1000h
+		mov     word ptr PalOffset, offset PalEGA
+		jmp     setmode2
+setmode11:
 		cmp		al,	0dh*2
 		jne		short setmode12
-		mov		di, 08f14h	; 400 lines, 14h offset
-		mov		ah, 11h		; graphic, 640x480x16, half -> 320x200x16
 		mov     word ptr ScreenWidth, 40
 		mov     word ptr RegenLength, 2000h
 		mov		word ptr PalOffset, offset PalEGA
 		jmp		short setmode121
-setmode12:	
+setmode12:
 		cmp		al, 0eh*2	; 640x200x16
 		jne		short setmode122
 		mov		word ptr PalOffset, offset PalEGA
-		mov		di, 8f28h	; 400lines, 28h offset
 setmode1221:
-		mov		ah, 1		; graphic, 640x400
 		mov     word ptr ScreenWidth, 80
 		mov     word ptr RegenLength, 04000h
 		jmp		short setmode121
 setmode122:
 		mov		word ptr PalOffset, offset PalVGA
 		cmp		al, 10h*2
-		mov		di, 5d28h	; 350lines, 28h offset
 		je		short setmode1221	; 640x350x16
 		cmp		al, 12h*2
 		jne		short setmode13
-		mov		di, 0df28h	; 480lines, 28h offset
-		mov		ah, 1		; graphic, 640x480x16
 		mov     word ptr ScreenWidth, 80
 		mov     word ptr RegenLength, 0a000h
 setmode121:
 		push	ax
-		mov		dx, 3c4h
+		mov		dx, 3c4h	; SC
 		mov		ax, 0ff02h
 		out		dx, ax		; set write all planes
-		mov		ax, 0004h
+		mov		ax, 0404h
 		out		dx, ax		; set planar mode
 		pop		ax
 		jmp		short setmode21
 setmode13:    
 		cmp     al, 13h*2
-		jne     short setmode3    
-		mov     ah, 41h     ; graphic mode, 320x200, 256 colors
+		jne     short setmode3
+		; graphic mode, 320x200, 256 colors
 		mov     word ptr ScreenWidth, 40
 		mov     word ptr RegenLength, 0000h
-		mov		di, 08f28h	; 400 lines, 28h offset
 		mov		word ptr PalOffset, offset Pal256
 		jmp     short setmode21
 setmode3:
 		cmp     al, 25h*2
 		jne		setmodeexit
-		mov		di, 0df50h	; 480 lines, 50h offset
-		mov     ah, 1       ; graphic mode, 640x480, 256 colors
 		mov     word ptr ScreenWidth, 80
 		mov     word ptr RegenLength, 0000h
 		mov		word ptr PalOffset, offset Pal256
@@ -1437,30 +1467,33 @@ setmode21:
 setmode2:
 		shr     al, 1
 		mov     ActiveVideoMode, al
+
+		xor     ah,ah
+		mov     di,ax
+		cmp     di,13h     ; video modes > 13h are mapped to 14h entry
+		jbe     setmode2a
+		mov     di,14h
+setmode2a:
+		mov     ah, cs:dac10[di]
+		mov     al, cs:sc1[di]
 		push    ax
 		push    cx
-		and     al, 0bh
-		cmp     al, 3
-		mov     ax, 8009h ; build the reg 09h data (lcr9 and repln) of VGA port 3d4h
-		sbb     ah, -1    ; repln count (1 for graphic modes 0dh, 0eh, 13h)
-		ror     ah, 1
-		push    ax
+		mov     dx, 3d4h   ; CRTC
+		mov     ah, cs:crtc9[di]
+		mov     al, 09h
+		out     dx, ax     ; set repln, lcr9
+		mov     ah, cs:crtc12[di]
+		mov     al, 12h
+		out     dx, ax     ; vde
+		mov     ah, cs:crtc13[di]
+		mov     al, 13h
+		out     dx, ax     ; offset
 		push    ds
 		pop     es
-		mov		dx, 3d4h
-		mov		ax, di
-		mov		al, 12h     ; vde
-		out		dx, ax		; set scanlines
-		xchg	ax, di
-		mov		ah, al
-		mov		al, 13h
-		out		dx, ax		; set offset
-        mov     ax, 1207h   ; lcr8, vde8
-        out     dx, ax
-        pop		ax			;	mov     ax, 4009h   ; lcr9
-        out     dx, ax
-        mov     ax, 0ff18h  ; lcr7..0
-        out     dx,ax
+		mov     ax, 1207h   ; lcr8, vde8
+		out     dx, ax
+		mov     ax, 0ff18h  ; lcr7..0
+		out     dx,ax
 		xor     ax, ax
 		mov     di, offset CursorPos
 		mov     cx, 8
@@ -1488,22 +1521,24 @@ clearnext:
 clearok:
 
 setmode4:
-		mov		dx, 3dah
-		in		al, dx
+		mov     dx, 3dah
+		in      al, dx
 		pop     ax
+		push    ax
 		mov     dx, 3c0h
 		mov     al, 10h
 		out     dx, al
 		mov     al, ah      
-		out     dx, al          ; set video mode
-		mov		cs:p3c0r10, al
-		mov		al, 13h
-		out 	dx, al
-		mov		al, 0
-		out		dx, al		; 0 pan
+		out     dx, al      ; set video mode
+		mov     cs:p3c0r10, al
+		mov     al, 13h
+		out     dx, al
+		mov     al, 0
+		out     dx, al      ; 0 pan
+		pop     ax
+		mov     ah, al    ; set half dot clock
 		mov     dx, 3c4h    ; SC
 		mov     al, 01h
-		shr     ah, 1       ; set half dot clock
 		out     dx, ax
 
 		mov     ax, 1114h
@@ -1530,8 +1565,12 @@ setmode4:
 		int		10h
 setmodeexit:
 		mov     dx,3d4h
-		mov     ax,8011h   ; set register protect
+		mov     ax,8011h   ; set register protect
 		out     dx,ax
+		mov     dx,3d9h    ; CGA color select
+		mov     al,030h    ; palette 1, hi-intensity, bg color=0
+		mov     CrtPalette, al
+		out     dx,al
 
 		pop     es
 		popa
@@ -1777,6 +1816,31 @@ writechar3:
 		pop     cx
 		pop     bx
 writecharskip:        
+		ret
+
+;---------------- fn 0bh,  Set Color Palette (CGA)
+setcolorpalette:
+		push    dx
+		push    ds
+		push    40h
+		pop     ds
+		mov     dx, 03d9h
+		mov     al, CrtPalette
+		or      bh, bh
+		jnz     setcolorpalette_pal
+		and     al, 020h ; clear brightness and color
+		and     bl, 01fh
+		or      al, bl
+		jmp short setcolorpalette_out
+setcolorpalette_pal:
+		and     al, 01fh ; clear palette bit
+		shl     bl, 5
+		or      al, bl
+setcolorpalette_out:
+		out     dx,al
+		mov     CrtPalette, al
+		pop     ds
+		pop     dx
 		ret
 
 ;---------------- fn 0eh, write char as TTY
@@ -2424,7 +2488,7 @@ staticfunctable db  00001100b   ; video modes 2h, 3h supported
 
 	   
 vidtbl  dw  setmode, cursor, curpos, getcurpos, lightpen, apage, scrollup, scrolldn, readchar, writecharattr
-		dw  writechar, nullproc, nullproc, nullproc, writecharTTY, readmode
+		dw  writechar, setcolorpalette, nullproc, nullproc, writecharTTY, readmode
 		dw  pal, chargen, special, writestr, nullproc, nullproc, nullproc, nullproc, nullproc, nullproc, getdcc, querystatus, nullproc
 int10 endp
 
