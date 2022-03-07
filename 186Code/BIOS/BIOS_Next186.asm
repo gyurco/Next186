@@ -1349,7 +1349,7 @@ setmode:
 		mov     dx,3d4h    ; CRTC
 		mov     ax,0011h   ; unset register protect
 		out     dx,ax
-		mov     ax,8017h   ; mode control
+		mov     ax,8317h   ; mode control
 		out     dx,ax
 		mov		dx, 3c4h ; SC
 		mov		ax, 0f02h
@@ -1391,7 +1391,7 @@ setmode1:
 
 		push    ax
 		mov     dx, 3d4h    ; CRTC
-		mov     ax, 8117h   ; mode control
+		mov     ax, 8217h   ; mode control
 		out     dx, ax
 		mov     dx, 3c4h   ; SC
 		mov     ax, 0804h

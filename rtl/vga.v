@@ -293,7 +293,7 @@ module VGA_CRT(
 		scraddr = {regs[5'hc], regs[5'hd]};
 		protect = regs[5'h11][7];
 		offset = regs[5'h13];
-		modecomp = regs[5'h17][0];
+		modecomp = ~regs[5'h17][0];
 	end
 
 	always @(posedge CLK) begin

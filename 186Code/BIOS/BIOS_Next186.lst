@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 6.14.8444		    03/06/22 14:47:06
+Microsoft (R) Macro Assembler Version 6.14.8444		    03/07/22 17:52:44
 BIOS_Next186.asm					     Page 1 - 1
 
 
@@ -1123,7 +1123,7 @@ BIOS_Next186.asm					     Page 1 - 1
  E720  BA 03D4					mov     dx,3d4h    ; CRTC
  E723  B8 0011					mov     ax,0011h   ; unset register protect
  E726  EF					out     dx,ax
- E727  B8 8017					mov     ax,8017h   ; mode control
+ E727  B8 8317					mov     ax,8317h   ; mode control
  E72A  EF					out     dx,ax
  E72B  BA 03C4					mov		dx, 3c4h ; SC
  E72E  B8 0F02					mov		ax, 0f02h
@@ -1165,7 +1165,7 @@ BIOS_Next186.asm					     Page 1 - 1
 				
  E77C  50					push    ax
  E77D  BA 03D4					mov     dx, 3d4h    ; CRTC
- E780  B8 8117					mov     ax, 8117h   ; mode control
+ E780  B8 8217					mov     ax, 8217h   ; mode control
  E783  EF					out     dx, ax
  E784  BA 03C4					mov     dx, 3c4h   ; SC
  E787  B8 0804					mov     ax, 0804h
@@ -1252,7 +1252,7 @@ BIOS_Next186.asm					     Page 1 - 1
  E860  2E: 8A 85 E6FE R				mov     al, cs:sc1[di]
  E865  50					push    ax
  E866  51					push    cx
- E867  BA 03D4					mov     dx, 3d4h   ; CRTC
+ E867  BA 03D4					mov     dx, 3d4h   ; CRTC
  E86A  2E: 8A A5 E6AA R				mov     ah, cs:crtc9[di]
  E86F  B0 09					mov     al, 09h
  E871  EF					out     dx, ax     ; set repln, lcr9
@@ -4403,7 +4403,7 @@ BIOS_Next186.asm					     Page 1 - 1
        31 37
  FFFD  FF FF 00					db      0ffh, 0ffh, 0
 				end bios
-Microsoft (R) Macro Assembler Version 6.14.8444		    03/06/22 14:47:06
+Microsoft (R) Macro Assembler Version 6.14.8444		    03/07/22 17:52:44
 BIOS_Next186.asm					     Symbols 2 - 1
 
 
