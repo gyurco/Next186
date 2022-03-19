@@ -301,7 +301,7 @@ module system (
 	wire cpu32_halt;
 
 	reg [1:0]cntrl0_user_command_register = 0;
-	reg [15:0]vga_addr = 0;
+	reg [16:0]vga_addr = 0;
 	reg s_prog_full;
 	reg s_prog_empty;
 	reg s_ddr_rd = 1'b0;
@@ -919,9 +919,9 @@ module system (
 		.rst(1'b0)
 	);
 
-	wire [15:0] vga_addr_adj = vga_addr + vga_lnbytecount;
+	wire [16:0] vga_addr_adj = (~vgatextreq & ~halfreq & ~vga13req & ~planarreq) ? vga_addr + vga_lnbytecount : {1'b0, vga_addr[15:0] + vga_lnbytecount};
 	// adjust for CGA odd/even line addressing mode, add framebuffer start address in physical RAM
-	wire [17:0] vga_ddr_row_col_adr = modecomp ? {6'b101110, evenline, cga_addr[12:2] + vga_lnbytecount} : {1'b1, {1'b0, vga_addr_adj[15:13]} + (vgatext ? 4'b0111 : 4'b0100), vga_addr_adj[12:0]};
+	wire [17:0] vga_ddr_row_col_adr = modecomp ? {6'b101110, evenline, cga_addr[12:2] + vga_lnbytecount} : {1'b1, vga_addr_adj[16:13] + (vgatext ? 4'b0111 : 4'b0100), vga_addr_adj[12:0]};
 
 	reg nop;
 	reg fifo_fill = 1;
