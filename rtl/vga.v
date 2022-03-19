@@ -45,103 +45,6 @@
 
 `timescale 1 ns / 1 ps
 
-module VGA_SG
-  (
-  input  wire	[9:0]	tc_hsblnk,
-  input  wire	[9:0]	tc_hssync,
-  input  wire	[9:0]	tc_hesync,
-  input  wire	[9:0]	tc_heblnk,
-
-  output reg	[9:0]	hcount = 0,
-  output reg			hsync,
-  output reg			hblnk = 0,
-
-  input  wire	[9:0]	tc_vsblnk,
-  input  wire	[9:0]	tc_vssync,
-  input  wire	[9:0]	tc_vesync,
-  input  wire	[9:0]	tc_veblnk,
-
-  output reg	[9:0]	vcount = 0,
-  output reg			vsync,
-  output reg			vblnk = 0,
-
-  input  wire			clk,
-  input  wire			ce
-  );
-
-  //******************************************************************//
-  // This logic describes a 10-bit horizontal position counter.       //
-  //******************************************************************//
-  always @(posedge clk)
-		if(ce) begin
-			if(hcount >= tc_heblnk) begin
-				hcount <= 0;
-				hblnk <= 0;
-			end else begin
-				hcount <= hcount + 1;
-				hblnk <= (hcount >= tc_hsblnk);
-			end
-			hsync <= (hcount >= tc_hssync) && (hcount < tc_hesync);
-		end
-		
-  //******************************************************************//
-  // This logic describes a 10-bit vertical position counter.         //
-  //******************************************************************//
-	always @(posedge clk)
-		if(ce && hcount == tc_heblnk) begin
-			if (vcount >= tc_veblnk) begin
-				vcount <= 0;
-				vblnk <= 0;
-			end else begin
-				vcount <= vcount + 1;
-				vblnk <= (vcount >= tc_vsblnk);
-			end
-			vsync <= (vcount >= tc_vssync) && (vcount < tc_vesync);
-		end
-
-  //******************************************************************//
-  // This is the logic for the horizontal outputs.  Active video is   //
-  // always started when the horizontal count is zero.  Example:      //
-  //                          
-  //
-  // tc_hsblnk = 03                                                   //
-  // tc_hssync = 07                                                   //
-  // tc_hesync = 11                                                   //
-  // tc_heblnk = 15 (htotal)                                          //
-  //                                                                  //
-  // hcount   00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15         //
-  // hsync    ________________________------------____________        //
-  // hblnk    ____________------------------------------------        //
-  //                                                                  //
-  // hsync time  = (tc_hesync - tc_hssync) pixels                     //
-  // hblnk time  = (tc_heblnk - tc_hsblnk) pixels                     //
-  // active time = (tc_hsblnk + 1) pixels                             //
-  //                                                                  //
-  //******************************************************************//
-
-  //******************************************************************//
-  // This is the logic for the vertical outputs.  Active video is     //
-  // always started when the vertical count is zero.  Example:        //
-  //                                                                  //
-  // tc_vsblnk = 03                                                   //
-  // tc_vssync = 07                                                   //
-  // tc_vesync = 11                                                   //
-  // tc_veblnk = 15 (vtotal)                                          //
-  //                                                                  //
-  // vcount   00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15         //
-  // vsync    ________________________------------____________        //
-  // vblnk    ____________------------------------------------        //
-  //                                                                  //
-  // vsync time  = (tc_vesync - tc_vssync) lines                      //
-  // vblnk time  = (tc_veblnk - tc_vsblnk) lines                      //
-  // active time = (tc_vsblnk + 1) lines                              //
-  //                                                                  //
-  //******************************************************************//
-
-
-endmodule
-
-
 module VGA_DAC(
 	input CE,
 	input WR,
@@ -254,19 +157,40 @@ module VGA_CRT(
 	output reg [9:0]lcr = 10'h3ff, // line compare register
 	output reg repln = 1'b0,		// line repeat count - 1 for graphics mode only
 	output reg [9:0]vde = 10'h0c7, // last display visible scan line (i.e. 199 in text mode)
-	output reg [7:0]htotal,
-	output reg [7:0]hde,
-	output reg [7:0]hsync_start,
-	output reg [7:0]hsync_end,
-	output reg [7:0]hblank_start,
-	output reg [7:0]hblank_end,
+	output reg [7:0]hde = 8'd79,
 	output reg [9:0]vtotal,
-	output reg modecomp // CGA compatible addressing (odd/even lines)
+	output reg modecomp, // CGA compatible addressing (odd/even lines)
+
+	input               half,
+
+	output reg	[9:0]	hcount = 0,
+	output reg			hsync,
+	output reg			hblnk = 0,
+
+	input  wire	[9:0]	tc_vsblnk,
+	input  wire	[9:0]	tc_vssync,
+	input  wire	[9:0]	tc_vesync,
+	input  wire	[9:0]	tc_veblnk,
+
+	output reg	[9:0]	vcount = 0,
+	output reg			vsync,
+	output reg			vblnk = 0,
+
+	input  wire			clk_vga,
+	input  wire			ce_vga
 	);
 
 	initial offset = 8'h28;
 	initial lcr = 10'h3ff;
 	initial vde = 10'h0c7;	// 200 lines
+
+	reg [7:0] htotal = 8'h5b /* synthesis keep */;
+	reg [7:0] hsync_start = 8'h51;
+	reg [7:0] hsync_end;
+	reg [7:0] hblank_start; // not used, overscan is blanked
+	reg [7:0] hblank_end;
+
+	reg [9:0] vsync_start /* synthesis keep */;
 
 	reg [4:0]idx_buf = 0;
 	reg [7:0]regs[5'h18:0];
@@ -291,6 +215,7 @@ module VGA_CRT(
 		cursorend = regs[5'hb][4:0];
 		cursorpos = {regs[5'he][3:0], regs[5'hf]};
 		scraddr = {regs[5'hc], regs[5'hd]};
+		vsync_start = {regs[5'h7][7], regs[5'h7][2], regs[5'h10]};
 		protect = regs[5'h11][7];
 		offset = regs[5'h13];
 		modecomp = ~regs[5'h17][0];
@@ -308,8 +233,45 @@ module VGA_CRT(
 		end
 		dout1 <= regs[idx_buf];
 	end
-endmodule
 
+	//******************************************************************//
+	// This logic describes a 10-bit horizontal position counter.       //
+	//******************************************************************//
+	wire [8:0] hchar = half ? hcount[9:4] : hcount[9:3] /* synthesis keep */;
+	wire       hch_en = half ? hcount[3:0] == 4'b1111 : hcount[2:0] == 3'b111;
+
+	always @(posedge clk_vga)
+		if(ce_vga) begin
+			hcount <= hcount + 1'd1;
+			if (hch_en) begin
+				if (hchar == htotal + 4'd5) begin
+					hcount <= 0;
+					hblnk <= 0;
+					hsync <= 0;
+				end
+				if (hchar == hde) hblnk <= 1;
+				if (hchar == hsync_start) hsync <= 1;
+				if (hchar == hsync_start + (half ? 4'd6 : 4'd13)) hsync <= 0;
+			end
+		end
+
+	//******************************************************************//
+	// This logic describes a 10-bit vertical position counter.         //
+	//******************************************************************//
+	always @(posedge clk_vga)
+		if(ce_vga && hch_en && hchar == htotal + 4'd5) begin
+			vcount <= vcount + 1'd1;
+			if (vcount == vtotal) begin
+				vcount <= 0;
+				vblnk <= 0;
+				vsync <= 0;
+			end
+			if (vcount == vde) vblnk <= 1;
+			if (vcount == vsync_start) vsync <= 1;
+			if (vcount == vsync_start + 2'd2) vsync <= 0;
+		end
+
+endmodule
 
 module VGA_SC(
 	input CE,

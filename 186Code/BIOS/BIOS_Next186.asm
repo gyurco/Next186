@@ -220,7 +220,6 @@ warmboot:
 		
 
 ; ------------------ MAP init
-		call    flush
 		mov     ax, 15h     ; BIOS physical segment 15h mapped on virtual segment 0ch
 		out     8ch, ax
 		push    0c000h
@@ -232,7 +231,6 @@ warmboot:
 		mov     cx, 8000h
 		rep     movsw       ; copy BIOS virtual segment 0fh over physical segment 15h
 
-		call    flush
 		mov     dx, 80h      
 		xor     ax, ax
 mapi:        
@@ -393,8 +391,6 @@ mouseok:
 		out     21h, al     ; enable all PIC interrupts (8h, 9h, 0ch)
 		out		0a1h, al	; enable all PIC interrupts (70h, 74h)
 		out		1, al		; intialize COM mux
-		inc		ax
-		out		1, ax		; enable auto flush on vblank
 		sti                 ; enable CPU interrupts
 
 ; ---------------------- COM flush
@@ -1280,7 +1276,6 @@ VESAMemControlCB:
 		add     al, 0ah
 		test    bh, bh
 		jnz     getpageinfo
-		call    flush
 		out     dx, ax          
 		pop     dx
 		pop     ax
@@ -1331,7 +1326,16 @@ p3c0r10	db		0	; port 3c0h reg 10h mirror
 
 ModeTab:
 ;           0     1     2     3     4     5     6     7     8     9     a     b     c     d     e     f     10    11    12    13    25
+crtc0   db 05fh, 05fh, 05fh, 05fh, 02dh, 02dh, 05fh, 05fh, 02dh, 02dh, 05fh, 05fh, 05fh, 02dh, 05fh, 05fh, 05fh, 05fh, 05fh, 05fh, 05fh ; horizontal total
+crtc1   db  79,   79,   79,   79,   39,   39,   79,   79,   39,   39,   79,   79,   79,   39,   79,   79,   79,   79,   79,   79,   79  ; hde
+;crtc2   db; hblank start
+;crtc3   db; hblank end
+crtc4   db 054h, 054h, 054h, 054h, 02bh, 02bh, 054h, 054h, 02bh, 02bh, 054h, 054h, 054h, 02bh, 054h, 054h, 054h, 054h, 054h, 054h, 054h ; hsync start
+;crtc5   db ; hsync end
+crtc6   db 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 008h, 008h, 0bfh, 008h ; vtotal
+crtc7   db 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 036h, 036h, 01fh, 036h ; overflow (vsync[9], vde[9], vtotal[9], lcr[8], vblank[8], vsync[8], vde[8], vtotal[8])
 crtc9   db 04dh, 04dh, 04dh, 04dh, 0c0h, 0c0h, 0c0h, 04dh, 0c0h, 0c0h, 0c0h, 0c0h, 0c0h, 0c0h, 0c0h, 040h, 040h, 040h, 040h, 0c0h, 040h ; repln, lcr[9]
+crtc10  db 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 0e1h, 0e1h, 09ch, 0e1h ; vsync start
 crtc12  db 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 05dh, 05dh, 0dfh, 0dfh, 08fh, 0dfh ; vde
 crtc13  db 014h, 014h, 014h, 014h, 014h, 014h, 014h, 028h, 028h, 028h, 028h, 028h, 028h, 014h, 028h, 028h, 028h, 028h, 028h, 028h, 050h ; offset
 dac10   db 008h, 008h, 008h, 008h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 00bh, 001h, 00bh, 001h, 041h, 001h ; mode ctrl
@@ -1479,6 +1483,33 @@ setmode2a:
 		push    ax
 		push    cx
 		mov     dx, 3d4h   ; CRTC
+		mov     ah, cs:crtc0[di]
+		xor     al, al
+		out     dx, ax     ; htotal
+		mov     ah, cs:crtc1[di]
+		inc     al
+		out     dx, ax     ; hde
+		;mov     ah, cs:crtc2[di]
+		inc     al
+		;out     dx, ax     ; hblank start
+		;mov     ah, cs:crtc3[di]
+		inc     al
+		;out     dx, ax     ; hblank end
+		mov     ah, cs:crtc4[di]
+		inc     al
+		out     dx, ax     ; hsync start
+		;mov     ah, cs:crtc5[di]
+		inc     al
+		;out     dx, ax     ; hsync end
+		mov     ah, cs:crtc6[di]
+		inc     al
+		out     dx, ax     ; vtotal
+		mov     ah, cs:crtc7[di]
+		inc     al
+		out     dx, ax     ; vtotal9, lcr8, vsync8, vde8, vtotal8
+		mov     ah, cs:crtc10[di]
+		mov     al, 10h
+		out     dx, ax     ; vsync start
 		mov     ah, cs:crtc9[di]
 		mov     al, 09h
 		out     dx, ax     ; set repln, lcr9
@@ -1490,8 +1521,6 @@ setmode2a:
 		out     dx, ax     ; offset
 		push    ds
 		pop     es
-		mov     ax, 1207h   ; lcr8, vde8
-		out     dx, ax
 		mov     ax, 0ff18h  ; lcr7..0
 		out     dx,ax
 		xor     ax, ax
@@ -1648,7 +1677,6 @@ lightpen:
 ;---------------- fn 05h, set active video page
 apage:
 		pusha
-		call    flush
 		and     al, 7
 		mov     bh, al
 		mov     ActivePage, al
@@ -2964,7 +2992,6 @@ MovExt:
 		mov     bh, [si+17h]
 		mov     di, [si+1ah]
 		mov     si, [si+12h]
-		call    flush   
 		call    SetSeg      ; 02000h = destination, DX=82h
 		dec     dx
 		xchg    ax, bx
@@ -3007,7 +3034,6 @@ raligned:
 		jnc     short MovExt_next
 		movsb
 MovExt_next:
-		call    flush
 		mov     cx, ax
 		or      ax, bx
 		jz      short MovExt_exit  ; finalized
@@ -3520,7 +3546,6 @@ int18 proc near
 		pop     es
 		mov     si, offset booterrmsg
 		call    prts
-		call	flush
 
 ;-------------- RS232 bootstrap
 		mov     al, 0b4h
@@ -3777,21 +3802,6 @@ enableKbIfPresent endp
 defint  proc near
 		iret
 defint  endp             
-
-; ------------------------------- flush --------------------------
-flush:
-		pop     cs:flushret
-flush_nostack:        
-		mov     cs:flushbh, bx
-		mov     bx, 2000h       ; flush all cache lines
-flush1:        
-		test    bl, cs:[bx + 0bf00h]
-		sub		bx, 40h
-		jnz     short flush1
-		mov     bx, cs:flushbh
-		jmp     word ptr cs:flushret
-flushret dw 0
-flushbh  dw 0          
 
 ; ------------------------------- misc --------------------------
 dispAX: 

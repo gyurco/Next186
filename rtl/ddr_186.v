@@ -58,7 +58,6 @@
 
 /* ----------------- implemented ports -------------------
 0001 - BYTE write: bit01=ComSel (00=DCE, 01=EXT, 1x=HOST), bit2=Host reset, bit43=COM divider shift right bits
-0001 - WORD write: bit0=auto cache flush
 	  
 0002 - 32 bit CPU data port R/W, lo first
 0003 - 32 bit CPU command port W
@@ -153,7 +152,6 @@
 module system (
 	input  clk_25, // VGA
 	input  clk_sdr, // SDRAM
-	input  CLK44100x256, // Soundwave
 	input  CLK14745600, // RS232 clk
  	input  clk_mpu, // MPU401 clock 
 	input  clk_dsp,
@@ -244,10 +242,11 @@ module system (
 	wire hblnk;
 	wire vblnk;
 	wire [9:0]hcount;
+	wire [7:0]hde;
 	wire [9:0]vcount;
 	reg [4:0]vga_hrzpan = 0;
 	wire [3:0]vga_hrzpan_req;
-	wire [9:0]hcount_pan = hcount + vga_hrzpan - 18 /* synthesis keep */;
+	wire [9:0]hcount_pan = hcount + vga_hrzpan - 18;
 	reg FifoStart = 1'b0;	// fifo not empty
 	wire displ_on = !(hblnk | vblnk | !FifoStart);
 	wire [17:0]DAC_COLOR;
@@ -272,7 +271,7 @@ module system (
 	wire INPUT_STATUS_OE = PORT_ADDR[15:0] == 16'h03da;
 	wire VGA_CRT_OE = (PORT_ADDR[15:1] == 15'b000000111011010) || (PORT_ADDR[15:1] == 15'b000000111101010); // 3b4h, 3b5h, 3d4h, 3d5h
 	wire RTC_SELECT = PORT_ADDR[15:0] == 16'h0070;
-	wire CGA_CL = PORT_ADDR[15:0] == 16'h03d9 /* synthesis keep */;
+	wire CGA_CL = PORT_ADDR[15:0] == 16'h03d9;
 	wire VGA_SC = PORT_ADDR[15:1] == (16'h03c4 >> 1); // 3c4h, 3c5h
 	wire VGA_GC = PORT_ADDR[15:1] == (16'h03ce >> 1); // 3ceh, 3cfh
 	wire PIC_OE = PORT_ADDR[15:8] == 8'h00 && PORT_ADDR[6:1] == 6'b010000;	// 20h, 21h, a0h, a1h
@@ -300,7 +299,7 @@ module system (
 	wire dss_full;
 	wire [15:0]cpu32_data;
 	wire cpu32_halt;
-		
+
 	reg [1:0]cntrl0_user_command_register = 0;
 	reg [16:0]vga_ddr_row_col = 0; // video buffer offset (multiple of 4)
 	reg s_prog_full;
@@ -316,7 +315,6 @@ module system (
 	reg vgatext = 0;          // 1 for text mode
 	reg modecomp = 0;         // 1 for CGA compatibility line addressing mode
 	wire shiftload;           // 1 for 4-bit packed pixel mode (for CGA 320x200x4)
-	wire v240 = vde >= 10'd400;
 	reg planar = 0;
 	reg half = 0;
 	reg repln_graph = 0;
@@ -333,12 +331,18 @@ module system (
 	reg evenline = 0;
 	reg [2:0]max_read;
 	reg [4:0]col_counter;
-	wire vga_end_frame = vga_ddr_row_count == (v240 ? 479 : 399);
-	wire vga_start_fifo = vcount == (v240 ? 519 : 445);
+	wire vga_end_frame = (vga_ddr_row_count == vde) && vde != 0;
+	wire vga_start_fifo = vcount == (vtotal - 1'd1) || vtotal == 0;
 	reg [3:0]vga_repln_count = 0; // repeat line counter
 	wire [3:0]vga_repln = vgatext ? (half ? 7 : 15) : {3'b000, repln_graph};//(vga13[0] | half[0]) ? 1 : 0;
 	reg [7:0]vga_lnbytecount = 0; // line byte count (multiple of 4)
-	wire [4:0]vga_lnend = modecomp ? 3 : (vgatext | half) ? 6 : (vga13 | planar) ? 11 : 21; // multiple of 32 (SDRAM resolution = 32)
+
+	wire [4:0]vga_lnend = (modecomp ? 1 : // multiple of 32 (SDRAM resolution = 32)
+	                       vgatext ? (hde >> 4) :
+	                       (vga13 | planar) ? (hde >> 3) :
+	                       (hde >> 2))
+	                       + 1'd1  // rounding up
+	                       + 1'd1; // extra 32 byte fetch for panning
 	reg [11:0]vga_font_counter = 0;
 	reg [7:0]vga_attr;
 	reg [4:0]RTCDIV25 = 0;
@@ -402,12 +406,14 @@ module system (
 		                             {fifo_dout32[{2'b11, shift}], fifo_dout32[{2'b10, shift}], fifo_dout32[{2'b01, shift}], fifo_dout32[{2'b00, shift}]};
 	wire [7:0]VGA_INDEX;
 	reg [3:0]exline = 4'b0000; // extra 8 dwords (32 bytes) for screen panning
-	wire vrdon = s_displ_on[16-vga_hrzpan] /* synthesis keep */;
-	wire vrden = (vrdon || exline[3]) &&
+	reg [2:0]wrdcnt = 0;
+	wire vrdon = s_displ_on[16-vga_hrzpan];
+	wire vrden = (~vrdon & ~exline[3] & |wrdcnt) || // flush extra words left in the FIFO
+	    ((vrdon || exline[3]) &&
 		(modecompreq           ? &hcount_pan[4:0] :
 		(vgatextreq | halfreq) ? &hcount_pan[3:0] :
 		(vga13req | planarreq) ? &hcount_pan[2:0] :
-		                         &hcount_pan[1:0]);
+		                         &hcount_pan[1:0]));
 	reg s_vga_endline;
 	reg s_vga_endscanline = 1'b0;
 	reg s_vga_endframe;
@@ -427,6 +433,7 @@ module system (
 	wire ppm; 			// pixel panning mode
 	wire [9:0]lcr; 		// line compare register
 	wire [9:0]vde;		// vertical display end
+	wire [9:0]vtotal;
 	wire sdon = s_displ_on[18+vgatextreq] & (vcount <= vde);
 	wire vga_in_cache;
 
@@ -547,26 +554,6 @@ module system (
 	  .wrusedw(fifo_wr_used_words) // output [8:0]
 	);
 
-	VGA_SG VGA 
-	(
-		.tc_hsblnk(10'd639), 
-		.tc_hssync(10'd654 + 10'd18), 	// +18 for hrz panning
-		.tc_hesync(10'd750 + 10'd18), 	// +18 for hrz panning
-		.tc_heblnk(10'd799), 
-		.hcount(hcount), 
-		.hsync(VGA_HSYNC), 
-		.hblnk(hblnk), 
-		.tc_vsblnk(v240 ? 10'd479 : 10'd399), 
-		.tc_vssync(v240 ? 10'd489 : 10'd411), 
-		.tc_vesync(v240 ? 10'd491 : 10'd413), 
-		.tc_veblnk(v240 ? 10'd520 : 10'd446), 
-		.vcount(vcount), 
-		.vsync(VGA_VSYNC), 
-		.vblnk(vblnk), 
-		.clk(clk_25),
-		.ce(FifoStart)
-	);
-
 	VGA_DAC dac 
 	(
 		 .CE(VGA_DAC_OE && IORQ && CPU_CE), 
@@ -606,7 +593,20 @@ module system (
 		.lcr(lcr),
 		.repln(replnreq),
 		.modecomp(modecompreq),
-		.vde(vde)
+		.hde(hde),
+		.vtotal(vtotal),
+		.vde(vde),
+
+		.clk_vga(clk_25),
+		.ce_vga(FifoStart),
+
+		.half(halfreq),
+		.hcount(hcount),
+		.hsync(VGA_HSYNC),
+		.hblnk(hblnk),
+		.vcount(vcount),
+		.vsync(VGA_VSYNC),
+		.vblnk(vblnk),
 	);
 
 	VGA_SC sc
@@ -1088,6 +1088,8 @@ module system (
 		// 32 extra bytes at the end of the scanline, for panning
 		// 16 extra bytes for CGA modes, as one line = 80 bytes, but SDRAM controller reads 3*32 = 96 bytes
 		exline <= vrdon ? (modecompreq ? 4'b1011 : 4'b1111) : (exline - vrden);
+		if (vrden) wrdcnt <= wrdcnt - 1'd1;
+		if (vblnk) wrdcnt <= 0;
 
 		vga_attr <= fifo_dout[15:8];		
 		flash_on <= (vgaflash & fifo_dout[15] & flashcount[5]) | (~oncursor && flashcount[4] && (charcount == cursorpos) && (char_ln >= crs[0][3:0]) && (char_ln <= crs[1][3:0]));		
