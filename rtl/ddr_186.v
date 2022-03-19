@@ -301,7 +301,7 @@ module system (
 	wire cpu32_halt;
 
 	reg [1:0]cntrl0_user_command_register = 0;
-	reg [16:0]vga_ddr_row_col = 0; // video buffer offset (multiple of 4)
+	reg [15:0]vga_addr = 0;
 	reg s_prog_full;
 	reg s_prog_empty;
 	reg s_ddr_rd = 1'b0;
@@ -919,8 +919,10 @@ module system (
 		.rst(1'b0)
 	);
 
-	// adjust for CGA odd/even line addressing mode
-	wire [17:0] vga_ddr_row_col_adr = modecomp ? {6'b101110, evenline, cga_addr[12:2] + vga_lnbytecount} : {1'b1, vga_ddr_row_col + vga_lnbytecount};
+	wire [15:0] vga_addr_adj = vga_addr + vga_lnbytecount;
+	// adjust for CGA odd/even line addressing mode, add framebuffer start address in physical RAM
+	wire [17:0] vga_ddr_row_col_adr = modecomp ? {6'b101110, evenline, cga_addr[12:2] + vga_lnbytecount} : {1'b1, {1'b0, vga_addr_adj[15:13]} + (vgatext ? 4'b0111 : 4'b0100), vga_addr_adj[12:0]};
+
 	reg nop;
 	reg fifo_fill = 1;
 	wire fifo_req = fifo_fill && !vga_in_cache;
@@ -970,11 +972,11 @@ module system (
 			s_vga_endscanline <= 1'b0;
 
 			if(s_vga_endframe)
-				vga_ddr_row_col <= {{1'b0, scraddr[15:13]} + (vgatext ? 4'b0111 : 4'b0100), scraddr[12:0]};
+				vga_addr <= scraddr;
 			else if({1'b0, vga_ddr_row_count} == lcr)
-				vga_ddr_row_col <= vgatext ? 17'he000 : 17'h8000;
+				vga_addr <= 0;
 			else if(s_vga_endline)
-				vga_ddr_row_col <= vga_ddr_row_col + (vgatext ? 40 : {vga_offset, 1'b0});
+				vga_addr <= vga_addr + (vgatext ? 40 : {vga_offset, 1'b0});
 
 			if(s_vga_endframe)
 				cga_addr <= {scraddr[11:0], 1'b0};
