@@ -76,18 +76,21 @@ end
 wire  [5:0] core_r, core_g, core_b;
 wire        core_hs, core_vs;
 
-wire        clk_25, clk_sdr, clk_50, CLK14745600;
+localparam  CPU_MHZ = 50;
+
+wire        clk_25, clk_sdr, CLK14745600;
 wire        clk_mpu; //3MHz MIDI, (31250Hz * 32)*3
+wire        clk_cpu, clk_dsp;
 wire        clk_sys = clk_25;
 
 assign SDRAM_CKE = 1'b1;
 
 dcm dcm_system (
-	.inclk0(CLOCK_27), 
-	.c0(clk_25), 
+	.inclk0(CLOCK_27),
+	.c0(SDRAM_CLK),
 	.c1(clk_sdr),
-	.c2(SDRAM_CLK),
-	.c3(clk_50)
+	.c2(clk_cpu),
+	.c3(clk_dsp)
 );
 
 dcm_misc dcm_misc (
@@ -97,11 +100,9 @@ dcm_misc dcm_misc (
 	.c2(clk_mpu)
 );
 
-wire        clk_cpu, clk_dsp;
 dcm_cpu dcm_cpu_inst (
-	.inclk0(CLOCK_27), 
-	.c0(clk_cpu),
-	.c1(clk_dsp)
+	.inclk0(CLOCK_27),
+	.c0(clk_25)
 );
 
 reg  reset;
@@ -393,9 +394,9 @@ wire [15:0] cen_opl2_cnt_next = cen_opl2_cnt + 16'd358;
 always @(posedge clk_cpu) begin
 	cen_opl2 <= 0;
 	cen_opl2_cnt <= cen_opl2_cnt_next;
-	if (cen_opl2_cnt_next >= 16'd5000) begin
+	if (cen_opl2_cnt_next >= (CPU_MHZ * 100)) begin
 		cen_opl2 <= 1;
-		cen_opl2_cnt <= cen_opl2_cnt_next - 16'd5000;
+		cen_opl2_cnt <= cen_opl2_cnt_next - (CPU_MHZ * 100);
 	end
 end
 
@@ -405,9 +406,9 @@ wire [31:0] cen_44100_cnt_next = cen_44100_cnt + 16'd44100;
 always @(posedge clk_cpu) begin
 	cen_44100 <= 0;
 	cen_44100_cnt <= cen_44100_cnt_next;
-	if (cen_44100_cnt_next >= 31'd50000000) begin
+	if (cen_44100_cnt_next >= (CPU_MHZ*1000000)) begin
 		cen_44100 <= 1;
-		cen_44100_cnt <= cen_44100_cnt_next - 31'd50000000;
+		cen_44100_cnt <= cen_44100_cnt_next - (CPU_MHZ*1000000);
 	end
 end
 
