@@ -284,6 +284,9 @@ module system (
 	wire OPL2_PORT = PORT_ADDR[15:1] == (16'h0388 >> 1); // 0x388 .. 0x389
 	wire NMI_IORQ_PORT = PORT_ADDR[15:1] == (16'h0006 >> 1); // 6, 7
 	wire MPU_PORT = PORT_ADDR[15:1] == (16'h0330 >> 1); // 0x330, 0x331
+	wire TANDY_SND_PORT = PORT_ADDR[15:3] == (16'h00c0 >> 3); // 0xc0 - 0xc7
+	wire [7:0] TANDY_SND;
+	wire TANDY_SND_RDY;
  	wire [7:0]VGA_DAC_DATA;
 	wire [7:0]VGA_CRT_DATA;
 	wire [7:0]VGA_SC_DATA;
@@ -806,12 +809,26 @@ module system (
 		.we(IORQ & CPU_CE & WR & PARALLEL_PORT),
 		.word(WORD),
 		.speaker(timer_spk & speaker_on[1]),
+		.tandy_snd(TANDY_SND),
 		.opl3left(opl3left),
 		.opl3right(opl3right),
 		.full(sq_full), // when not full, write max 2x1152 16bit samples
 		.dss_full(dss_full),
 		.AUDIO_L(AUD_L),
 		.AUDIO_R(AUD_R)
+	);
+
+	// Tandy sound
+	sn76489_top sn76489
+	(
+		.clock_i(clk_cpu),
+		.clock_en_i(clk_en_opl2), // 3.579MHz
+		.res_n_i(rstcount[18]),
+		.ce_n_i(~(IORQ & TANDY_SND_PORT)),
+		.we_n_i(~(IORQ & WR)),
+		.ready_o(TANDY_SND_RDY),
+		.d_i(CPU_DOUT[7:0]),
+		.aout_o(TANDY_SND)
 	);
 
 	DSP32 DSP32_inst
@@ -880,7 +897,7 @@ module system (
 	wire      jtopl2_cs = IORQ & OPL2_PORT & CPU_CE;
 	reg [7:0] jtopl2_ready;
 
-	assign io_ready = jtopl2_ready == 0;
+	assign io_ready = (jtopl2_ready == 0 && TANDY_SND_RDY);
 
 	always @(posedge clk_cpu) begin
 		if (!rstcount[18])
