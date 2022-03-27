@@ -1339,7 +1339,7 @@ crtc10  db 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09c
 crtc12  db 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 05dh, 05dh, 0dfh, 0dfh, 08fh, 0dfh ; vde
 crtc13  db 014h, 014h, 014h, 014h, 014h, 014h, 014h, 028h, 028h, 028h, 028h, 028h, 028h, 014h, 028h, 028h, 028h, 028h, 028h, 028h, 050h ; offset
 dac10   db 008h, 008h, 008h, 008h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 00bh, 001h, 00bh, 001h, 041h, 001h ; mode ctrl
-sc1     db 001h, 001h, 001h, 001h, 00bh, 00bh, 001h, 000h, 000h, 000h, 000h, 000h, 000h, 00bh, 001h, 001h, 001h, 001h, 001h, 001h, 001h ; clocking mode (half)
+sc1     db 001h, 001h, 001h, 001h, 00bh, 00bh, 001h, 000h, 00bh, 00bh, 001h, 000h, 000h, 00bh, 001h, 001h, 001h, 001h, 001h, 001h, 001h ; clocking mode (half)
 
 ; --------------- fn 00h, set video mode
 setmode:
@@ -1390,12 +1390,19 @@ setmode:
 		jmp     setmode2
 setmode1:
 		; CGA modes
-		cmp     al,6*2
+		cmp     al,0ah*2
 		ja      setmode11
 
 		push    ax
 		mov     dx, 3d4h    ; CRTC
-		mov     ax, 8217h   ; mode control
+		cmp     al, 06h*2
+		ja      short setmode1_pcjr
+		mov     ah, 82h
+		jmp     short setmode1b
+setmode1_pcjr:
+		mov     ah, 80h
+setmode1b:
+		mov     al, 17h    ; mode control
 		out     dx, ax
 		mov     dx, 3c4h   ; SC
 		mov     ax, 0804h
@@ -1404,12 +1411,14 @@ setmode1:
 
 		cmp     al,6*2
 		je      setmode1a
+		cmp     al,0ah*2
+		je      setmode1a
 		push    ax         ; save AL
 		mov     dl, 0ceh   ; GC
 		mov     ax, 3005h
 		out     dx,ax      ; set shift-load
 		pop     ax         ; restore AL
-		mov     ah, 11h    ; half -> 320x200x4
+		mov     ah, 11h    ; half -> 320x200x4(16)
 setmode1a:
 		mov     bx, 0b800h  ; segment
 		mov     cx, 2000h   ; video len/2

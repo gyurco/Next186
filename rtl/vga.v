@@ -159,18 +159,13 @@ module VGA_CRT(
 	output reg [9:0]vde = 10'h0c7, // last display visible scan line (i.e. 199 in text mode)
 	output reg [7:0]hde = 8'd79,
 	output reg [9:0]vtotal,
-	output reg modecomp, // CGA compatible addressing (odd/even lines)
+	output reg [1:0]modecomp, // CGA/Tandy compatible addressing (odd/even lines)
 
 	input               half,
 
 	output reg	[9:0]	hcount = 0,
 	output reg			hsync,
 	output reg			hblnk = 0,
-
-	input  wire	[9:0]	tc_vsblnk,
-	input  wire	[9:0]	tc_vssync,
-	input  wire	[9:0]	tc_vesync,
-	input  wire	[9:0]	tc_veblnk,
 
 	output reg	[9:0]	vcount = 0,
 	output reg			vsync,
@@ -218,7 +213,7 @@ module VGA_CRT(
 		vsync_start = {regs[5'h7][7], regs[5'h7][2], regs[5'h10]};
 		protect = regs[5'h11][7];
 		offset = regs[5'h13];
-		modecomp = ~regs[5'h17][0];
+		modecomp = ~regs[5'h17][1:0];
 	end
 
 	always @(posedge CLK) begin

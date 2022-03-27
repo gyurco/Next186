@@ -285,6 +285,7 @@ module system (
 	wire NMI_IORQ_PORT = PORT_ADDR[15:1] == (16'h0006 >> 1); // 6, 7
 	wire MPU_PORT = PORT_ADDR[15:1] == (16'h0330 >> 1); // 0x330, 0x331
 	wire TANDY_SND_PORT = PORT_ADDR[15:3] == (16'h00c0 >> 3); // 0xc0 - 0xc7
+	wire TANDY_PAGE_PORT = PORT_ADDR[15:0] == 16'h03df;
 	wire [7:0] TANDY_SND;
 	wire TANDY_SND_RDY;
  	wire [7:0]VGA_DAC_DATA;
@@ -316,7 +317,7 @@ module system (
 	reg [19:0]s_displ_on = 0; // clk_25 delayed displ_on
 	reg vga13 = 0;            // 1 for mode 13h
 	reg vgatext = 0;          // 1 for text mode
-	reg modecomp = 0;         // 1 for CGA compatibility line addressing mode
+	reg [1:0]modecomp = 0;    // CGA/Tandy compatibility line addressing mode
 	wire shiftload;           // 1 for 4-bit packed pixel mode (for CGA 320x200x4)
 	reg planar = 0;
 	reg half = 0;
@@ -328,10 +329,10 @@ module system (
 	wire [3:0]char_ln = {(vcount[3] & !halfreq), vcount[2:0]};
 	wire [11:0]charcount = {char_row, 4'b0000} + {char_row, 6'b000000} + hcount_pan[9:3];
 	wire [31:0]fifo_dout32;
-	wire [15:0]fifo_dout = (modecompreq ? hcount_pan[4] : vgatextreq ? hcount_pan[3] : vga13req ? hcount_pan[2] : hcount_pan[1]) ? fifo_dout32[31:16] : fifo_dout32[15:0];
+	wire [15:0]fifo_dout = (modecompreq == 2'b01 ? hcount_pan[4] : (vgatextreq | modecompreq[1]) ? hcount_pan[3] : vga13req ? hcount_pan[2] : hcount_pan[1]) ? fifo_dout32[31:16] : fifo_dout32[15:0];
 
 	reg [8:0]vga_ddr_row_count = 0;
-	reg evenline = 0;
+	reg [1:0]linecnt = 0;
 	reg [2:0]max_read;
 	reg [4:0]col_counter;
 	wire vga_end_frame = (vga_ddr_row_count == vde) && vde != 0;
@@ -340,7 +341,8 @@ module system (
 	wire [3:0]vga_repln = vgatext ? (half ? 7 : 15) : {3'b000, repln_graph};//(vga13[0] | half[0]) ? 1 : 0;
 	reg [7:0]vga_lnbytecount = 0; // line byte count (multiple of 4)
 
-	wire [4:0]vga_lnend = (modecomp ? 1 : // multiple of 32 (SDRAM resolution = 32)
+	wire [4:0]vga_lnend = (modecomp[1] ? 4 : // multiple of 32 (SDRAM resolution = 32)
+	                       modecomp[0] ? 1 :
 	                       vgatext ? (hde >> 4) :
 	                       (vga13 | planar) ? (hde >> 3) :
 	                       (hde >> 2))
@@ -363,7 +365,7 @@ module system (
 	wire vga13req;
 	wire planarreq;
 	wire replnreq;
-	wire modecompreq;
+	wire [1:0]modecompreq;
 	wire halfreq;
 	wire oncursor;
 	wire [4:0]crs[1:0];
@@ -374,6 +376,9 @@ module system (
 	reg [9:0]rNMI = 0;
 	wire [2:0]shift = halfreq ? ~hcount_pan[3:1] : ~hcount_pan[2:0];
 	wire [2:0]pxindex = -hcount_pan[2:0];
+
+	reg [2:0]crt_page /* synthesis noprune */;
+	reg [2:0]cpu_page /* synthesis noprune */;
 
 	reg [13:0]cga_addr;
 	reg cga_palette;
@@ -404,19 +409,22 @@ module system (
 	end
 
 	wire [3:0]EGA_MUX = vgatextreq ? (font_dout[pxindex] ^ flash_on) ? vga_attr[3:0] : {vga_attr[7] & ~vgaflash, vga_attr[6:4]} :
-	                    (modecompreq & ~shiftload) ? {4{fifo_dout[{hcount_pan[3], ~hcount_pan[2:0]}]}} : // CGA 640x200x2
-						modecompreq ? cga_color : // CGA 320x200x4
+	                    (modecompreq[1] & ~shiftload) ? {2{fifo_dout[{hcount_pan[2], ~hcount_pan[1:0], 1'b1}], fifo_dout[{hcount_pan[2], ~hcount_pan[1:0], 1'b0}] }} :  // PCJr 640x200x4
+	                    modecompreq[1] ? {fifo_dout[{hcount_pan[2], ~hcount_pan[1], 2'b11}], fifo_dout[{hcount_pan[2], ~hcount_pan[1], 2'b10}], fifo_dout[{hcount_pan[2], ~hcount_pan[1], 2'b01}],fifo_dout[{hcount_pan[2], ~hcount_pan[1], 2'b00}] } :  // PCJr 320x200x16
+	                    (modecompreq[0] & ~shiftload) ? {4{fifo_dout[{hcount_pan[3], ~hcount_pan[2:0]}]}} : // CGA 640x200x2
+						modecompreq[0] ? cga_color : // CGA 320x200x4
 		                             {fifo_dout32[{2'b11, shift}], fifo_dout32[{2'b10, shift}], fifo_dout32[{2'b01, shift}], fifo_dout32[{2'b00, shift}]};
 	wire [7:0]VGA_INDEX;
 	reg [3:0]exline = 4'b0000; // extra 8 dwords (32 bytes) for screen panning
 	reg [2:0]wrdcnt = 0;
 	wire vrdon = s_displ_on[16-vga_hrzpan];
 	wire vrden = (~vrdon & ~exline[3] & |wrdcnt) || // flush extra words left in the FIFO
-	    ((vrdon || exline[3]) &&
-		(modecompreq           ? &hcount_pan[4:0] :
-		(vgatextreq | halfreq) ? &hcount_pan[3:0] :
-		(vga13req | planarreq) ? &hcount_pan[2:0] :
-		                         &hcount_pan[1:0]));
+		((vrdon || exline[3]) &&
+		(modecompreq[1]         ? &hcount_pan[3:0] :
+		 modecompreq[0]         ? &hcount_pan[4:0] :
+		 (vgatextreq | halfreq) ? &hcount_pan[3:0] :
+		 (vga13req | planarreq) ? &hcount_pan[2:0] :
+		                          &hcount_pan[1:0]));
 	reg s_vga_endline;
 	reg s_vga_endscanline = 1'b0;
 	reg s_vga_endframe;
@@ -566,7 +574,7 @@ module system (
 		 .dout(VGA_DAC_DATA), 
 		 .CLK(clk_cpu), 
 		 .VGA_CLK(clk_25), 
-		 .vga_addr((modecompreq | vgatextreq | (~vga13req & planarreq)) ? VGA_INDEX : (vga13req ? hcount_pan[1] : hcount_pan[0]) ? fifo_dout[15:8] : fifo_dout[7:0]), 
+		 .vga_addr((modecompreq[0] | vgatextreq | (~vga13req & planarreq)) ? VGA_INDEX : (vga13req ? hcount_pan[1] : hcount_pan[0]) ? fifo_dout[15:8] : fifo_dout[7:0]), 
 		 .color(DAC_COLOR),
 		 .vgatext(vgatextreq),
 		 .vga13(vga13req),
@@ -938,7 +946,7 @@ module system (
 
 	wire [16:0] vga_addr_adj = (~vgatextreq & ~halfreq & ~vga13req & ~planarreq) ? vga_addr + vga_lnbytecount : {1'b0, vga_addr[15:0] + vga_lnbytecount};
 	// adjust for CGA odd/even line addressing mode, add framebuffer start address in physical RAM
-	wire [17:0] vga_ddr_row_col_adr = modecomp ? {6'b101110, evenline, cga_addr[12:2] + vga_lnbytecount} : {1'b1, vga_addr_adj[16:13] + (vgatext ? 4'b0111 : 4'b0100), vga_addr_adj[12:0]};
+	wire [17:0] vga_ddr_row_col_adr = modecomp[0] ? {5'b10111, modecomp[1] & linecnt[1], linecnt[0], cga_addr[12:2] + vga_lnbytecount} : {1'b1, vga_addr_adj[16:13] + (vgatext ? 4'b0111 : 4'b0100), vga_addr_adj[12:0]};
 
 	reg nop;
 	reg fifo_fill = 1;
@@ -997,12 +1005,12 @@ module system (
 
 			if(s_vga_endframe)
 				cga_addr <= {scraddr[11:0], 1'b0};
-			else if(s_vga_endline & evenline)
+			else if(s_vga_endline & linecnt[0] & (!modecomp[1] | linecnt[1]))
 				cga_addr[12:0] <= cga_addr[12:0] + {vga_offset, 2'b0};
 
 			if(s_vga_endline) begin
 				vga_repln_count <= 0;
-				evenline <= ~evenline;
+				linecnt <= linecnt + 1'd1;
 			end
 			else vga_repln_count <= vga_repln_count + 1'b1;
 			if(s_vga_endframe) begin
@@ -1014,7 +1022,7 @@ module system (
 				repln_graph <= replnreq;
 				vga_ddr_row_count <= 0;
 				fifo_fill <= 0;
-				evenline <= 0;
+				linecnt <= 0;
 			end else vga_ddr_row_count <= vga_ddr_row_count + 1'b1; 
 		end else s_vga_endscanline <= (vga_lnbytecount[7:3] == vga_lnend);
 	end
@@ -1096,7 +1104,13 @@ module system (
 		end
 
 // CGA color
-		if(CPU_CE && IORQ && WR && !WORD && CGA_CL) {cga_palette, cga_bright, cga_background} <= CPU_DOUT[5:0];
+		if (!rstcount[18]) begin
+			{cga_palette, cga_bright, cga_background} <= 0;
+			{cpu_page, crt_page} <= 0;
+		end else begin
+			if(CPU_CE && IORQ && WR && !WORD && CGA_CL) {cga_palette, cga_bright, cga_background} <= CPU_DOUT[5:0];
+			if(CPU_CE && IORQ && WR && !WORD && TANDY_PAGE_PORT) {cpu_page, crt_page} <= CPU_DOUT[5:0];
+		end
 
 	end
 
@@ -1106,7 +1120,7 @@ module system (
 		s_displ_on <= {s_displ_on[18:0], displ_on};
 		// 32 extra bytes at the end of the scanline, for panning
 		// 16 extra bytes for CGA modes, as one line = 80 bytes, but SDRAM controller reads 3*32 = 96 bytes
-		exline <= vrdon ? (modecompreq ? 4'b1011 : 4'b1111) : (exline - vrden);
+		exline <= vrdon ? (modecompreq == 2'b01 ? 4'b1011 : 4'b1111) : (exline - vrden);
 		if (vrden) wrdcnt <= wrdcnt - 1'd1;
 		if (vblnk) wrdcnt <= 0;
 
@@ -1126,7 +1140,7 @@ module system (
 		if(!BTN_NMI) rNMI <= 0;		// NMI
 		else if(!rNMI[9] && RTCDIVEND) rNMI <= rNMI + 1'b1;	// 1Mhz increment
 
-		if(VGA_VSYNC) vga_hrzpan <= modecompreq ? {cga_addr[1], 4'b0} : halfreq ? {1'b0, vga_hrzpan_req[2:0], 1'b0} : {2'b0, vga_hrzpan_req[2:0]};
+		if(VGA_VSYNC) vga_hrzpan <= modecompreq[0] ? {cga_addr[1], 4'b0} : halfreq ? {1'b0, vga_hrzpan_req[2:0], 1'b0} : {2'b0, vga_hrzpan_req[2:0]};
 		else if(VGA_HSYNC && ppm && (vcount == lcr)) vga_hrzpan <= 4'b0000;
 
 		{VGA_B, VGA_G, VGA_R} <= DAC_COLOR & {18{sdon}};
