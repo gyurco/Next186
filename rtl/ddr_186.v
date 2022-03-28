@@ -248,6 +248,7 @@ module system (
 	wire [3:0]vga_hrzpan_req;
 	wire [9:0]hcount_pan = hcount + vga_hrzpan - 18;
 	reg FifoStart = 1'b0;	// fifo not empty
+	reg fifo_clear;
 	wire displ_on = !(hblnk | vblnk | !FifoStart);
 	wire [17:0]DAC_COLOR;
 	wire [8:0]fifo_wr_used_words;
@@ -560,6 +561,7 @@ module system (
 	(
 	  .wrclk(clk_sdr), // input wr_clk
 	  .rdclk(clk_25), // input rd_clk
+	  .aclr(fifo_clear),
 	  .data(sys_DOUT), // input [15 : 0] din
 	  .wrreq(!crw && sys_rd_data_valid && !col_counter[4]), // input wrreq
 	  .rdreq(vrden), // input rdreq
@@ -1131,12 +1133,16 @@ module system (
 	assign CGA_CL_DATA = {2'b0, cga_palette, cga_bright, cga_background};
 
 	always @ (posedge clk_25) begin
+		reg vblnkD;
 		s_displ_on <= {s_displ_on[18:0], displ_on};
 		// 32 extra bytes at the end of the scanline, for panning
 		// 16 extra bytes for CGA modes, as one line = 80 bytes, but SDRAM controller reads 3*32 = 96 bytes
 		exline <= vrdon ? (modecompreq == 2'b01 ? 4'b1011 : 4'b1111) : (exline - vrden);
 		if (vrden) wrdcnt <= wrdcnt - 1'd1;
 		if (vblnk) wrdcnt <= 0;
+
+		vblnkD <= vblnk;
+		fifo_clear <= vblnk & ~vblnkD;
 
 		vga_attr <= fifo_dout[15:8];		
 		flash_on <= (vgaflash & fifo_dout[15] & flashcount[5]) | (~oncursor && flashcount[4] && (charcount == cursorpos) && (char_ln >= crs[0][3:0]) && (char_ln <= crs[1][3:0]));		
