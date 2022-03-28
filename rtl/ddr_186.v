@@ -306,6 +306,7 @@ module system (
 
 	reg [1:0]cntrl0_user_command_register = 0;
 	reg [16:0]vga_addr = 0;
+	reg [16:0]vga_addr_r;
 	reg s_prog_full;
 	reg s_prog_empty;
 	reg s_ddr_rd = 1'b0;
@@ -381,6 +382,7 @@ module system (
 	reg [2:0]cpu_page /* synthesis noprune */;
 
 	reg [13:0]cga_addr;
+	reg [13:0]cga_addr_r;
 	reg cga_palette;
 	reg cga_bright;
 	reg [3:0] cga_background;
@@ -944,9 +946,8 @@ module system (
 		.rst(1'b0)
 	);
 
-	wire [16:0] vga_addr_adj = (~vgatextreq & ~halfreq & ~vga13req & ~planarreq) ? vga_addr + vga_lnbytecount : {1'b0, vga_addr[15:0] + vga_lnbytecount};
 	// adjust for CGA odd/even line addressing mode, add framebuffer start address in physical RAM
-	wire [17:0] vga_ddr_row_col_adr = modecomp[0] ? {5'b10111, modecomp[1] & linecnt[1], linecnt[0], cga_addr[12:2] + vga_lnbytecount} : {1'b1, vga_addr_adj[16:13] + (vgatext ? 4'b0111 : 4'b0100), vga_addr_adj[12:0]};
+	wire [17:0] vga_ddr_row_col_adr = modecomp[0] ? {5'b10111, modecomp[1] & linecnt[1], linecnt[0], cga_addr[12:2]} : {1'b1, vga_addr[16:13] + (vgatext ? 4'b0111 : 4'b0100), vga_addr[12:0]};
 
 	reg nop;
 	reg fifo_fill = 1;
@@ -985,6 +986,9 @@ module system (
 				crw <= 1'b0;	// VGA read
 				col_counter <= {1'b0, max_read, 1'b1};
 				vga_lnbytecount <= vga_lnbytecount + max_read + 1'b1;
+				vga_addr <= vga_addr + max_read + 1'b1;
+				if (vgatext | half | vga13 | planar) vga_addr[16] <= 0; // 64K/plane in normal VGA modes
+				cga_addr[12:2] <= cga_addr[12:2] + max_read + 1'b1;
 			end					
 			2'b01, 2'b11: crw <= !BIOS_WR;	// cache read/write
 		endcase
@@ -996,17 +1000,27 @@ module system (
 			vga_lnbytecount <= 0;
 			s_vga_endscanline <= 1'b0;
 
-			if(s_vga_endframe)
+			vga_addr <= vga_addr_r;
+			if(s_vga_endframe) begin
 				vga_addr <= scraddr;
-			else if({1'b0, vga_ddr_row_count} == lcr)
+				vga_addr_r <= scraddr;
+			end else if({1'b0, vga_ddr_row_count} == lcr) begin
 				vga_addr <= 0;
-			else if(s_vga_endline)
-				vga_addr <= vga_addr + (vgatext ? 40 : {vga_offset, 1'b0});
+				vga_addr_r <= 0;
+			end else if(s_vga_endline) begin
+				vga_addr <= vga_addr_r + (vgatext ? 40 : {vga_offset, 1'b0});
+				vga_addr_r <= vga_addr_r + (vgatext ? 40 : {vga_offset, 1'b0});
+				if (vgatext | half | vga13 | planar) {vga_addr_r[16], vga_addr[16]} <= 0; // 64K/plane in normal VGA modes
+			end
 
-			if(s_vga_endframe)
+			cga_addr <= cga_addr_r;
+			if(s_vga_endframe) begin
 				cga_addr <= {scraddr[11:0], 1'b0};
-			else if(s_vga_endline & linecnt[0] & (!modecomp[1] | linecnt[1]))
-				cga_addr[12:0] <= cga_addr[12:0] + {vga_offset, 2'b0};
+				cga_addr_r <= {scraddr[11:0], 1'b0};
+			end else if(s_vga_endline & linecnt[0] & (!modecomp[1] | linecnt[1])) begin
+				cga_addr[12:0] <= cga_addr_r[12:0] + {vga_offset, 2'b0};
+				cga_addr_r[12:0] <= cga_addr_r[12:0] + {vga_offset, 2'b0};
+			end
 
 			if(s_vga_endline) begin
 				vga_repln_count <= 0;
