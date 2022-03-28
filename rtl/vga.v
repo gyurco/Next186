@@ -205,7 +205,7 @@ module VGA_CRT(
 		vtotal = {regs[5'h7][5], regs[5'h7][0], regs[5'h6]};
 		vde = {regs[5'h7][6], regs[5'h7][1], regs[5'h12]};
 		lcr = {regs[5'h9][6], regs[5'h7][4], regs[5'h18]};
-		repln = regs[5'h9][7];
+		repln = regs[5'h9][7] | regs[5'h9][0];
 		{oncursor, cursorstart} = regs[5'ha][5:0];
 		cursorend = regs[5'hb][4:0];
 		cursorpos = {regs[5'he][3:0], regs[5'hf]};
