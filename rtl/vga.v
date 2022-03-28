@@ -220,7 +220,7 @@ module VGA_CRT(
 		if(CE && WR) begin
 			if(!addr) idx_buf <= din[4:0];
 			if(addr || WORD) begin
-				if (!protect || index > 5'h7)
+				if (!protect || (index > 5'h7 && index != 5'h10)) // protect vsync, too for Defender of the Crown CGA
 					regs[index] <= data;
 				else if (index == 5'h7)
 					regs[5'h7][4] <= data[4]; // LCR bit 8 is not protected
