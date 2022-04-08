@@ -415,6 +415,7 @@ module Next186_CPU(
 				WR = MREQ & !FETCH[0][1];
 				WE = WR | IRQ ? 5'b00000 : &FETCH[0][2:1] ? {2'b00, FETCH[1][4:3] != 2'b01, 2'b00} : {3'b000, WBIT};		// RSSEL, RASEL_HI/RASEL_LO
 				ISIZE = IRQ ? 0 : ISIZES;
+				FFLUSH_REQ = WR;
 			end
 // --------------------------------  mov IMM to R/M  --------------------------------
 			1: begin	
@@ -453,7 +454,7 @@ module Next186_CPU(
 				WE[1:0] = WRBIT;		// IP, RASEL_HI/RASEL_LO
 				ISIZE = 3;
 				NOBP = 1'b1;
-				FFLUSH_REQ = 1;
+				FFLUSH_REQ = WR;
 			end
 // --------------------------------  segment override prefix --------------------------------
 			4: begin	
