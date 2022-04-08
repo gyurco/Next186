@@ -324,11 +324,12 @@ module system (
 	reg planar = 0;
 	reg half = 0;
 	reg repln_graph = 0;
+	reg [3:0]replncnt;
 	wire vgaflash;
 	reg flashbit = 0;
 	reg [5:0]flashcount = 0;
-	wire [5:0]char_row = vcount[8:3] >> !halfreq;
-	wire [3:0]char_ln = {(vcount[3] & !halfreq), vcount[2:0]};
+	wire [5:0]char_row;// = vcount[8:3] >> !halfreq;
+	wire [3:0]char_ln;// = {(vcount[3] & !halfreq), vcount[2:0]};
 	wire [11:0]charcount = {char_row, 4'b0000} + {char_row, 6'b000000} + hcount_pan[9:3];
 	wire [31:0]fifo_dout32;
 	wire [15:0]fifo_dout = (modecompreq == 2'b01 ? hcount_pan[4] : (vgatextreq | modecompreq[1]) ? hcount_pan[3] : vga13req ? hcount_pan[2] : hcount_pan[1]) ? fifo_dout32[31:16] : fifo_dout32[15:0];
@@ -340,7 +341,8 @@ module system (
 	wire vga_end_frame = (vga_ddr_row_count == vde) && vde != 0;
 	wire vga_start_fifo = vcount == (vtotal - 1'd1) || vtotal == 0;
 	reg [3:0]vga_repln_count = 0; // repeat line counter
-	wire [3:0]vga_repln = vgatext ? (half ? 7 : 15) : {3'b000, repln_graph};//(vga13[0] | half[0]) ? 1 : 0;
+//	wire [3:0]vga_repln = vgatext ? (half ? 7 : 15) : {3'b000, repln_graph};//(vga13[0] | half[0]) ? 1 : 0;
+	wire [3:0]vga_repln = vgatext ? replncnt : {3'b000, repln_graph};//(vga13[0] | half[0]) ? 1 : 0;
 	reg [7:0]vga_lnbytecount = 0; // line byte count (multiple of 4)
 
 	wire [4:0]vga_lnend = (modecomp[1] ? 4 : // multiple of 32 (SDRAM resolution = 32)
@@ -363,6 +365,7 @@ module system (
 	wire [8:0]memmap_mux;
 	wire [7:0]font_dout;
 	wire [7:0]VGA_FONT_DATA;
+	wire [3:0]replncntreq;
 	wire vgatextreq;
 	wire vga13req;
 	wire planarreq;
@@ -607,6 +610,7 @@ module system (
 		.offset(vga_offset),
 		.lcr(lcr),
 		.repln(replnreq),
+		.replncnt(replncntreq),
 		.modecomp(modecompreq),
 		.hde(hde),
 		.vtotal(vtotal),
@@ -622,6 +626,8 @@ module system (
 		.vcount(vcount),
 		.vsync(VGA_VSYNC),
 		.vblnk(vblnk),
+		.char_ln(char_ln),
+		.char_row(char_row)
 	);
 
 	VGA_SC sc
@@ -1036,9 +1042,11 @@ module system (
 				planar <= planarreq;
 				half <= halfreq;
 				repln_graph <= replnreq;
+				replncnt <= replncntreq;
 				vga_ddr_row_count <= 0;
 				fifo_fill <= 0;
 				linecnt <= 0;
+				vga_repln_count <= 0;
 			end else vga_ddr_row_count <= vga_ddr_row_count + 1'b1; 
 		end else s_vga_endscanline <= (vga_lnbytecount[7:3] == vga_lnend);
 	end

@@ -155,7 +155,8 @@ module VGA_CRT(
 	output reg [15:0]scraddr,
 	output reg [7:0]offset = 8'h28,
 	output reg [9:0]lcr = 10'h3ff, // line compare register
-	output reg repln = 1'b0,		// line repeat count - 1 for graphics mode only
+	output reg repln = 1'b0,       // line repeat count - 1 for graphics mode only
+	output reg [3:0]replncnt,      // line repeat count
 	output reg [9:0]vde = 10'h0c7, // last display visible scan line (i.e. 199 in text mode)
 	output reg [7:0]hde = 8'd79,
 	output reg [9:0]vtotal,
@@ -170,6 +171,8 @@ module VGA_CRT(
 	output reg	[9:0]	vcount = 0,
 	output reg			vsync,
 	output reg			vblnk = 0,
+	output reg  [3:0]   char_ln,
+	output reg  [5:0]   char_row,
 
 	input  wire			clk_vga,
 	input  wire			ce_vga
@@ -206,6 +209,7 @@ module VGA_CRT(
 		vde = {regs[5'h7][6], regs[5'h7][1], regs[5'h12]};
 		lcr = {regs[5'h9][6], regs[5'h7][4], regs[5'h18]};
 		repln = regs[5'h9][7] | regs[5'h9][0];
+		replncnt = regs[5'h9][3:0];
 		{oncursor, cursorstart} = regs[5'ha][5:0];
 		cursorend = regs[5'hb][4:0];
 		cursorpos = {regs[5'he][3:0], regs[5'hf]};
@@ -256,10 +260,17 @@ module VGA_CRT(
 	always @(posedge clk_vga)
 		if(ce_vga && hch_en && hchar == htotal + 4'd5) begin
 			vcount <= vcount + 1'd1;
+			char_ln <= char_ln + 1'd1;
+			if (char_ln == replncnt) begin
+				char_ln <= 0;
+				char_row <= char_row + 1'd1;
+			end
 			if (vcount == vtotal) begin
+				char_ln <= 0;
 				vcount <= 0;
 				vblnk <= 0;
 				vsync <= 0;
+				char_row <= 0;
 			end
 			if (vcount == vde) vblnk <= 1;
 			if (vcount == vsync_start) vsync <= 1;

@@ -1334,7 +1334,7 @@ crtc4   db 054h, 054h, 054h, 054h, 02bh, 02bh, 054h, 054h, 02bh, 02bh, 054h, 054
 ;crtc5   db ; hsync end
 crtc6   db 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 008h, 008h, 0bfh, 008h ; vtotal
 crtc7   db 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 036h, 036h, 01fh, 036h ; overflow (vsync[9], vde[9], vtotal[9], lcr[8], vblank[8], vsync[8], vde[8], vtotal[8])
-crtc9   db 04dh, 04dh, 04dh, 04dh, 0c0h, 0c0h, 0c0h, 04dh, 0c0h, 0c0h, 0c0h, 0c0h, 0c0h, 0c0h, 0c0h, 040h, 040h, 040h, 040h, 0c0h, 040h ; repln, lcr[9]
+crtc9   db 04fh, 04fh, 04fh, 04fh, 0c0h, 0c0h, 0c0h, 04fh, 0c0h, 0c0h, 0c0h, 041h, 041h, 041h, 041h, 040h, 040h, 040h, 040h, 041h, 040h ; lcr[9], repln
 crtc10  db 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 0e1h, 0e1h, 09ch, 0e1h ; vsync start
 crtc12  db 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 05dh, 05dh, 0dfh, 0dfh, 08fh, 0dfh ; vde
 crtc13  db 014h, 014h, 014h, 014h, 014h, 014h, 014h, 028h, 028h, 028h, 028h, 028h, 028h, 014h, 028h, 028h, 028h, 028h, 028h, 028h, 050h ; offset
