@@ -231,11 +231,15 @@ module VGA_CRT(
 		dout1 <= regs[idx_buf];
 	end
 
+	// Synchronizers
+	reg [1:0] half_s;
+	always @(posedge clk_vga) half_s <= {half_s[0], half};
+
 	//******************************************************************//
 	// This logic describes a 10-bit horizontal position counter.       //
 	//******************************************************************//
-	wire [8:0] hchar = half ? hcount[9:4] : hcount[9:3];
-	wire       hch_en = half ? hcount[3:0] == 4'b1111 : hcount[2:0] == 3'b111;
+	wire [8:0] hchar = half_s[1] ? hcount[9:4] : hcount[9:3];
+	wire       hch_en = half_s[1] ? hcount[3:0] == 4'b1111 : hcount[2:0] == 3'b111;
 
 	always @(posedge clk_vga)
 		if(ce_vga) begin
@@ -248,7 +252,7 @@ module VGA_CRT(
 				end
 				if (hchar == hde) hblnk <= 1;
 				if (hchar == hsync_start) hsync <= 1;
-				if (hchar == hsync_start + (half ? 4'd6 : 4'd13)) hsync <= 0;
+				if (hchar == hsync_start + (half_s[1] ? 4'd6 : 4'd13)) hsync <= 0;
 			end
 		end
 
