@@ -323,8 +323,6 @@ module system (
 	wire shiftload;           // 1 for 4-bit packed pixel mode (for CGA 320x200x4)
 	reg planar = 0;
 	reg half = 0;             // half pixel clock
-	reg scanline = 0;         // odd/even lines when doublescan is active
-	reg doublescan = 0;
 	reg [3:0]replncnt;
 	wire vgaflash;
 	reg flashbit = 0;
@@ -339,8 +337,7 @@ module system (
 	reg [1:0]linecnt = 0;
 	reg [2:0]max_read;
 	reg [4:0]col_counter;
-	wire nextline = (doublescan && scanline) || !doublescan;
-	wire vga_end_frame = (vga_ddr_row_count == vde) && vde != 0 && nextline;
+	wire vga_end_frame = (vga_ddr_row_count == vde) && vde != 0;
 	wire vga_start_fifo = (vcount == vtotal - 1'd1) || vtotal == 0;
 	reg [3:0]vga_repln_count = 0; // repeat line counter
 	reg [7:0]vga_lnbytecount = 0; // line byte count (multiple of 4)
@@ -366,7 +363,6 @@ module system (
 	wire [7:0]font_dout;
 	wire [7:0]VGA_FONT_DATA;
 	wire [3:0]replncntreq;
-	wire doublescanreq;
 	wire vgatextreq;
 	wire vga13req;
 	wire planarreq;
@@ -609,7 +605,6 @@ module system (
 		.scraddr(scraddr),
 		.offset(vga_offset),
 		.lcr(lcr),
-		.doublescan(doublescanreq),
 		.replncnt(replncntreq),
 		.modecomp(modecompreq),
 		.hde(hde),
@@ -970,7 +965,7 @@ module system (
 		fifo_req <= fifo_fill && !vga_in_cache;
 		s_ddr_rd <= ddr_rd;
 		s_ddr_wr <= ddr_wr;
-		s_vga_endline <= ((vga_repln_count == replncnt) && !doublescan) || (doublescan && scanline);
+		s_vga_endline <= vga_repln_count == replncnt;
 		s_vga_endframe <= vga_end_frame;
 		s_vga_start_fifo <= vga_start_fifo;
 		nop <= sys_cmd_ack == 2'b00;
@@ -1015,7 +1010,6 @@ module system (
 		if(s_vga_start_fifo) fifo_fill <= 1;
 
 		if(s_vga_endscanline) begin
-			scanline <= ~scanline;
 			col_counter[3:1] <= col_counter[3:1] - vga_lnbytecount[2:0];
 			vga_lnbytecount <= 0;
 			s_vga_endscanline <= 1'b0;
@@ -1058,9 +1052,7 @@ module system (
 				fifo_fill <= 0;
 				linecnt <= 0;
 				vga_repln_count <= 0;
-				doublescan <= doublescanreq;
-				scanline <= 0;
-			end else if (nextline) vga_ddr_row_count <= vga_ddr_row_count + 1'b1; 
+			end else vga_ddr_row_count <= vga_ddr_row_count + 1'b1; 
 		end else s_vga_endscanline <= (vga_lnbytecount[7:3] == vga_lnend);
 	end
 

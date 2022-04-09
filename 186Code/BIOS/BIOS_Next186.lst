@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 6.14.8444		    04/08/22 23:25:16
+Microsoft (R) Macro Assembler Version 6.14.8444		    04/09/22 14:18:16
 BIOS_Next186.asm					     Page 1 - 1
 
 
@@ -1100,24 +1100,24 @@ BIOS_Next186.asm					     Page 1 - 1
        54 2B 54 54 54 54
        54 54 54
 				;crtc5   db ; hsync end
- E6DD BF BF BF BF DF DF		crtc6   db 0bfh, 0bfh, 0bfh, 0bfh, 0dfh, 0dfh, 0dfh, 0bfh, 0dfh, 0dfh, 0dfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 008h, 008h, 0bfh, 008h ; vtotal
-       DF BF DF DF DF BF
+ E6DD BF BF BF BF BF BF		crtc6   db 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 008h, 008h, 0bfh, 008h ; vtotal
+       BF BF BF BF BF BF
        BF BF BF BF BF 08
        08 BF 08
- E6F2 1F 1F 1F 1F 10 10		crtc7   db 01fh, 01fh, 01fh, 01fh, 010h, 010h, 010h, 01fh, 010h, 010h, 010h, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 036h, 036h, 01fh, 036h ; overflow (vsync[9], vde[9], vtotal[9], lcr[8], vblank[8], vsync[8], vde[8], vtotal[8])
-       10 1F 10 10 10 1F
+ E6F2 1F 1F 1F 1F 1F 1F		crtc7   db 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 036h, 036h, 01fh, 036h ; overflow (vsync[9], vde[9], vtotal[9], lcr[8], vblank[8], vsync[8], vde[8], vtotal[8])
+       1F 1F 1F 1F 1F 1F
        1F 1F 1F 1F 1F 36
        36 1F 36
  E707 4F 4F 4F 4F C0 C0		crtc9   db 04fh, 04fh, 04fh, 04fh, 0c0h, 0c0h, 0c0h, 04fh, 0c0h, 0c0h, 0c0h, 041h, 041h, 041h, 041h, 040h, 040h, 040h, 040h, 041h, 040h ; lcr[9], repln
        C0 4F C0 C0 C0 41
        41 41 41 40 40 40
        40 41 40
- E71C 9C 9C 9C 9C CE CE		crtc10  db 09ch, 09ch, 09ch, 09ch, 0ceh, 0ceh, 0ceh, 09ch, 0ceh, 0ceh, 0ceh, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 0e1h, 0e1h, 09ch, 0e1h ; vsync start
-       CE 9C CE CE CE 9C
+ E71C 9C 9C 9C 9C 9C 9C		crtc10  db 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 0e1h, 0e1h, 09ch, 0e1h ; vsync start
+       9C 9C 9C 9C 9C 9C
        9C 9C 9C 9C 9C E1
        E1 9C E1
- E731 8F 8F 8F 8F C7 C7		crtc12  db 08fh, 08fh, 08fh, 08fh, 0c7h, 0c7h, 0c7h, 08fh, 0c7h, 0c7h, 0c7h, 08fh, 08fh, 08fh, 08fh, 05dh, 05dh, 0dfh, 0dfh, 08fh, 0dfh ; vde
-       C7 8F C7 C7 C7 8F
+ E731 8F 8F 8F 8F 8F 8F		crtc12  db 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 05dh, 05dh, 0dfh, 0dfh, 08fh, 0dfh ; vde
+       8F 8F 8F 8F 8F 8F
        8F 8F 8F 5D 5D DF
        DF 8F DF
  E746 14 14 14 14 14 14		crtc13  db 014h, 014h, 014h, 014h, 014h, 014h, 014h, 028h, 028h, 028h, 028h, 028h, 028h, 014h, 028h, 028h, 028h, 028h, 028h, 028h, 050h ; offset
@@ -4440,7 +4440,7 @@ BIOS_Next186.asm					     Page 1 - 1
        31 37
  FFFD  FF FF 00					db      0ffh, 0ffh, 0
 				end bios
-Microsoft (R) Macro Assembler Version 6.14.8444		    04/08/22 23:25:16
+Microsoft (R) Macro Assembler Version 6.14.8444		    04/09/22 14:18:16
 BIOS_Next186.asm					     Symbols 2 - 1
 
 

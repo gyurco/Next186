@@ -1332,11 +1332,11 @@ crtc1   db  79,   79,   79,   79,   39,   39,   79,   79,   39,   39,   79,   79
 ;crtc3   db; hblank end
 crtc4   db 054h, 054h, 054h, 054h, 02bh, 02bh, 054h, 054h, 02bh, 02bh, 054h, 054h, 054h, 02bh, 054h, 054h, 054h, 054h, 054h, 054h, 054h ; hsync start
 ;crtc5   db ; hsync end
-crtc6   db 0bfh, 0bfh, 0bfh, 0bfh, 0dfh, 0dfh, 0dfh, 0bfh, 0dfh, 0dfh, 0dfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 008h, 008h, 0bfh, 008h ; vtotal
-crtc7   db 01fh, 01fh, 01fh, 01fh, 010h, 010h, 010h, 01fh, 010h, 010h, 010h, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 036h, 036h, 01fh, 036h ; overflow (vsync[9], vde[9], vtotal[9], lcr[8], vblank[8], vsync[8], vde[8], vtotal[8])
+crtc6   db 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 008h, 008h, 0bfh, 008h ; vtotal
+crtc7   db 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 036h, 036h, 01fh, 036h ; overflow (vsync[9], vde[9], vtotal[9], lcr[8], vblank[8], vsync[8], vde[8], vtotal[8])
 crtc9   db 04fh, 04fh, 04fh, 04fh, 0c0h, 0c0h, 0c0h, 04fh, 0c0h, 0c0h, 0c0h, 041h, 041h, 041h, 041h, 040h, 040h, 040h, 040h, 041h, 040h ; lcr[9], repln
-crtc10  db 09ch, 09ch, 09ch, 09ch, 0ceh, 0ceh, 0ceh, 09ch, 0ceh, 0ceh, 0ceh, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 0e1h, 0e1h, 09ch, 0e1h ; vsync start
-crtc12  db 08fh, 08fh, 08fh, 08fh, 0c7h, 0c7h, 0c7h, 08fh, 0c7h, 0c7h, 0c7h, 08fh, 08fh, 08fh, 08fh, 05dh, 05dh, 0dfh, 0dfh, 08fh, 0dfh ; vde
+crtc10  db 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 0e1h, 0e1h, 09ch, 0e1h ; vsync start
+crtc12  db 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 05dh, 05dh, 0dfh, 0dfh, 08fh, 0dfh ; vde
 crtc13  db 014h, 014h, 014h, 014h, 014h, 014h, 014h, 028h, 028h, 028h, 028h, 028h, 028h, 014h, 028h, 028h, 028h, 028h, 028h, 028h, 050h ; offset
 dac10   db 008h, 008h, 008h, 008h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 00bh, 001h, 00bh, 001h, 041h, 001h ; mode ctrl
 sc1     db 001h, 001h, 001h, 001h, 00bh, 00bh, 001h, 000h, 00bh, 00bh, 001h, 000h, 000h, 00bh, 001h, 001h, 001h, 001h, 001h, 001h, 001h ; clocking mode (half)
