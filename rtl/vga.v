@@ -182,13 +182,13 @@ module VGA_CRT(
 	initial lcr = 10'h3ff;
 	initial vde = 10'h0c7;	// 200 lines
 
-	reg [7:0] htotal = 8'h5b /* synthesis keep */;
+	reg [7:0] htotal = 8'h5b;
 	reg [7:0] hsync_start = 8'h51;
 	reg [7:0] hsync_end;
 	reg [7:0] hblank_start; // not used, overscan is blanked
 	reg [7:0] hblank_end;
 
-	reg [9:0] vsync_start /* synthesis keep */;
+	reg [9:0] vsync_start;
 
 	reg [4:0]idx_buf = 0;
 	reg [7:0]regs[5'h18:0];
@@ -236,7 +236,7 @@ module VGA_CRT(
 	//******************************************************************//
 	// This logic describes a 10-bit horizontal position counter.       //
 	//******************************************************************//
-	wire [8:0] hchar = half ? hcount[9:4] : hcount[9:3] /* synthesis keep */;
+	wire [8:0] hchar = half ? hcount[9:4] : hcount[9:3];
 	wire       hch_en = half ? hcount[3:0] == 4'b1111 : hcount[2:0] == 3'b111;
 
 	always @(posedge clk_vga)

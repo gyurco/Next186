@@ -222,7 +222,7 @@ module system (
 	localparam BIOS_BASE = 20'h57800;
 	initial SD_n_CS = 1'b1;
 
-	wire [15:0]cntrl0_user_input_data;//i
+	wire [15:0]cntrl0_user_input_data;
 	wire [1:0]sys_cmd_ack;
 	wire sys_rd_data_valid;
 	wire sys_wr_data_valid;   
@@ -246,7 +246,7 @@ module system (
 	wire [9:0]vcount;
 	reg [4:0]vga_hrzpan = 0;
 	wire [3:0]vga_hrzpan_req;
-	wire [9:0]hcount_pan = hcount + vga_hrzpan - 18;
+	wire [9:0]hcount_pan = hcount + vga_hrzpan - 8'd18;
 	reg FifoStart = 1'b0;	// fifo not empty
 	reg fifo_clear;
 	wire displ_on = !(hblnk | vblnk | !FifoStart);
@@ -322,15 +322,15 @@ module system (
 	reg [1:0]modecomp = 0;    // CGA/Tandy compatibility line addressing mode
 	wire shiftload;           // 1 for 4-bit packed pixel mode (for CGA 320x200x4)
 	reg planar = 0;
-	reg half = 0;
-	reg scanline = 0;
+	reg half = 0;             // half pixel clock
+	reg scanline = 0;         // odd/even lines when doublescan is active
 	reg doublescan = 0;
 	reg [3:0]replncnt;
 	wire vgaflash;
 	reg flashbit = 0;
 	reg [5:0]flashcount = 0;
-	wire [5:0]char_row;// = vcount[8:3] >> !halfreq;
-	wire [3:0]char_ln;// = {(vcount[3] & !halfreq), vcount[2:0]};
+	wire [5:0]char_row;
+	wire [3:0]char_ln;
 	wire [11:0]charcount = {char_row, 4'b0000} + {char_row, 6'b000000} + hcount_pan[9:3];
 	wire [31:0]fifo_dout32;
 	wire [15:0]fifo_dout = (modecompreq == 2'b01 ? hcount_pan[4] : (vgatextreq | modecompreq[1]) ? hcount_pan[3] : vga13req ? hcount_pan[2] : hcount_pan[1]) ? fifo_dout32[31:16] : fifo_dout32[15:0];
@@ -341,14 +341,12 @@ module system (
 	reg [4:0]col_counter;
 	wire nextline = (doublescan && scanline) || !doublescan;
 	wire vga_end_frame = (vga_ddr_row_count == vde) && vde != 0 && nextline;
-	wire vga_start_fifo = vcount == vtotal || vtotal == 0;
+	wire vga_start_fifo = (vcount == vtotal - 1'd1) || vtotal == 0;
 	reg [3:0]vga_repln_count = 0; // repeat line counter
-//	wire [3:0]vga_repln = vgatext ? (half ? 7 : 15) : {3'b000, repln_graph};//(vga13[0] | half[0]) ? 1 : 0;
-	wire [3:0]vga_repln = replncnt;//vgatext ? replncnt : {3'b000, repln_graph};//(vga13[0] | half[0]) ? 1 : 0;
 	reg [7:0]vga_lnbytecount = 0; // line byte count (multiple of 4)
 
-	wire [4:0]vga_lnend = (modecomp[1] ? 4 : // multiple of 32 (SDRAM resolution = 32)
-	                       modecomp[0] ? 1 :
+	wire [4:0]vga_lnend = (modecomp[1] ? 3'd4 : // multiple of 32 (SDRAM resolution = 32)
+	                       modecomp[0] ? 3'd1 :
 	                       vgatext ? (hde >> 4) :
 	                       (vga13 | planar) ? (hde >> 3) :
 	                       (hde >> 2))
@@ -384,8 +382,8 @@ module system (
 	wire [2:0]shift = halfreq ? ~hcount_pan[3:1] : ~hcount_pan[2:0];
 	wire [2:0]pxindex = -hcount_pan[2:0];
 
-	reg [2:0]crt_page /* synthesis noprune */;
-	reg [2:0]cpu_page /* synthesis noprune */;
+	reg [2:0]crt_page;
+	reg [2:0]cpu_page;
 
 	reg [13:0]cga_addr;
 	reg [13:0]cga_addr_r;
@@ -961,7 +959,7 @@ module system (
 
 	reg nop;
 	reg fifo_fill = 1;
-	wire fifo_req = fifo_fill && !vga_in_cache;
+	reg fifo_req;
 	always @ (posedge clk_sdr) begin
 		s_prog_full <= fifo_wr_used_words > 350; // AlmostFull;
 		if(fifo_wr_used_words < 64) s_prog_empty <= 1'b1; //AlmostEmpty;
@@ -969,26 +967,37 @@ module system (
 			s_prog_empty <= 1'b0;
 			FifoStart <= 1'b1;
 		end
+		fifo_req <= fifo_fill && !vga_in_cache;
 		s_ddr_rd <= ddr_rd;
 		s_ddr_wr <= ddr_wr;
-		s_vga_endline <= ((vga_repln_count == vga_repln) && !doublescan) || (doublescan && scanline);
+		s_vga_endline <= ((vga_repln_count == replncnt) && !doublescan) || (doublescan && scanline);
 		s_vga_endframe <= vga_end_frame;
 		s_vga_start_fifo <= vga_start_fifo;
 		nop <= sys_cmd_ack == 2'b00;
 
-		sdraddr <= BIOS_WR ? BIOS_BASE + (BIOS_ADDR >> 1) : 
-		           (fifo_req & (s_prog_empty || !(s_ddr_wr || s_ddr_rd))) ? vga_ddr_row_col_adr : {cache_hi_addr[18:0], 4'b0000};
-		max_read <= &sdraddr[7:3] ? ~sdraddr[2:0] : 3'b111;	// SDRAM row size = 512 words
-
 		BIOS_data_valid <= BIOS_WR;
 		BIOS_data <= BIOS_DIN;
 
-		if(BIOS_WR) cntrl0_user_command_register <= 2'b01;
-		else if(s_prog_empty & fifo_req) cntrl0_user_command_register <= 2'b10;	// read 32 bytes VGA
-		else if(s_ddr_wr) cntrl0_user_command_register <= 2'b01;		// write 256 bytes cache
-		else if(s_ddr_rd) cntrl0_user_command_register <= 2'b11;		// read 256 bytes cache
-		else if(~s_prog_full & fifo_req) cntrl0_user_command_register <= 2'b10;	// read 32 bytes VGA
-		else cntrl0_user_command_register <= 2'b00;
+		if(BIOS_WR) begin
+			cntrl0_user_command_register <= 2'b01;  // write 256 byte BIOS data
+			sdraddr <= BIOS_BASE + (BIOS_ADDR >> 1);
+		end else if(s_prog_empty & fifo_req) begin
+			cntrl0_user_command_register <= 2'b10;  // read 32 bytes VGA
+			sdraddr <= vga_ddr_row_col_adr;
+		end else if(s_ddr_wr) begin
+			cntrl0_user_command_register <= 2'b01;  // write 256 bytes cache
+			sdraddr <= {cache_hi_addr[18:0], 4'b0000};
+		end else if(s_ddr_rd) begin
+			cntrl0_user_command_register <= 2'b11;  // read 256 bytes cache
+			sdraddr <= {cache_hi_addr[18:0], 4'b0000};
+		end else if(~s_prog_full & fifo_req) begin
+			cntrl0_user_command_register <= 2'b10;  // read 32 bytes VGA
+			sdraddr <= vga_ddr_row_col_adr;
+		end else begin
+			cntrl0_user_command_register <= 2'b00;
+		end
+
+		max_read <= &sdraddr[7:3] ? ~sdraddr[2:0] : 3'b111;	// SDRAM row size = 512 words
 
 		if(!crw && sys_rd_data_valid) col_counter <= col_counter - 1'b1;
 		if(nop) case(sys_cmd_ack)
@@ -1019,8 +1028,8 @@ module system (
 				vga_addr <= 0;
 				vga_addr_r <= 0;
 			end else if(s_vga_endline) begin
-				vga_addr <= vga_addr_r + (vgatext ? 40 : {vga_offset, 1'b0});
-				vga_addr_r <= vga_addr_r + (vgatext ? 40 : {vga_offset, 1'b0});
+				vga_addr <= vga_addr_r + (vgatext ? 8'd40 : {vga_offset, 1'b0});
+				vga_addr_r <= vga_addr_r + (vgatext ? 8'd40 : {vga_offset, 1'b0});
 				if (vgatext | half | vga13 | planar) {vga_addr_r[16], vga_addr[16]} <= 0; // 64K/plane in normal VGA modes
 			end
 
