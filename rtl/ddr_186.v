@@ -337,7 +337,7 @@ module system (
 	reg [1:0]linecnt = 0;
 	reg [2:0]max_read;
 	reg [4:0]col_counter;
-	wire vga_end_frame = (vga_ddr_row_count == vde_adj) && vde != 0;
+	wire vga_end_frame = ((vga_ddr_row_count == vblank_start) || (vga_ddr_row_count == vde_adj)) && vde != 0;
 	wire vga_start_fifo = (vcount == vtotal - 1'd1) || vtotal == 0;
 	reg [3:0]vga_repln_count = 0; // repeat line counter
 	reg [7:0]vga_lnbytecount = 0; // line byte count (multiple of 4)
@@ -453,6 +453,7 @@ module system (
 	wire ppmreq;        // pixel panning mode
 	wire [9:0]lcr;      // line compare register
 	wire [9:0]vde;      // vertical display end
+	wire [9:0]vblank_start; // vertical blank start
 	wire [9:0]vtotal;
 	wire [9:0]vde_adj = vtotal>vde ? vde : vtotal - 1'd1;
 	wire sdon = s_displ_on[18+vgatext_s[1]] & (vcount <= vde_adj);
@@ -628,6 +629,7 @@ module system (
 		.hde(hde),
 		.vtotal(vtotal),
 		.vde(vde),
+		.vblank_start(vblank_start),
 
 		.clk_vga(clk_25),
 		.ce_vga(FifoStart),

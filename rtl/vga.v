@@ -158,6 +158,7 @@ module VGA_CRT(
 	output reg [3:0]replncnt,      // line repeat count
 	output reg [9:0]vde = 10'h0c7, // last display visible scan line (i.e. 199 in text mode)
 	output reg [7:0]hde = 8'd79,
+	output reg [9:0]vblank_start,
 	output reg [9:0]vtotal,
 	output reg [1:0]modecomp, // CGA/Tandy compatible addressing (odd/even lines)
 
@@ -213,6 +214,7 @@ module VGA_CRT(
 		cursorpos = {regs[5'he][3:0], regs[5'hf]};
 		scraddr = {regs[5'hc], regs[5'hd]};
 		vsync_start = {regs[5'h7][7], regs[5'h7][2], regs[5'h10]};
+		vblank_start = {regs[5'h9][5], regs[5'h7][3], regs[5'h15]};
 		protect = regs[5'h11][7];
 		offset = regs[5'h13];
 		modecomp = ~regs[5'h17][1:0];
@@ -274,7 +276,7 @@ module VGA_CRT(
 				vsync <= 0;
 				char_row <= 0;
 			end
-			if (vcount == vde) vblnk <= 1;
+			if (vcount == vde || vcount == vblank_start) vblnk <= 1; // overscan is not implemented
 			if (vcount == vsync_start) vsync <= 1;
 			if (vcount == vsync_start + 2'd2) vsync <= 0;
 		end
