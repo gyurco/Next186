@@ -47,6 +47,7 @@ parameter CONF_STR = {
 	"O7,Fake 286,Off,On;",
 	"O8,Swap Joysticks,Off,On;",
 	"O9,MIDI,MPU401,COM1;",
+	"OA,Adlib,On,Invisible;",
 	"T1,NMI;",
 	"T0,Reset;",
 	"V,",`BUILD_DATE
@@ -58,6 +59,7 @@ wire  [1:0] isawait = status[6:5];
 wire        fake286 = status[7];
 wire        joyswap = status[8];
 wire        midi = ~status[9];
+wire        adlibhide = status[10];
 
 reg   [3:0] cpu_speed;
 
@@ -427,6 +429,7 @@ system sys_inst (
 	.clk_dsp(clk_dsp),
 
 	.fake286(fake286_r2),
+	.adlibhide(adlibhide),
 	.cpu_speed(cpu_speed),
 	.waitstates(isawait == 0 ? 8'd50 :
 	            isawait == 1 ? 8'd100 :

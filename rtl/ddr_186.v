@@ -161,6 +161,7 @@ module system (
 	input  clk_en_44100, // COVOX/DSS clock enable
 
 	input  fake286,
+	input  adlibhide,
 	input  [3:0] cpu_speed, // CPU speed control, 0 - maximum
 	input  [7:0] waitstates,  // ISA Bus wait states (for Adlib), in clk_cpu periods
 
@@ -925,7 +926,7 @@ module system (
     assign opl3right = jtopl2_snd;
 
     wire [7:0] jtopl2_dout;
-    assign opl32_data = jtopl2_dout;//PORT_ADDR[1:0] == 2'b00 ? {jtopl2_dout[7:5], 5'd0} : 8'd0;
+    assign opl32_data = adlibhide ? 8'hFF : PORT_ADDR[1:0] == 2'b00 ? {jtopl2_dout[7:5], 5'd0} : 8'd0;
 
 	wire      jtopl2_cs = IORQ & OPL2_PORT & CPU_CE;
 	reg [7:0] jtopl2_ready;
