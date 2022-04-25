@@ -164,7 +164,7 @@ module VGA_CRT(
 
 	input               half,
 
-	output reg	[9:0]	hcount = 0,
+	output reg [10:0]	hcount = 0,
 	output reg			hsync,
 	output reg			hblnk = 0,
 
@@ -238,9 +238,9 @@ module VGA_CRT(
 	always @(posedge clk_vga) half_s <= {half_s[0], half};
 
 	//******************************************************************//
-	// This logic describes a 10-bit horizontal position counter.       //
+	// This logic describes a 11-bit horizontal position counter.       //
 	//******************************************************************//
-	wire [8:0] hchar = half_s[1] ? hcount[9:4] : hcount[9:3];
+	wire [8:0] hchar = half_s[1] ? hcount[10:4] : hcount[9:3];
 	wire       hch_en = half_s[1] ? hcount[3:0] == 4'b1111 : hcount[2:0] == 3'b111;
 
 	always @(posedge clk_vga)

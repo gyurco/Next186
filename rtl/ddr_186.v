@@ -242,12 +242,12 @@ module system (
 	wire [3:0] RAM_WMASK;
 	wire hblnk;
 	wire vblnk;
-	wire [9:0]hcount;
+	wire [10:0]hcount;
 	wire [7:0]hde;
 	wire [9:0]vcount;
 	reg [4:0]vga_hrzpan = 0;
 	wire [3:0]vga_hrzpan_req;
-	wire [9:0]hcount_pan = hcount + vga_hrzpan - 8'd18;
+	wire [10:0]hcount_pan = hcount + vga_hrzpan - 8'd18;
 	reg FifoStart = 1'b0;	// fifo not empty
 	reg fifo_clear;
 	wire displ_on = !(hblnk | vblnk | !FifoStart);
@@ -330,7 +330,7 @@ module system (
 	reg [5:0]flashcount = 0;
 	wire [5:0]char_row;
 	wire [3:0]char_ln;
-	wire [11:0]charcount = {char_row, 4'b0000} + {char_row, 6'b000000} + hcount_pan[9:3];
+	wire [11:0]charcount = {char_row, 4'b0000} + {char_row, 6'b000000} + hcount_pan[10:3];
 	wire [31:0]fifo_dout32;
 	wire [15:0]fifo_dout = (modecompreq == 2'b01 ? hcount_pan[4] : (vgatext_s[1] | modecompreq[1]) ? hcount_pan[3] : vga13_s[1] ? hcount_pan[2] : hcount_pan[1]) ? fifo_dout32[31:16] : fifo_dout32[15:0];
 
