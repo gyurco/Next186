@@ -188,13 +188,13 @@ font8x16	equ	font8x8 - 1000h
 font8x14	equ	font8x16 - 0e00h
 
 
-		org 0e000h
+		org 0c000h
 bios:        
 biosmsg     db 'Next186 MiST SoC PC BIOS (C) 2017 Nicolae Dumitrache', 0
 msgmb       db 'MB SD Card', 13, 10, 0
 msgkb       db 'PS2 KB detected', 13, 10, 0
 
-		org 0e05bh
+		org 0c05bh
 coldboot:
 warmboot:
 		cli

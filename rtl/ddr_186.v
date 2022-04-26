@@ -214,13 +214,13 @@ module system (
 	output I2C_SCL,
 	inout I2C_SDA,
 
-	input [12:0] BIOS_ADDR,
+	input [13:0] BIOS_ADDR,
 	input [15:0] BIOS_DIN,
 	input BIOS_WR,
 	output BIOS_REQ
     );
 
-	localparam BIOS_BASE = 20'h57800;
+	localparam BIOS_BASE = 20'h57000;
 	initial SD_n_CS = 1'b1;
 
 	wire [15:0]cntrl0_user_input_data;

@@ -297,7 +297,7 @@ data_io data_io(
 );
 
 reg [15:0] bios_tmp[64];
-reg [12:0] bios_addr = 0;
+reg [13:0] bios_addr = 0;
 reg [15:0] bios_din;
 reg        bios_wr = 0;
 wire       bios_req;
