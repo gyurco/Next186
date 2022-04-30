@@ -1326,20 +1326,20 @@ p3c0r10	db		0	; port 3c0h reg 10h mirror
 
 ModeTab:
 ;           0     1     2     3     4     5     6     7     8     9     a     b     c     d     e     f     10    11    12    13    25
-crtc0   db 05fh, 05fh, 05fh, 05fh, 02dh, 02dh, 05fh, 05fh, 02dh, 02dh, 05fh, 05fh, 05fh, 02dh, 05fh, 05fh, 05fh, 05fh, 05fh, 05fh, 05fh ; horizontal total
-crtc1   db  79,   79,   79,   79,   39,   39,   79,   79,   39,   39,   79,   79,   79,   39,   79,   79,   79,   79,   79,   79,   79  ; hde
+crtc0   db 02dh, 02dh, 05fh, 05fh, 02dh, 02dh, 05fh, 05fh, 02dh, 02dh, 05fh, 05fh, 05fh, 02dh, 05fh, 05fh, 05fh, 05fh, 05fh, 05fh, 05fh ; horizontal total
+crtc1   db  39,   39,   79,   79,   39,   39,   79,   79,   39,   39,   79,   79,   79,   39,   79,   79,   79,   79,   79,   79,   79  ; hde
 ;crtc2   db; hblank start
 ;crtc3   db; hblank end
-crtc4   db 054h, 054h, 054h, 054h, 02bh, 02bh, 054h, 054h, 02bh, 02bh, 054h, 054h, 054h, 02bh, 054h, 054h, 054h, 054h, 054h, 054h, 054h ; hsync start
+crtc4   db 02bh, 02bh, 054h, 054h, 02bh, 02bh, 054h, 054h, 02bh, 02bh, 054h, 054h, 054h, 02bh, 054h, 054h, 054h, 054h, 054h, 054h, 054h ; hsync start
 ;crtc5   db ; hsync end
 crtc6   db 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 008h, 008h, 0bfh, 008h ; vtotal
 crtc7   db 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 03eh, 03eh, 01fh, 03eh ; overflow (vsync[9], vde[9], vtotal[9], lcr[8], vblank[8], vsync[8], vde[8], vtotal[8])
 crtc9   db 04fh, 04fh, 04fh, 04fh, 0c0h, 0c0h, 0c0h, 04fh, 0c0h, 0c0h, 0c0h, 041h, 041h, 041h, 041h, 040h, 040h, 040h, 040h, 041h, 040h ; lcr[9], repln
 crtc10  db 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 0e1h, 0e1h, 09ch, 0e1h ; vsync start
 crtc12  db 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 05dh, 05dh, 0dfh, 0dfh, 08fh, 0dfh ; vde
-crtc13  db 014h, 014h, 014h, 014h, 014h, 014h, 014h, 028h, 028h, 028h, 028h, 028h, 028h, 014h, 028h, 028h, 028h, 028h, 028h, 028h, 050h ; offset
+crtc13  db 014h, 014h, 028h, 028h, 014h, 014h, 014h, 028h, 028h, 028h, 028h, 028h, 028h, 014h, 028h, 028h, 028h, 028h, 028h, 028h, 050h ; offset
 dac10   db 008h, 008h, 008h, 008h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 00bh, 001h, 00bh, 001h, 041h, 001h ; mode ctrl
-sc1     db 001h, 001h, 001h, 001h, 00bh, 00bh, 001h, 000h, 00bh, 00bh, 001h, 000h, 000h, 00bh, 001h, 001h, 001h, 001h, 001h, 001h, 001h ; clocking mode (half)
+sc1     db 009h, 009h, 001h, 001h, 00bh, 00bh, 001h, 000h, 00bh, 00bh, 001h, 000h, 000h, 00bh, 001h, 001h, 001h, 001h, 001h, 001h, 001h ; clocking mode (half)
 
 ; --------------- fn 00h, set video mode
 setmode:
@@ -1375,14 +1375,21 @@ setmode:
 
 		cmp     al, 3*2
 		ja      short setmode1
+		push    ax
 		mov     al, 0b6h        ; reset sound generator
 		out     43h, al
 		mov     al, 0
 		out     42h, al
 		out     42h, al
-		mov     ax, 0806h   ; text mode (80x25, 16 colors), flash enabled
+		pop     ax
+		mov     ah, 08h   ; text mode, flash enabled
 		mov     word ptr ScreenWidth, 80
 		mov     word ptr RegenLength, 1000h
+		cmp     al, 2
+		ja      setmode_80ch
+		mov     word ptr ScreenWidth, 40
+		mov     word ptr RegenLength, 800h
+setmode_80ch:
 		mov     bx, 0b800h  ; segment
 		mov     cx, 4000h   ; video len/2
 		mov     si, 0720h   ; clear value
@@ -1640,6 +1647,10 @@ cursor8:
 		ret
 
 ;---------------- fn 02h, set cursor pos
+;	AH = 02
+;	BH = page number (0 for graphics modes)
+;	DH = row
+;	DL = column
 curpos:
 		push    ax
 		push    bx
@@ -1648,13 +1659,14 @@ curpos:
 		and     bx, 0eh
 		mov     CursorPos[bx], dx
 		cmp     byte ptr ActiveVideoMode, 3
-		jne     short curpos1
+		ja      short curpos1
 		cmp     al, ActivePage
 		jne     short curpos1
 		push    dx
 		xor     ax, ax
-		xchg    al, dh        
-		imul    ax, 80
+		xchg    al, dh
+		mov     bx, word ptr ScreenWidth
+		imul    bl
 		add     ax, dx
 		mov     dx, 3d4h
 		push    ax
@@ -1671,6 +1683,13 @@ curpos1:
 		ret
 
 ;---------------- fn 03h, get cursor pos
+;	AH = 03
+;	BH = video page
+;	on return:
+;	CH = cursor starting scan line (low order 5 bits)
+;	CL = cursor ending scan line (low order 5 bits)
+;	DH = row
+;	DL = column
 getcurpos:
 		push    bx
 		shr     bx, 7
@@ -1735,6 +1754,14 @@ apage4:
 		ret
 
 ;---------------- fn 06h, scroll up / clr
+;	AH = 06
+;	AL = number of lines to scroll, previous lines are
+;	     blanked, if 0 or AL > screen size, window is blanked
+;	BH = attribute to be used on blank line
+;	CH = row of upper left corner of scroll window
+;	CL = column of upper left corner of scroll window
+;	DH = row of lower right corner of scroll window
+;	DL = column of lower right corner of scroll window
 scrollup:
 		pusha
 		push    es
@@ -1777,6 +1804,14 @@ scrollexit:
 		ret
 
 ;---------------- fn 07h, scroll dn / clr
+;	AH = 07
+;	AL = number of lines to scroll, previous lines are
+;	     blanked, if 0 or AL > screen size, window is blanked
+;	BH = attribute to be used on blank line
+;	CH = row of upper left corner of scroll window
+;	CL = column of upper left corner of scroll window
+;	DH = row of lower right corner of scroll window
+;	DL = column of lower right corner of scroll window
 scrolldn:
 		std
 		pusha
@@ -1790,17 +1825,30 @@ scrolldn:
 		jmp     short scrollup6
 
 scr_params:
+		push    cx
 		mov     bl, al          ; lines
-		xor     ax, ax
+		xor     ah, ah
+		mov     cx, word ptr ScreenWidth
+		imul    cl
+		shl     ax, 1
+		mov     si, ax
+		xor     al, al
 		xchg    al, dh
-		imul    di, ax, 80
+		imul    cl
+		mov     di, ax
 		add     di, dx
-		mov     dl, 80          ; dh = 0
+		mov     dx, cx
+		pop     cx
 		sub     dl, cl
 		mov     al, bl
-		imul    si, ax, 160
 		ret
+
 ;---------------- fn 08h, read char/attr
+;	AH = 08
+;	BH = display page
+;	on return:
+;	AH = attribute of character (alpha modes only)
+;	AL = character at cursor position
 readchar:
 		push    bx
 		call    mode3chaddr
@@ -1810,20 +1858,28 @@ readchar:
 
 mode3chaddr:    ; returns current char address in mode3 in ds:bx. Input: bh=page, ds=40h 
 		push    ax
+		push    cx
 		and     bx, 700h
 		lea     ax, [bx+0b800h]
 		shr     bx, 7
 		mov     bx, CursorPos[bx]
+		mov     cx, word ptr ScreenWidth
 		mov     ds, ax
 		xor     ax, ax
 		xchg    al, bh
-		imul    ax, 80
+		imul    cl
 		add     bx, ax
 		add     bx, bx
+		pop     cx
 		pop     ax
 		ret
 
 ;---------------- fn 09h, write char/attr
+;	AH = 09
+;	AL = ASCII character to write
+;	BH = display page  (or mode 13h, background pixel value)
+;	BL = character attribute (text) foreground color (graphics)
+;	CX = count of characters to write (CX >= 1)
 writecharattr:
 		push    ax
 		push    es
@@ -1843,6 +1899,11 @@ writecharattr:
 		ret
 
 ;---------------- fn 0ah, write char
+;	AH = 0A
+;	AL = ASCII character to write
+;	BH = display page  (or mode 13h, background pixel value)
+;	BL = foreground color (graphics mode only)
+;	CX = count of characters to write (CX >= 1)
 writechar:
 		jcxz    short writecharskip
 		push    bx
@@ -1858,6 +1919,12 @@ writecharskip:
 		ret
 
 ;---------------- fn 0bh,  Set Color Palette (CGA)
+;	AH = 0B
+;	BH = palette color ID
+;	   = 0	to set background and border color
+;	   = 1	to select 4 color palette
+;	BL = color value (when BH = 0)
+;	   = palette value (when BH = 1)
 setcolorpalette:
 		push    dx
 		push    ds
@@ -1883,6 +1950,10 @@ setcolorpalette_out:
 		ret
 
 ;---------------- fn 0eh, write char as TTY
+;	AH = 0E
+;	AL = ASCII character to write
+;	BH = page number (text modes)
+;	BL = foreground pixel color (graphics modes)
 writecharTTY:
 		push    ax
 		push    bx
@@ -1955,6 +2026,11 @@ cr:
 		jmp     short tty1
 		
 ;---------------- fn 0fh, read video mode
+;	AH = 0F
+;	on return:
+;	AH = number of screen columns
+;	AL = mode currently set (see VIDEO MODES)
+;	BH = current display page
 readmode:
 		mov     al, EgaMiscInfo
 		and     al, 80h

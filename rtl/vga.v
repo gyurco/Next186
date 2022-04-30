@@ -156,6 +156,7 @@ module VGA_CRT(
 	output reg [7:0]offset = 8'h28,
 	output reg [9:0]lcr = 10'h3ff, // line compare register
 	output reg [3:0]replncnt,      // line repeat count
+	output reg [4:0]line_preset,
 	output reg [9:0]vde = 10'h0c7, // last display visible scan line (i.e. 199 in text mode)
 	output reg [7:0]hde = 8'd79,
 	output reg [9:0]vblank_start,
@@ -207,6 +208,7 @@ module VGA_CRT(
 		hsync_end = {regs[5'h4][7:5], regs[5'h5][4:0]};
 		vtotal = {regs[5'h7][5], regs[5'h7][0], regs[5'h6]};
 		vde = {regs[5'h7][6], regs[5'h7][1], regs[5'h12]};
+		line_preset = regs[5'h8][4:0];
 		lcr = {regs[5'h9][6], regs[5'h7][4], regs[5'h18]};
 		replncnt = {regs[5'h9][3:1], regs[5'h9][0] | regs[5'h9][7]};
 		{oncursor, cursorstart} = regs[5'ha][5:0];
@@ -270,7 +272,7 @@ module VGA_CRT(
 				char_row <= char_row + 1'd1;
 			end
 			if (vcount == vtotal) begin
-				char_ln <= 0;
+				char_ln <= line_preset;
 				vcount <= 0;
 				vblnk <= 0;
 				vsync <= 0;

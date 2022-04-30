@@ -330,9 +330,9 @@ module system (
 	reg [5:0]flashcount = 0;
 	wire [5:0]char_row;
 	wire [3:0]char_ln;
-	wire [11:0]charcount = {char_row, 4'b0000} + {char_row, 6'b000000} + hcount_pan[10:3];
+	wire [11:0]charcount = (({char_row, 4'b0000} + {char_row, 6'b000000}) >> half_s[1]) + (half_s[1] ? hcount_pan[10:4] : hcount_pan[10:3]);
 	wire [31:0]fifo_dout32;
-	wire [15:0]fifo_dout = (modecompreq == 2'b01 ? hcount_pan[4] : (vgatext_s[1] | modecompreq[1]) ? hcount_pan[3] : vga13_s[1] ? hcount_pan[2] : hcount_pan[1]) ? fifo_dout32[31:16] : fifo_dout32[15:0];
+	wire [15:0]fifo_dout = ((modecompreq == 2'b01 | (vgatext_s[1] & half_s[1])) ? hcount_pan[4] : (vgatext_s[1] | modecompreq[1]) ? hcount_pan[3] : vga13_s[1] ? hcount_pan[2] : hcount_pan[1]) ? fifo_dout32[31:16] : fifo_dout32[15:0];
 
 	reg [8:0]vga_ddr_row_count = 0;
 	reg [1:0]linecnt = 0;
@@ -345,7 +345,7 @@ module system (
 
 	wire [4:0]vga_lnend = (modecomp[1] ? 3'd4 : // multiple of 32 (SDRAM resolution = 32)
 	                       modecomp[0] ? 3'd1 :
-	                       vgatext[1] ? (hde >> 4) :
+	                       vgatext[1] ? (hde >> (4+half[1])) :
 	                       (vga13[1] | planar[1]) ? (hde >> 3) :
 	                       (hde >> 2))
 	                       + 1'd1  // rounding up
@@ -364,6 +364,7 @@ module system (
 	wire [7:0]font_dout;
 	wire [7:0]VGA_FONT_DATA;
 	wire [3:0]replncntreq;
+	wire [3:0]line_presetreq;
 	wire vgatextreq;
 	wire vga13req;
 	wire planarreq;
@@ -377,7 +378,7 @@ module system (
 	reg [1:0] speaker_on = 0;
 	reg [9:0]rNMI = 0;
 	wire [2:0]shift = half_s[1] ? ~hcount_pan[3:1] : ~hcount_pan[2:0];
-	wire [2:0]pxindex = -hcount_pan[2:0];
+	wire [2:0]pxindex = half_s[1] ? -hcount_pan[3:1] : -hcount_pan[2:0];
 
 	reg [1:0]planar_s; // synced to CPU clock
 	reg [1:0]half_s;
@@ -430,11 +431,11 @@ module system (
 	wire vrdon = s_displ_on[16-vga_hrzpan];
 	wire vrden = (~vrdon & ~exline[3] & |wrdcnt) || // flush extra words left in the FIFO
 		((vrdon || exline[3]) &&
-		(modecompreq[1]             ? &hcount_pan[3:0] :
-		 modecompreq[0]             ? &hcount_pan[4:0] :
-		 (vgatext_s[1] | half_s[1]) ? &hcount_pan[3:0] :
-		 (vga13_s[1] | planar_s[1]) ? &hcount_pan[2:0] :
-		                              &hcount_pan[1:0]));
+		(modecompreq[1]                                ? &hcount_pan[3:0] :
+		 (modecompreq[0] | (vgatext_s[1] & half_s[1])) ? &hcount_pan[4:0] :
+		 (vgatext_s[1] | half_s[1])                    ? &hcount_pan[3:0] :
+		 (vga13_s[1] | planar_s[1])                    ? &hcount_pan[2:0] :
+		                                                 &hcount_pan[1:0]));
 	reg s_vga_endline;
 	reg s_vga_endscanline = 1'b0;
 	reg s_vga_endframe;
@@ -626,6 +627,7 @@ module system (
 		.offset(vga_offset),
 		.lcr(lcr),
 		.replncnt(replncntreq),
+		.line_preset(line_presetreq),
 		.modecomp(modecompreq),
 		.hde(hde),
 		.vtotal(vtotal),
@@ -1037,14 +1039,14 @@ module system (
 
 			vga_addr <= vga_addr_r;
 			if(s_vga_endframe) begin
-				vga_addr <= scraddr;
-				vga_addr_r <= scraddr;
+				vga_addr <= scraddr >> vgatext[1];
+				vga_addr_r <= scraddr >> vgatext[1];
 			end else if({1'b0, vga_ddr_row_count} == lcr) begin
 				vga_addr <= 0;
 				vga_addr_r <= 0;
 			end else if(s_vga_endline) begin
-				vga_addr <= vga_addr_r + (vgatext ? 8'd40 : {vga_offset, 1'b0});
-				vga_addr_r <= vga_addr_r + (vgatext ? 8'd40 : {vga_offset, 1'b0});
+				vga_addr <= vga_addr_r + (vga_offset << ~vgatext[1]);
+				vga_addr_r <= vga_addr_r + (vga_offset << ~vgatext[1]);
 				if (vgatext[1] | half[1] | vga13[1] | planar[1]) {vga_addr_r[16], vga_addr[16]} <= 0; // 64K/plane in normal VGA modes
 			end
 
@@ -1072,7 +1074,7 @@ module system (
 				vga_ddr_row_count <= 0;
 				fifo_fill <= 0;
 				linecnt <= 0;
-				vga_repln_count <= 0;
+				vga_repln_count <= line_presetreq;
 			end else vga_ddr_row_count <= vga_ddr_row_count + 1'b1; 
 		end else s_vga_endscanline <= (vga_lnbytecount[7:3] == vga_lnend);
 	end
@@ -1171,7 +1173,7 @@ module system (
 		s_displ_on <= {s_displ_on[18:0], displ_on};
 		// 32 extra bytes at the end of the scanline, for panning
 		// 16 extra bytes for CGA modes, as one line = 80 bytes, but SDRAM controller reads 3*32 = 96 bytes
-		exline <= vrdon ? (modecompreq == 2'b01 ? 4'b1011 : 4'b1111) : (exline - vrden);
+		exline <= vrdon ? ((modecompreq == 2'b01 | (vgatext_s[1] & half_s[1])) ? 4'b1011 : 4'b1111) : (exline - vrden);
 		if (vrden) wrdcnt <= wrdcnt - 1'd1;
 		if (vblnk) wrdcnt <= 0;
 
