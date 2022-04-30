@@ -1949,6 +1949,69 @@ setcolorpalette_out:
 		pop     dx
 		ret
 
+;---------------- fn 0ch, Write Graphics Pixel at Coordinate
+;	AH = 0C
+;	AL = color value (XOR'ED with current pixel if bit 7=1)
+;	BH = page number
+;	CX = column number (zero based)
+;	DX = row number (zero based)
+writepixel: ; https://github.com/wbhart/CGAGraphics/blob/master/cga.asm
+		push    es
+		push    di
+		push    bx
+		push    cx
+		push    dx
+
+		push    ax
+		mov     ax, 0b800h
+		mov     es, ax
+		mov     ax, dx      ; row
+		xor     di, di
+		shr     al, 1
+		sbb     di, 0
+		and     di, 2000h
+		shl     ax, 1
+		shl     ax, 1
+		shl     ax, 1
+		shl     ax, 1
+		mov     bx, ax
+		shl     ax, 1
+		shl     ax, 1
+		add     di, ax
+		add     di, bx
+		mov     ax, cx      ; column
+		mov     cl, al
+		shr     ax, 1
+		shr     ax, 1
+		add     di, ax
+		inc     cl
+		and     cl, 3
+		shl     cl, 1
+		pop     dx          ; color
+		ror     dl, cl
+		mov     al, 0fch
+		ror     al, cl
+		and     al, es:[di]
+		or      al, dl
+		stosb
+
+		pop     dx
+		pop     cx
+		pop     bx
+		pop     di
+		pop     es
+		ret
+
+;---------------- fn 0dh, Read Graphics Pixel at Coordinate
+;	AH = 0D
+;	BH = page number
+;	CX = column number (zero based)
+;	DX = row number (zero based)
+;	on return:
+;	AL = color of pixel read
+readpixel:
+		ret
+
 ;---------------- fn 0eh, write char as TTY
 ;	AH = 0E
 ;	AL = ASCII character to write
@@ -2603,7 +2666,7 @@ staticfunctable db  00001100b   ; video modes 2h, 3h supported
 
 	   
 vidtbl  dw  setmode, cursor, curpos, getcurpos, lightpen, apage, scrollup, scrolldn, readchar, writecharattr
-		dw  writechar, setcolorpalette, nullproc, nullproc, writecharTTY, readmode
+		dw  writechar, setcolorpalette, writepixel, readpixel, writecharTTY, readmode
 		dw  pal, chargen, special, writestr, nullproc, nullproc, nullproc, nullproc, nullproc, nullproc, getdcc, querystatus, nullproc
 int10 endp
 
