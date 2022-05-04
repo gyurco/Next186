@@ -1827,19 +1827,19 @@ scrolldn:
 scr_params:
 		push    cx
 		mov     bl, al          ; lines
-		xor     ah, ah
 		mov     cx, word ptr ScreenWidth
 		imul    cl
 		shl     ax, 1
 		mov     si, ax
-		xor     al, al
+		xor     ax, ax
 		xchg    al, dh
 		imul    cl
 		mov     di, ax
 		add     di, dx
-		mov     dx, cx
+		mov     dl, cl
 		pop     cx
 		sub     dl, cl
+		xor     ah, ah
 		mov     al, bl
 		ret
 
