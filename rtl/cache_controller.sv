@@ -57,7 +57,7 @@ module cache_controller(
 	input mreq,
 	input [3:0]wmask,
 	output reg ce = 1'b1,	// clock enable for CPU
-	input [3:0] cpu_speed, // 0 - Maximum 1,2,3...15 - divide by 1,2,3...16
+	input [4:0] cpu_speed, // 0 - Maximum 1,2,3...15 - divide by 1,2,3...16
 
 	// VGA snoop
 	input [`ADDR-1:0] vga_addr,
@@ -113,7 +113,7 @@ module cache_controller(
 	wire [31:0]cache_QA;
 	wire [`WAYS-1:0]lru[(1<<`WAYS)-1:0];
 
-	reg [3:0] ce_div;
+	reg [4:0] ce_div;
 
 	genvar i;
 	generate

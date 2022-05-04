@@ -42,7 +42,7 @@ module Next186_MiST
 
 parameter CONF_STR = {
 	"NEXT186;;",
-	"O24,CPU Speed,Maximum,/2,/3,/4,/8,/16;",
+	"O24,CPU Speed,Maximum,/2,/3,/4,/8,/16,/32;",
 	"O56,ISA Bus Wait,1us,2us,3us,4us;",
 	"O7,Fake 286,Off,On;",
 	"O8,Swap Joysticks,Off,On;",
@@ -61,7 +61,7 @@ wire        joyswap = status[8];
 wire        midi = ~status[9];
 wire        adlibhide = status[10];
 
-reg   [3:0] cpu_speed;
+reg   [4:0] cpu_speed;
 
 always @(*) begin
 	case (speed)
@@ -70,6 +70,7 @@ always @(*) begin
 		3: cpu_speed = 3; // /4
 		4: cpu_speed = 7; // /8
 		5: cpu_speed = 15;// /16
+		6: cpu_speed = 31;// /32
 		default: cpu_speed = 0;
 	endcase
 end
@@ -339,7 +340,7 @@ end
 reg   [7:0] joy = 8'hFF;
 wire        joy_wr;
 reg   [7:0] joy_cnt = 8'hFF;
-reg   [7:0] joy_cnt_ce_cnt;
+reg   [8:0] joy_cnt_ce_cnt;
 reg         joy_cnt_ce;
 wire [15:0] joy0 = joyswap ? joystick_analog_1: joystick_analog_0;
 wire [15:0] joy1 = joyswap ? joystick_analog_0: joystick_analog_1;

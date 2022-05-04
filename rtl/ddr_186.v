@@ -162,7 +162,7 @@ module system (
 
 	input  fake286,
 	input  adlibhide,
-	input  [3:0] cpu_speed, // CPU speed control, 0 - maximum
+	input  [4:0] cpu_speed, // CPU speed control, 0 - maximum
 	input  [7:0] waitstates,  // ISA Bus wait states (for Adlib), in clk_cpu periods
 
 	output [3:0]sdr_n_CS_WE_RAS_CAS,
