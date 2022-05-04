@@ -1338,8 +1338,8 @@ crtc9   db 04fh, 04fh, 04fh, 04fh, 0c0h, 0c0h, 0c0h, 04fh, 0c0h, 0c0h, 0c0h, 041
 crtc10  db 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 09ch, 0e1h, 0e1h, 09ch, 0e1h ; vsync start
 crtc12  db 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 08fh, 05dh, 05dh, 0dfh, 0dfh, 08fh, 0dfh ; vde
 crtc13  db 014h, 014h, 028h, 028h, 014h, 014h, 014h, 028h, 028h, 028h, 028h, 028h, 028h, 014h, 028h, 028h, 028h, 028h, 028h, 028h, 050h ; offset
-dac10   db 008h, 008h, 008h, 008h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 00bh, 001h, 00bh, 001h, 041h, 001h ; mode ctrl
-sc1     db 009h, 009h, 001h, 001h, 00bh, 00bh, 001h, 000h, 00bh, 00bh, 001h, 000h, 000h, 00bh, 001h, 001h, 001h, 001h, 001h, 001h, 001h ; clocking mode (half)
+dac10   db 008h, 008h, 008h, 008h, 001h, 001h, 001h, 008h, 001h, 001h, 001h, 001h, 001h, 001h, 001h, 00bh, 001h, 00bh, 001h, 041h, 001h ; mode ctrl
+sc1     db 009h, 009h, 001h, 001h, 00bh, 00bh, 001h, 001h, 00bh, 00bh, 001h, 000h, 000h, 00bh, 001h, 001h, 001h, 001h, 001h, 001h, 001h ; clocking mode (half)
 
 ; --------------- fn 00h, set video mode
 setmode:
@@ -1373,8 +1373,11 @@ setmode:
 		out		dx, ax		; set bitmask to CPU access
 		pop		ax
 
+		cmp     al, 7*2
+		je      setmode_text1
 		cmp     al, 3*2
 		ja      short setmode1
+setmode_text1:
 		push    ax
 		mov     al, 0b6h        ; reset sound generator
 		out     43h, al
@@ -1659,9 +1662,14 @@ curpos:
 		and     bx, 0eh
 		mov     CursorPos[bx], dx
 		cmp     byte ptr ActiveVideoMode, 3
-		ja      short curpos1
+		ja      short curpos_ismode7
+		jmp     short curpos1
+curpos_ismode7:
+		cmp     byte ptr ActiveVideoMode, 7
+		jne     curpos_exit
+curpos1:
 		cmp     al, ActivePage
-		jne     short curpos1
+		jne     short curpos_exit
 		push    dx
 		xor     ax, ax
 		xchg    al, dh
@@ -1677,7 +1685,7 @@ curpos:
 		mov		al, 0eh
 		out 	dx, ax
 		pop     dx
-curpos1:        
+curpos_exit:
 		pop     bx
 		pop     ax
 		ret
