@@ -1330,7 +1330,7 @@ crtc0   db 02dh, 02dh, 05fh, 05fh, 02dh, 02dh, 05fh, 05fh, 02dh, 02dh, 05fh, 05f
 crtc1   db  39,   39,   79,   79,   39,   39,   79,   79,   39,   39,   79,   79,   79,   39,   79,   79,   79,   79,   79,   79,   79  ; hde
 ;crtc2   db; hblank start
 ;crtc3   db; hblank end
-crtc4   db 02bh, 02bh, 054h, 054h, 02bh, 02bh, 054h, 054h, 02bh, 02bh, 054h, 054h, 054h, 02bh, 054h, 054h, 054h, 054h, 054h, 054h, 054h ; hsync start
+crtc4   db 02bh, 02bh, 056h, 056h, 02bh, 02bh, 056h, 056h, 02bh, 02bh, 056h, 056h, 056h, 02bh, 056h, 056h, 056h, 056h, 056h, 056h, 056h ; hsync start
 ;crtc5   db ; hsync end
 crtc6   db 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 008h, 008h, 0bfh, 008h ; vtotal
 crtc7   db 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 03eh, 03eh, 01fh, 03eh ; overflow (vsync[9], vde[9], vtotal[9], lcr[8], vblank[8], vsync[8], vde[8], vtotal[8])
@@ -1386,11 +1386,9 @@ setmode_text1:
 		out     42h, al
 		pop     ax
 		mov     ah, 08h   ; text mode, flash enabled
-		mov     word ptr ScreenWidth, 80
 		mov     word ptr RegenLength, 1000h
 		cmp     al, 2
 		ja      setmode_80ch
-		mov     word ptr ScreenWidth, 40
 		mov     word ptr RegenLength, 800h
 setmode_80ch:
 		mov     bx, 0b800h  ; segment
@@ -1433,14 +1431,12 @@ setmode1a:
 		mov     bx, 0b800h  ; segment
 		mov     cx, 2000h   ; video len/2
 		mov     si, 0000h   ; clear value
-		mov     word ptr ScreenWidth, 80
 		mov     word ptr RegenLength, 1000h
 		mov     word ptr PalOffset, offset PalEGA
 		jmp     setmode2
 setmode11:
 		cmp		al,	0dh*2
 		jne		short setmode12
-		mov     word ptr ScreenWidth, 40
 		mov     word ptr RegenLength, 2000h
 		mov		word ptr PalOffset, offset PalEGA
 		jmp		short setmode121
@@ -1449,7 +1445,6 @@ setmode12:
 		jne		short setmode122
 		mov		word ptr PalOffset, offset PalEGA
 setmode1221:
-		mov     word ptr ScreenWidth, 80
 		mov     word ptr RegenLength, 04000h
 		jmp		short setmode121
 setmode122:
@@ -1458,7 +1453,6 @@ setmode122:
 		je		short setmode1221	; 640x350x16
 		cmp		al, 12h*2
 		jne		short setmode13
-		mov     word ptr ScreenWidth, 80
 		mov     word ptr RegenLength, 0a000h
 setmode121:
 		push	ax
@@ -1473,14 +1467,12 @@ setmode13:
 		cmp     al, 13h*2
 		jne     short setmode3
 		; graphic mode, 320x200, 256 colors
-		mov     word ptr ScreenWidth, 40
 		mov     word ptr RegenLength, 0000h
 		mov		word ptr PalOffset, offset Pal256
 		jmp     short setmode21
 setmode3:
 		cmp     al, 25h*2
 		jne		setmodeexit
-		mov     word ptr ScreenWidth, 80
 		mov     word ptr RegenLength, 0000h
 		mov		word ptr PalOffset, offset Pal256
 setmode21:
@@ -1508,6 +1500,11 @@ setmode2a:
 		mov     ah, cs:crtc1[di]
 		inc     al
 		out     dx, ax     ; hde
+		inc     ah
+		xor     al, al
+		xchg    al, ah
+		mov     word ptr ScreenWidth, ax
+		mov     al, 1
 		;mov     ah, cs:crtc2[di]
 		inc     al
 		;out     dx, ax     ; hblank start
