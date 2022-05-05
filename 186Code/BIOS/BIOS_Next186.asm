@@ -1523,12 +1523,15 @@ setmode2a:
 		mov     ah, cs:crtc7[di]
 		inc     al
 		out     dx, ax     ; vtotal9, lcr8, vsync8, vde8, vtotal8
+		xor     ah, ah
+		inc     al
+		out     dx, ax   ; clear preset row scan
+		mov     ah, cs:crtc9[di]
+		inc     al
+		out     dx, ax     ; set repln, lcr9, char height
 		mov     ah, cs:crtc10[di]
 		mov     al, 10h
 		out     dx, ax     ; vsync start
-		mov     ah, cs:crtc9[di]
-		mov     al, 09h
-		out     dx, ax     ; set repln, lcr9
 		mov     ah, cs:crtc12[di]
 		mov     al, 12h
 		out     dx, ax     ; vde
@@ -1540,7 +1543,7 @@ setmode2a:
 		push    ds
 		pop     es
 		mov     ax, 0ff18h  ; lcr7..0
-		out     dx,ax
+		out     dx, ax
 		xor     ax, ax
 		mov     di, offset CursorPos
 		mov     cx, 8
