@@ -378,7 +378,7 @@ module system (
 	reg [1:0] speaker_on = 0;
 	reg [9:0]rNMI = 0;
 	wire [2:0]shift = half_s[1] ? ~hcount_pan[3:1] : ~hcount_pan[2:0];
-	wire [2:0]pxindex = half_s[1] ? -hcount_pan[3:1] : -hcount_pan[2:0];
+	wire [2:0]pxindex = half_s[1] ? (-hcount_pan[3:0]) >> 1 : -hcount_pan[2:0];
 
 	reg [1:0]planar_s; // synced to CPU clock
 	reg [1:0]half_s;
