@@ -266,8 +266,8 @@ mist_video #(.COLOR_DEPTH(6)) mist_video (
 	.G           ( core_g     ),
 	.B           ( core_b     ),
 
-	.HSync       ( core_hs    ),
-	.VSync       ( core_vs    ),
+	.HSync       ( ~core_hs   ),
+	.VSync       ( ~core_vs   ),
 
 	// MiST video output signals
 	.VGA_R       ( VGA_R      ),
