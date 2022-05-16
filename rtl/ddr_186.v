@@ -1030,7 +1030,22 @@ module system (
 			2'b01, 2'b11: crw <= !BIOS_WR;	// cache read/write
 		endcase
 
-		if(s_vga_start_fifo) fifo_fill <= 1;
+		if(s_vga_start_fifo) begin
+			fifo_fill <= 1;
+			if (!fifo_fill) begin
+				vga_addr <= scraddr >> vgatext[1];
+				vga_addr_r <= scraddr >> vgatext[1];
+				cga_addr <= {scraddr[11:0], 1'b0};
+				cga_addr_r <= {scraddr[11:0], 1'b0};
+				vga13 <= {vga13[0], vga13req};
+				vgatext <= {vgatext[0], vgatextreq};
+				modecomp <= modecompreq;
+				planar <= {planar[0], planarreq};
+				half <= {half[0], halfreq};
+				replncnt <= replncntreq;
+				vga_repln_count <= line_presetreq;
+			end
+		end
 
 		if(s_vga_endscanline) begin
 			col_counter[3:1] <= col_counter[3:1] - vga_lnbytecount[2:0];
@@ -1038,10 +1053,7 @@ module system (
 			s_vga_endscanline <= 1'b0;
 
 			vga_addr <= vga_addr_r;
-			if(s_vga_endframe) begin
-				vga_addr <= scraddr >> vgatext[1];
-				vga_addr_r <= scraddr >> vgatext[1];
-			end else if({1'b0, vga_ddr_row_count} == lcr) begin
+			if({1'b0, vga_ddr_row_count} == lcr) begin
 				vga_addr <= 0;
 				vga_addr_r <= 0;
 			end else if(s_vga_endline) begin
@@ -1051,10 +1063,7 @@ module system (
 			end
 
 			cga_addr <= cga_addr_r;
-			if(s_vga_endframe) begin
-				cga_addr <= {scraddr[11:0], 1'b0};
-				cga_addr_r <= {scraddr[11:0], 1'b0};
-			end else if(s_vga_endline & linecnt[0] & (!modecomp[1] | linecnt[1])) begin
+			if(s_vga_endline & linecnt[0] & (!modecomp[1] | linecnt[1])) begin
 				cga_addr[12:0] <= cga_addr_r[12:0] + {vga_offset, 2'b0};
 				cga_addr_r[12:0] <= cga_addr_r[12:0] + {vga_offset, 2'b0};
 			end
@@ -1065,16 +1074,9 @@ module system (
 			end
 			else vga_repln_count <= vga_repln_count + 1'b1;
 			if(s_vga_endframe) begin
-				vga13 <= {vga13[0], vga13req};
-				vgatext <= {vgatext[0], vgatextreq};
-				modecomp <= modecompreq;
-				planar <= {planar[0], planarreq};
-				half <= {half[0], halfreq};
-				replncnt <= replncntreq;
 				vga_ddr_row_count <= 0;
 				fifo_fill <= 0;
 				linecnt <= 0;
-				vga_repln_count <= line_presetreq;
 			end else vga_ddr_row_count <= vga_ddr_row_count + 1'b1; 
 		end else s_vga_endscanline <= (vga_lnbytecount[7:3] == vga_lnend);
 	end
