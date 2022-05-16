@@ -1198,7 +1198,7 @@ module system (
 		if(!BTN_NMI) rNMI <= 0;		// NMI
 		else if(!rNMI[9] && RTCDIVEND) rNMI <= rNMI + 1'b1;	// 1Mhz increment
 
-		if(VGA_VSYNC) vga_hrzpan <= modecompreq[0] ? {cga_addr[1], 4'b0} : half_s[1] ? {1'b0, vga_hrzpan_req[2:0], 1'b0} : {2'b0, vga_hrzpan_req[2:0]};
+		if(VGA_VSYNC) vga_hrzpan <= modecompreq[0] ? {scraddr[0], 4'b0} : half_s[1] ? {1'b0, vga_hrzpan_req[2:0], 1'b0} : {2'b0, vga_hrzpan_req[2:0]};
 		else if(VGA_HSYNC && ppm_s[1] && (vcount == lcr)) vga_hrzpan <= 4'b0000;
 
 		{VGA_B, VGA_G, VGA_R} <= DAC_COLOR & {18{sdon}};
