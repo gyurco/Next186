@@ -256,7 +256,7 @@ module VGA_CRT(
 				end
 				if (hchar == hde) hblnk <= 1;
 				if (hchar == hsync_start) hsync <= 1;
-				if (hchar == hsync_start + (half_s[1] ? 4'd6 : 4'd13)) hsync <= 0;
+				if (hchar == hsync_end) hsync <= 0;
 			end
 		end
 

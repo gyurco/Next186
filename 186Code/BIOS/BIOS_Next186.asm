@@ -1330,8 +1330,8 @@ crtc0   db 02dh, 02dh, 05fh, 05fh, 02dh, 02dh, 05fh, 05fh, 02dh, 02dh, 05fh, 05f
 crtc1   db  39,   39,   79,   79,   39,   39,   79,   79,   39,   39,   79,   79,   79,   39,   79,   79,   79,   79,   79,   79,   79  ; hde
 ;crtc2   db; hblank start
 ;crtc3   db; hblank end
-crtc4   db 02bh, 02bh, 056h, 056h, 02bh, 02bh, 056h, 056h, 02bh, 02bh, 056h, 056h, 056h, 02bh, 056h, 056h, 056h, 056h, 056h, 056h, 056h ; hsync start
-;crtc5   db ; hsync end
+crtc4   db 029h, 029h, 052h, 052h, 029h, 029h, 052h, 052h, 029h, 029h, 052h, 052h, 052h, 029h, 052h, 052h, 052h, 052h, 052h, 052h, 052h ; hsync start
+crtc5   db 00fh, 00fh, 01eh, 01eh, 00fh, 00fh, 01eh, 01eh, 00fh, 00fh, 01eh, 01eh, 01eh, 00fh, 01eh, 01eh, 01eh, 01eh, 01eh, 01eh, 01eh ; hsync end
 crtc6   db 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 0bfh, 008h, 008h, 0bfh, 008h ; vtotal
 crtc7   db 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 01fh, 03eh, 03eh, 01fh, 03eh ; overflow (vsync[9], vde[9], vtotal[9], lcr[8], vblank[8], vsync[8], vde[8], vtotal[8])
 crtc9   db 04fh, 04fh, 04fh, 04fh, 0c0h, 0c0h, 0c0h, 04fh, 0c0h, 0c0h, 0c0h, 041h, 041h, 041h, 041h, 040h, 040h, 040h, 040h, 041h, 040h ; lcr[9], repln
@@ -1514,9 +1514,9 @@ setmode2a:
 		mov     ah, cs:crtc4[di]
 		inc     al
 		out     dx, ax     ; hsync start
-		;mov     ah, cs:crtc5[di]
+		mov     ah, cs:crtc5[di]
 		inc     al
-		;out     dx, ax     ; hsync end
+		out     dx, ax     ; hsync end
 		mov     ah, cs:crtc6[di]
 		inc     al
 		out     dx, ax     ; vtotal
