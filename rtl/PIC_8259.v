@@ -58,35 +58,37 @@ module PIC_8259(
 	input clk,		// cpu CLK
 	output reg INT = 0,
 	input IACK,
-	input [4:0]I,	// 0:timer, 1:keyboard, 2:RTC, 3:mouse, 4:COM1
+	input [6:0]I,	// 0:timer, 1:keyboard, 2:RTC, 3:mouse, 4: IDE0, 5: IDE1, 6: COM1
 	output reg dbg_slave,
 	output reg dbg_a,
 	output reg dbg_wr,
 	output reg [7:0] dbg_din
 );
 
-reg [4:0]ss_I = 0;
-reg [4:0]s_I = 0;
+reg [6:0]ss_I = 0;
+reg [6:0]s_I = 0;
 reg [7:0]IMR_m = 8'hFF;
 reg [7:0]IMR_s = 8'hFF;
-reg [4:0]IRR = 0;
-reg [4:0]ISR = 0;
+reg [6:0]IRR = 0;
+reg [6:0]ISR = 0;
 reg      RIS; // Read ISR
 reg      AEOI;
 
-wire [4:0]IMR = {IMR_m[4],IMR_s[4],IMR_s[0],IMR_m[1:0]};
+wire [6:0]IMR = {IMR_m[4],IMR_s[7:6],IMR_s[4],IMR_s[0],IMR_m[1:0]};
 
 assign dout = A ? (slave ? IMR_s : IMR_m) :
-            RIS ? (slave ? {3'b000, ISR[3], 3'b000, ISR[2]} : {3'b000, ISR[4], 2'b00, ISR[1:0]}) :
-			      (slave ? {3'b000, IRR[3], 3'b000, IRR[2]} : {3'b000, IRR[4], 2'b00, IRR[1:0]});
+            RIS ? (slave ? {ISR[5:4], 1'b0, ISR[3], 3'b000, ISR[2]} : {3'b000, ISR[6], 2'b00, ISR[1:0]}) :
+			      (slave ? {IRR[5:4], 1'b0, IRR[3], 3'b000, IRR[2]} : {3'b000, IRR[6], 2'b00, IRR[1:0]});
 
-wire [4:0] IRQ = IRR & ~IMR;
+wire [6:0] IRQ = IRR & ~IMR;
 
 assign ivect = IRQ[0] ? 8'h08 :
                IRQ[1] ? 8'h09 :
                IRQ[2] ? 8'h70 :
                IRQ[3] ? 8'h74 :
-               IRQ[4] ? 8'h0c : 8'h00;
+               IRQ[4] ? 8'h76 :
+               IRQ[5] ? 8'h77 :
+               IRQ[6] ? 8'h0c : 8'h00;
 
 always @ (posedge clk) begin
 	if (RST) begin
@@ -112,7 +114,11 @@ always @ (posedge clk) begin
 				INT <= 1'b1; 
 			end else if(IRQ[3] && ISR[3:0] == 0) begin // mouse
 				INT <= 1'b1; 
-			end else if(IRQ[4] && ISR[4:0] == 0) begin // COM1
+			end else if(IRQ[4] && ISR[4:0] == 0) begin // IDE0
+				INT <= 1'b1;
+			end else if(IRQ[5] && ISR[5:0] == 0) begin // IDE1
+				INT <= 1'b1;
+			end else if(IRQ[6] && ISR[6:0] == 0) begin // COM1
 				INT <= 1'b1;
 			end
 		end else if(IACK) begin
@@ -132,6 +138,12 @@ always @ (posedge clk) begin
 			end else if (IRQ[4]) begin
 				IRR[4] <= 0;
 				ISR[4] <= !AEOI;
+			end else if (IRQ[5]) begin
+				IRR[5] <= 0;
+				ISR[5] <= !AEOI;
+			end else if (IRQ[6]) begin
+				IRR[6] <= 0;
+				ISR[6] <= !AEOI;
 			end
 		end
 		if(CS) begin
@@ -152,7 +164,9 @@ always @ (posedge clk) begin
 							else if (!slave && ISR[1]) ISR[1] <= 0;
 							else if ( slave && ISR[2]) ISR[2] <= 0;
 							else if ( slave && ISR[3]) ISR[3] <= 0;
-							else if (!slave && ISR[4]) ISR[4] <= 0;
+							else if ( slave && ISR[4]) ISR[4] <= 0;
+							else if ( slave && ISR[5]) ISR[5] <= 0;
+							else if (!slave && ISR[6]) ISR[6] <= 0;
 						end
 					end else begin
 						// OCW3

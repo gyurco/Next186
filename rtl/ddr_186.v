@@ -211,6 +211,13 @@ module system (
 	output [7:0] GPIO_OE,
 	output reg   GPIO_WR,
 
+	output [15:0] IDE_DAT_O,
+	input  [15:0] IDE_DAT_I,
+	output  [3:0] IDE_A,
+	output        IDE_WE,
+	output  [1:0] IDE_CS,
+	input   [1:0] IDE_INT,
+
 	output I2C_SCL,
 	inout I2C_SDA,
 
@@ -288,6 +295,15 @@ module system (
 	wire MPU_PORT = PORT_ADDR[15:1] == (16'h0330 >> 1); // 0x330, 0x331
 	wire TANDY_SND_PORT = PORT_ADDR[15:3] == (16'h00c0 >> 3); // 0xc0 - 0xc7
 	wire TANDY_PAGE_PORT = PORT_ADDR[15:0] == 16'h03df;
+	wire IDE_PORT0 = PORT_ADDR == 16'h03f6 || PORT_ADDR[15:3] == (16'h01f0 >> 3); // 0x3f6, 0x1f0-1f7
+	wire IDE_PORT1 = PORT_ADDR == 16'h0376 || PORT_ADDR[15:3] == (16'h0170 >> 3); // 0x1f6, 0x1f0-1f7
+
+	assign IDE_CS[0] = CPU_CE & IORQ && IDE_PORT0;
+	assign IDE_CS[1] = CPU_CE & IORQ && IDE_PORT1;
+	assign IDE_A = {PORT_ADDR[9], PORT_ADDR[2:0]};
+	assign IDE_DAT_O = CPU_DOUT;
+	assign IDE_WE = WR;
+
 	wire [7:0] TANDY_SND;
 	wire TANDY_SND_RDY;
  	wire [7:0]VGA_DAC_DATA;
@@ -505,7 +521,8 @@ module system (
 		({8{INPUT_STATUS_OE}} & SDI) |
 		({8{CPU32_PORT}} & cpu32_data[15:8]) | 
 		({8{JOYSTICK}} & GPIOState) |
-		({8{I2C_SELECT}} & i2cdout);
+		({8{I2C_SELECT}} & i2cdout) |
+		({8{IDE_PORT0 | IDE_PORT1}} & IDE_DAT_I[15:8]);
 
 	assign PORT_IN[7:0] = //INPUT_STATUS_OE ? {2'b1x, cpu32_halt, sq_full, vblnk, s_RS232_HOST_RXD, s_RS232_DCE_RXD, hblnk | vblnk} : CPU32_PORT ? cpu32_data[7:0] : slowportdata;
 							 ({8{VGA_DAC_OE}} & VGA_DAC_DATA) |
@@ -525,7 +542,8 @@ module system (
 							 ({8{COM1_PORT}} & COM1_DOUT) | 
 							 ({8{OPL2_PORT}} & opl32_data)  |
 							 ({8{MPU_PORT}} & mpu_data) |
-							 ({8{CGA_CL}} & CGA_CL_DATA);
+							 ({8{CGA_CL}} & CGA_CL_DATA) |
+							 ({8{IDE_PORT0 | IDE_PORT1}} & IDE_DAT_I[7:0]);
 
 
 	assign BIOS_REQ = sys_wr_data_valid;
@@ -764,7 +782,7 @@ module system (
 		 .clk(clk_cpu), 
 		 .INT(INT), 
 		 .IACK(INTA & CPU_CE), 
-		 .I({I_COM1, I_MOUSE, RTCEND, I_KB, timer_int})
+		 .I({I_COM1, IDE_INT, I_MOUSE, RTCEND, I_KB, timer_int})
     );
 
 	wire [3:0]seg_addr;
@@ -923,12 +941,12 @@ module system (
 		.RX_Empty(rx_empty)
 	);
 
-    wire signed [15:0] jtopl2_snd;
-    assign opl3left = jtopl2_snd;
-    assign opl3right = jtopl2_snd;
+	wire signed [15:0] jtopl2_snd;
+	assign opl3left = jtopl2_snd;
+	assign opl3right = jtopl2_snd;
 
-    wire [7:0] jtopl2_dout;
-    assign opl32_data = adlibhide ? 8'hFF : PORT_ADDR[1:0] == 2'b00 ? {jtopl2_dout[7:5], 5'd0} : 8'd0;
+	wire [7:0] jtopl2_dout;
+	assign opl32_data = adlibhide ? 8'hFF : PORT_ADDR[1:0] == 2'b00 ? {jtopl2_dout[7:5], 5'd0} : 8'd0;
 
 	wire      jtopl2_cs = IORQ & OPL2_PORT & CPU_CE;
 	reg [7:0] jtopl2_ready;

@@ -2,28 +2,29 @@
 
 module Next186_MiST
 (
-    input         CLOCK_27,   // Input clock 27 MHz
+	input         CLOCK_27,   // Input clock 27 MHz
 
-    output  [5:0] VGA_R,
-    output  [5:0] VGA_G,
-    output  [5:0] VGA_B,
-    output        VGA_HS,
-    output        VGA_VS,
+	output  [5:0] VGA_R,
+	output  [5:0] VGA_G,
+	output  [5:0] VGA_B,
+	output        VGA_HS,
+	output        VGA_VS,
 
-    output        LED,
+	output        LED,
 
-    output        AUDIO_L,
-    output        AUDIO_R,
+	output        AUDIO_L,
+	output        AUDIO_R,
 
 	input         UART_RX,
 	output        UART_TX,
 
-    input         SPI_SCK,
-    output        SPI_DO,
-    input         SPI_DI,
-    input         SPI_SS2,
-    input         SPI_SS3,
-    input         CONF_DATA0,
+	input         SPI_SCK,
+	inout         SPI_DO,
+	input         SPI_DI,
+	input         SPI_SS2,
+	input         SPI_SS3,
+	input         SPI_SS4,
+	input         CONF_DATA0,
 
 	output [12:0] SDRAM_A,
 	output  [1:0] SDRAM_BA,
@@ -42,6 +43,7 @@ module Next186_MiST
 
 parameter CONF_STR = {
 	"NEXT186;;",
+	"S1C,CUEISO,Mount CD;",
 	"O24,CPU Speed,Maximum,/2,/3,/4,/8,/16,/32;",
 	"O56,ISA Bus Wait,1us,2us,3us,4us;",
 	"O7,Fake 286,Off,On;",
@@ -123,7 +125,7 @@ wire        ps2_mouse_clk, ps2_mouse_clk_i;
 wire        ps2_mouse_dat, ps2_mouse_dat_i;
 
 // conections between user_io (implementing the SPI communication 
-// to the io controller) and the legacy 
+// to the io controller) and the legacy SD Card wrapper
 wire [31:0] sd_lba;
 wire        sd_rd;
 wire        sd_wr;
@@ -150,7 +152,7 @@ wire        no_csync;
 
 assign LED = ~led_out[0]; // CPU HALT
 
-user_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(2000), .PS2BIDIR(1'b1)) user_io(
+user_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(2000), .PS2BIDIR(1'b1), .FEATURES(32'h580) /* Secondary IDE - ATA, Primary Slave - CDROM*/) user_io(
 	.conf_str        ( CONF_STR      ),
 	.clk_sys         ( clk_cpu       ),
 	.clk_sd          ( clk_cpu       ),
@@ -285,16 +287,41 @@ wire        ioctl_wr;
 wire [24:0] ioctl_addr;
 wire  [7:0] ioctl_dout;
 
-data_io data_io(
+wire        hdd_cmd_req;
+wire        hdd_dat_req;
+wire        hdd_status_wr;
+
+wire  [2:0] hdd_addr;
+wire        hdd_wr;
+
+wire [15:0] hdd_data_out;
+wire [15:0] hdd_data_in;
+wire        hdd_data_rd;
+wire        hdd_data_wr;
+
+data_io #(.ENABLE_IDE(1'b1)) data_io(
 	.clk_sys       ( clk_sdr      ),
 	.SPI_SCK       ( SPI_SCK      ),
 	.SPI_SS2       ( SPI_SS2      ),
+	.SPI_SS4       ( SPI_SS4      ),
 	.SPI_DI        ( SPI_DI       ),
+	.SPI_DO        ( SPI_DO       ),
 	.ioctl_download( ioctl_downl  ),
 	.ioctl_index   ( ioctl_index  ),
 	.ioctl_wr      ( ioctl_wr     ),
 	.ioctl_addr    ( ioctl_addr   ),
-	.ioctl_dout    ( ioctl_dout   )
+	.ioctl_dout    ( ioctl_dout   ),
+
+	.hdd_clk       ( clk_cpu      ),
+	.hdd_cmd_req   ( hdd_cmd_req  ),
+	.hdd_dat_req   ( hdd_dat_req  ),
+	.hdd_status_wr ( hdd_status_wr),
+	.hdd_addr      ( hdd_addr     ),
+	.hdd_wr        ( hdd_wr       ),
+	.hdd_data_out  ( hdd_data_out ),
+	.hdd_data_in   ( hdd_data_in  ),
+	.hdd_data_rd   ( hdd_data_rd  ),
+	.hdd_data_wr   ( hdd_data_wr  )
 );
 
 reg [15:0] bios_tmp[64];
@@ -334,6 +361,56 @@ always @(posedge clk_sdr) begin
 		bios_din <= bios_tmp[bios_addr[5:0]];
 	end
 end
+
+////////////// IDE INTERFACES ///////
+wire [15:0] IDE_DAT_O;
+wire [15:0] IDE_DAT_I;
+wire  [3:0] IDE_A;
+wire        IDE_WE;
+wire  [1:0] IDE_CS;
+reg   [1:0] IDE_INT;
+
+wire  [1:0] ide_irq_ack;
+
+assign ide_irq_ack[1] = IDE_CS[1] && IDE_A == 4'd7;
+assign ide_irq_ack[0] = IDE_CS[0] && IDE_A == 4'd7;
+
+//reg [3:0] dbg_ide_addr /* synthesis noprune */;
+//always @(posedge clk_cpu) if (|IDE_CS) dbg_ide_addr <= IDE_A;
+
+ide ide (
+	.clk(clk_cpu), // system clock
+	.clk_en(1'b1),
+	.reset(reset),
+
+	// cpu interface
+	.address_in((~IDE_WE && IDE_A == 4'hE) ? 3'd7 : IDE_A[2:0]),
+	.sel_secondary(IDE_CS[1]),
+	.data_in({IDE_DAT_O[7:0], IDE_DAT_O[15:8]}),
+	.data_out({IDE_DAT_I[7:0], IDE_DAT_I[15:8]}),
+	.rd(~IDE_WE),
+	.hwr(IDE_WE),
+	.lwr(IDE_WE),
+	.sel_ide(|IDE_CS),
+	.intreq(IDE_INT),
+	.intreq_ack(ide_irq_ack),  // interrupt clear
+	.nrdy(),				// fifo is not ready for reading 
+	.hdd0_ena(2'b10),		// enables Master & Slave drives on primary channel
+	.hdd1_ena(2'b11),		// enables Master & Slave drives on secondary channel
+	.fifo_rd(),
+	.fifo_wr(),
+
+	// io controller interface
+	.hdd_cmd_req   ( hdd_cmd_req  ),
+	.hdd_dat_req   ( hdd_dat_req  ),
+	.hdd_status_wr ( hdd_status_wr),
+	.hdd_addr      ( hdd_addr     ),
+	.hdd_wr        ( hdd_wr       ),
+	.hdd_data_in   ( hdd_data_in  ),
+	.hdd_data_out  ( hdd_data_out ),
+	.hdd_data_rd   ( hdd_data_rd  ),
+	.hdd_data_wr   ( hdd_data_wr  )
+);
 
 ////////////// JOYSTICKS /////////////
 
@@ -484,6 +561,13 @@ system sys_inst (
 
 	.GPIO_WR(joy_wr),
 	.GPIO_IN(joy),
+
+	.IDE_DAT_O(IDE_DAT_O),
+	.IDE_DAT_I(IDE_DAT_I),
+	.IDE_A(IDE_A),
+	.IDE_WE(IDE_WE),
+	.IDE_CS(IDE_CS),
+	.IDE_INT(IDE_INT),
 
 	.I2C_SCL(),//I2C_SCLK),
 	.I2C_SDA(), //I2C_SDAT)
