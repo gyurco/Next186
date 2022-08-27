@@ -289,6 +289,8 @@ wire  [7:0] ioctl_dout;
 
 wire        hdd_cmd_req;
 wire        hdd_dat_req;
+wire        hdd_cdda_req;
+wire        hdd_cdda_wr;
 wire        hdd_status_wr;
 
 wire  [2:0] hdd_addr;
@@ -298,6 +300,9 @@ wire [15:0] hdd_data_out;
 wire [15:0] hdd_data_in;
 wire        hdd_data_rd;
 wire        hdd_data_wr;
+
+wire [15:0] cdda_l;
+wire [15:0] cdda_r;
 
 data_io #(.ENABLE_IDE(1'b1)) data_io(
 	.clk_sys       ( clk_sdr      ),
@@ -315,6 +320,8 @@ data_io #(.ENABLE_IDE(1'b1)) data_io(
 	.hdd_clk       ( clk_cpu      ),
 	.hdd_cmd_req   ( hdd_cmd_req  ),
 	.hdd_dat_req   ( hdd_dat_req  ),
+	.hdd_cdda_req  ( hdd_cdda_req ),
+	.hdd_cdda_wr   ( hdd_cdda_wr  ),
 	.hdd_status_wr ( hdd_status_wr),
 	.hdd_addr      ( hdd_addr     ),
 	.hdd_wr        ( hdd_wr       ),
@@ -410,6 +417,19 @@ ide ide (
 	.hdd_data_out  ( hdd_data_out ),
 	.hdd_data_rd   ( hdd_data_rd  ),
 	.hdd_data_wr   ( hdd_data_wr  )
+);
+
+cdda_fifo cdda_fifo (
+	.clk_sys       ( clk_cpu      ),
+	.cen_44100     ( cen_44100    ),
+	.reset         ( reset        ),
+
+	.hdd_cdda_req  ( hdd_cdda_req ),
+	.hdd_cdda_wr   ( hdd_cdda_wr  ),
+	.hdd_data_out  ( hdd_data_out ),
+
+	.cdda_l        ( cdda_l       ),
+	.cdda_r        ( cdda_r       )
 );
 
 ////////////// JOYSTICKS /////////////
@@ -542,6 +562,9 @@ system sys_inst (
 	.SD_DI(sd_sdi),
 	.SD_CK(sd_sck),
 	.SD_DO(sd_sdo),
+
+	.CDDA_L(cdda_l),
+	.CDDA_R(cdda_r),
 
 	.AUD_L(AUDIO_L),
 	.AUD_R(AUDIO_R),

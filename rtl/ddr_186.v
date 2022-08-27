@@ -194,7 +194,10 @@ module system (
 	output wire SD_DI,
 	output reg SD_CK = 0,
 	input SD_DO,
-		 
+
+	input [15:0] CDDA_L,
+	input [15:0] CDDA_R,
+
 	output AUD_L,
 	output AUD_R,
 	input PS2_CLK1_I,
@@ -864,6 +867,8 @@ module system (
 		.word(WORD),
 		.speaker(timer_spk & speaker_on[1]),
 		.tandy_snd(TANDY_SND),
+		.cdda_l(CDDA_L),
+		.cdda_r(CDDA_R),
 		.opl3left(opl3left),
 		.opl3right(opl3right),
 		.full(sq_full), // when not full, write max 2x1152 16bit samples

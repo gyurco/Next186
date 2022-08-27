@@ -56,6 +56,8 @@ module soundwave(
 		input we,
 		input word,
 		input speaker,
+		input [15:0]cdda_l,
+		input [15:0]cdda_r,
 		input [15:0]opl3left,
 		input [15:0]opl3right,
 		input [7:0]tandy_snd,
@@ -75,8 +77,8 @@ module soundwave(
 	reg [31:0]rval = 0;
 	reg [15:0]r_opl3left = 0;
 	reg [15:0]r_opl3right = 0;
-	wire [16:0]lmix = {sample1[15], sample1[15:0]} + {r_opl3left[15], r_opl3left} + {tandy_snd, 6'd0} + (speaker << `SPKVOL); // signed mixer left
-	wire [16:0]rmix = {sample1[31], sample1[31:16]} + {r_opl3right[15], r_opl3right} + {tandy_snd, 6'd0} + (speaker << `SPKVOL); // signed mixer right
+	wire [16:0]lmix = {cdda_l[15], cdda_l[15:0]} + {sample1[15], sample1[15:0]} + {r_opl3left[15], r_opl3left} + {tandy_snd, 6'd0} + (speaker << `SPKVOL); // signed mixer left
+	wire [16:0]rmix = {cdda_r[15], cdda_r[15:0]} + {sample1[31], sample1[31:16]} + {r_opl3right[15], r_opl3right} + {tandy_snd, 6'd0} + (speaker << `SPKVOL); // signed mixer right
 	wire [15:0]lclamp = (~|lmix[16:15] | &lmix[16:15]) ? {!lmix[15], lmix[14:0]} : {16{!lmix[16]}}; // clamp to [-32768..32767] and add 32878
 	wire [15:0]rclamp = (~|rmix[16:15] | &rmix[16:15]) ? {!rmix[15], rmix[14:0]} : {16{!rmix[16]}};
 	wire lsign = lval[31:16] < lclamp;
