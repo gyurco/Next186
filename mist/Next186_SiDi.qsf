@@ -182,7 +182,6 @@ set_global_assignment -name QIP_FILE ../rtl/Next186.qip
 set_global_assignment -name QIP_FILE dcm.qip
 set_global_assignment -name QIP_FILE dcm_misc.qip
 set_global_assignment -name QIP_FILE dcm_cpu.qip
-set_global_assignment -name VERILOG_FILE "../mist-modules/sd_card.v"
 
 set_global_assignment -name SDC_FILE Next186_MiST.sdc
 set_global_assignment -name SMART_RECOMPILE ON
