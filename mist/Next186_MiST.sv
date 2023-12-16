@@ -2,6 +2,9 @@
 
 module Next186_MiST(
 	input         CLOCK_27,
+`ifdef USE_CLOCK_50
+	input         CLOCK_50,
+`endif
 
 	output        LED,
 	output [VGA_BITS-1:0] VGA_R,
@@ -10,12 +13,26 @@ module Next186_MiST(
 	output        VGA_HS,
 	output        VGA_VS,
 
+`ifdef USE_HDMI
+	output        HDMI_RST,
+	output  [7:0] HDMI_R,
+	output  [7:0] HDMI_G,
+	output  [7:0] HDMI_B,
+	output        HDMI_HS,
+	output        HDMI_VS,
+	output        HDMI_PCLK,
+	output        HDMI_DE,
+	inout         HDMI_SDA,
+	inout         HDMI_SCL,
+	input         HDMI_INT,
+`endif
+
 	input         SPI_SCK,
 	inout         SPI_DO,
 	input         SPI_DI,
-	input         SPI_SS2,
-	input         SPI_SS3,
-	input         CONF_DATA0,
+	input         SPI_SS2,    // data_io
+	input         SPI_SS3,    // OSD
+	input         CONF_DATA0, // SPI_SS for user_io
 
 `ifdef USE_QSPI
 	input         QSCK,
@@ -59,7 +76,12 @@ module Next186_MiST(
 	output        I2S_LRCK,
 	output        I2S_DATA,
 `endif
-
+`ifdef SPDIF_AUDIO
+	output        SPDIF,
+`endif
+`ifdef USE_AUDIO_IN
+	input         AUDIO_IN,
+`endif
 	input         UART_RX,
 	output        UART_TX
 
@@ -85,6 +107,27 @@ localparam VGA_BITS = 8;
 localparam VGA_BITS = 6;
 `endif
 
+`ifdef USE_HDMI
+localparam bit HDMI = 1;
+assign HDMI_RST = 1'b1;
+`else
+localparam bit HDMI = 0;
+`endif
+
+`ifdef BIG_OSD
+localparam bit BIG_OSD = 1;
+`define SEP "-;",
+`else
+localparam bit BIG_OSD = 0;
+`define SEP
+`endif
+
+`ifdef USE_AUDIO_IN
+localparam bit USE_AUDIO_IN = 1;
+`else
+localparam bit USE_AUDIO_IN = 0;
+`endif
+
 // remove this if the 2nd chip is actually used
 `ifdef DUAL_SDRAM
 assign SDRAM2_A = 13'hZZZZ;
@@ -95,9 +138,9 @@ assign SDRAM2_CKE = 0;
 assign SDRAM2_CLK = 0;
 assign SDRAM2_nCS = 1;
 assign SDRAM2_DQ = 16'hZZZZ;
-assign SDRAM2_nCAS = 0;
-assign SDRAM2_nRAS = 0;
-assign SDRAM2_nWE = 0;
+assign SDRAM2_nCAS = 1;
+assign SDRAM2_nRAS = 1;
+assign SDRAM2_nWE = 1;
 `endif
 
 `include "build_id.v"
@@ -105,12 +148,14 @@ assign SDRAM2_nWE = 0;
 parameter CONF_STR = {
 	"NEXT186;;",
 	"S1C,CUEISO,Mount CD;",
+	`SEP
 	"O24,CPU Speed,Maximum,/2,/3,/4,/8,/16,/32;",
 	"O56,ISA Bus Wait,1us,2us,3us,4us;",
 	"O7,Fake 286,Off,On;",
 	"O8,Swap Joysticks,Off,On;",
 	"O9,MIDI,MPU401,COM1;",
 	"OA,Adlib,On,Invisible;",
+	`SEP
 	"T1,NMI;",
 	"T0,Reset;",
 	"V,",`BUILD_DATE
@@ -141,6 +186,7 @@ end
 // core's raw video 
 wire  [5:0] core_r, core_g, core_b;
 wire        core_hs, core_vs;
+wire        core_blank, core_vb;
 
 localparam  CPU_MHZ = 50;
 
@@ -213,7 +259,18 @@ wire        no_csync;
 
 assign LED = ~led_out[0]; // CPU HALT
 
-user_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(2000), .PS2BIDIR(1'b1), .FEATURES(32'h580) /* Secondary IDE - ATA, Primary Slave - CDROM*/) user_io(
+`ifdef USE_HDMI
+wire        i2c_start;
+wire        i2c_read;
+wire  [6:0] i2c_addr;
+wire  [7:0] i2c_subaddr;
+wire  [7:0] i2c_dout;
+wire  [7:0] i2c_din;
+wire        i2c_ack;
+wire        i2c_end;
+`endif
+
+user_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(2000), .PS2BIDIR(1'b1), .FEATURES(32'h580 | (BIG_OSD << 13) | (HDMI << 14)) /* Secondary IDE - ATA, Primary Slave - CDROM*/) user_io(
 	.conf_str        ( CONF_STR      ),
 	.clk_sys         ( clk_cpu       ),
 	.clk_sd          ( clk_cpu       ),
@@ -229,6 +286,16 @@ user_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(2000), .PS2BIDIR(1'b1), .FEATURES
 	.joystick_analog_0 ( joystick_analog_0 ),
 	.joystick_analog_1 ( joystick_analog_1 ),
 
+`ifdef USE_HDMI
+	.i2c_start       ( i2c_start     ),
+	.i2c_read        ( i2c_read      ),
+	.i2c_addr        ( i2c_addr      ),
+	.i2c_subaddr     ( i2c_subaddr   ),
+	.i2c_dout        ( i2c_dout      ),
+	.i2c_din         ( i2c_din       ),
+	.i2c_ack         ( i2c_ack       ),
+	.i2c_end         ( i2c_end       ),
+`endif
 	.status          ( status        ),
 	.switches        ( switches      ),
 	.buttons         ( buttons       ),
@@ -299,7 +366,7 @@ sd_card sd_card (
 
 ///// VIDEO OUT /////
 
-mist_video #(.COLOR_DEPTH(6), .OUT_COLOR_DEPTH(VGA_BITS)) mist_video (
+mist_video #(.COLOR_DEPTH(6), .OUT_COLOR_DEPTH(VGA_BITS), .BIG_OSD(BIG_OSD)) mist_video (
 	.clk_sys     ( clk_sys    ),
 
 	// OSD SPI interface
@@ -339,6 +406,71 @@ mist_video #(.COLOR_DEPTH(6), .OUT_COLOR_DEPTH(VGA_BITS)) mist_video (
 	.VGA_VS      ( VGA_VS     ),
 	.VGA_HS      ( VGA_HS     )
 );
+
+`ifdef USE_HDMI
+i2c_master #(50_000_000) i2c_master (
+	.CLK         (clk_cpu),
+	.I2C_START   (i2c_start),
+	.I2C_READ    (i2c_read),
+	.I2C_ADDR    (i2c_addr),
+	.I2C_SUBADDR (i2c_subaddr),
+	.I2C_WDATA   (i2c_dout),
+	.I2C_RDATA   (i2c_din),
+	.I2C_END     (i2c_end),
+	.I2C_ACK     (i2c_ack),
+
+	//I2C bus
+	.I2C_SCL     (HDMI_SCL),
+	.I2C_SDA     (HDMI_SDA)
+);
+
+mist_video #(.COLOR_DEPTH(6), .OUT_COLOR_DEPTH(8), .USE_BLANKS(1'b1), .BIG_OSD(BIG_OSD)) hdmi_video (
+	.clk_sys     ( clk_25     ),
+
+	// OSD SPI interface
+	.SPI_SCK     ( SPI_SCK    ),
+	.SPI_SS3     ( SPI_SS3    ),
+	.SPI_DI      ( SPI_DI     ),
+
+	// scanlines (00-none 01-25% 10-50% 11-75%)
+	.scanlines   ( 2'b00      ),
+
+	// non-scandoubled pixel clock divider 0 - clk_sys/4, 1 - clk_sys/2
+	.ce_divider  ( 1'b0       ),
+
+	// 0 = HVSync 31KHz, 1 = CSync 15KHz
+	.scandoubler_disable ( 1'b1 ), // already VGA
+	// disable csync without scandoubler
+	.no_csync    ( 1'b1       ),
+	// YPbPr always uses composite sync
+	.ypbpr       ( 1'b0       ),
+	// Rotate OSD [0] - rotate [1] - left or right
+	.rotate      ( 2'b00      ),
+	// composite-like blending
+	.blend       ( 1'b0       ),
+
+	// video in
+	.R           ( core_r     ),
+	.G           ( core_g     ),
+	.B           ( core_b     ),
+
+	.HSync       ( ~core_hs   ),
+	.VSync       ( ~core_vs   ),
+	.HBlank      ( core_blank ),
+	.VBlank      ( core_vb    ),
+
+	// MiST video output signals
+	.VGA_R       ( HDMI_R     ),
+	.VGA_G       ( HDMI_G     ),
+	.VGA_B       ( HDMI_B     ),
+	.VGA_VS      ( HDMI_VS    ),
+	.VGA_HS      ( HDMI_HS    ),
+	.VGA_DE      ( HDMI_DE    )
+);
+
+assign HDMI_PCLK = clk_25;
+
+`endif
 
 ////// BIOS DOWNLOAD /////
 
@@ -576,6 +708,7 @@ end
 
 reg fake286_r, fake286_r2;
 always @(posedge clk_cpu) { fake286_r, fake286_r2 } <= { fake286, fake286_r };
+wire [15:0] laudio, raudio;
 
 system sys_inst (
 	.clk_25(clk_25),
@@ -600,6 +733,8 @@ system sys_inst (
 	.VGA_B(core_b),
 	.VGA_HSYNC(core_hs),
 	.VGA_VSYNC(core_vs),
+	.VGA_BLANK(core_blank),
+	.VGA_VBLANK(core_vb),
 	.frame_on(),
 
 	.sdr_n_CS_WE_RAS_CAS({SDRAM_nCS, SDRAM_nWE, SDRAM_nRAS, SDRAM_nCAS}),
@@ -630,6 +765,8 @@ system sys_inst (
 
 	.AUD_L(AUDIO_L),
 	.AUD_R(AUDIO_R),
+	.LAUDIO(laudio),
+	.RAUDIO(raudio),
 
 	.PS2_CLK1_I(ps2_kbd_clk),
 	.PS2_CLK1_O(ps2_kbd_clk_i),
@@ -662,5 +799,31 @@ system sys_inst (
 	.BIOS_WR(bios_wr),
 	.BIOS_REQ(bios_req)
 );
+
+`ifdef I2S_AUDIO
+i2s i2s (
+	.reset(1'b0),
+	.clk(clk_cpu),
+	.clk_rate(32'd50_000_000),
+
+	.sclk(I2S_BCK),
+	.lrclk(I2S_LRCK),
+	.sdata(I2S_DATA),
+
+	.left_chan(laudio),
+	.right_chan(raudio)
+);
+`endif
+
+`ifdef SPDIF_AUDIO
+spdif spdif
+(
+	.clk_i(clk_cpu),
+	.rst_i(1'b0),
+	.clk_rate_i(32'd50_000_000),
+	.spdif_o(SPDIF),
+	.sample_i({raudio, laudio})
+);
+`endif
 
 endmodule

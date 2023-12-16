@@ -177,6 +177,8 @@ module system (
 	output frame_on,
 	output wire VGA_HSYNC,
 	output wire VGA_VSYNC,
+	output reg VGA_BLANK,
+	output wire VGA_VBLANK,
 	input BTN_RESET,	// Reset
 	input BTN_NMI,		// NMI
 	output [7:0]LED,	// HALT
@@ -200,6 +202,8 @@ module system (
 
 	output AUD_L,
 	output AUD_R,
+	output [15:0] LAUDIO,
+	output [15:0] RAUDIO,
 	input PS2_CLK1_I,
 	output PS2_CLK1_O,
 	input PS2_CLK2_I,
@@ -668,6 +672,7 @@ module system (
 		.char_ln(char_ln),
 		.char_row(char_row)
 	);
+	assign VGA_VBLANK = vblnk;
 
 	VGA_SC sc
 	(
@@ -873,6 +878,8 @@ module system (
 		.opl3right(opl3right),
 		.full(sq_full), // when not full, write max 2x1152 16bit samples
 		.dss_full(dss_full),
+		.laudio(LAUDIO),
+		.raudio(RAUDIO),
 		.AUDIO_L(AUD_L),
 		.AUDIO_R(AUD_R)
 	);
@@ -1225,6 +1232,7 @@ module system (
 		else if(VGA_HSYNC && ppm_s[1] && (vcount == lcr)) vga_hrzpan <= 4'b0000;
 
 		{VGA_B, VGA_G, VGA_R} <= DAC_COLOR & {18{sdon}};
+		VGA_BLANK <= ~sdon;
 	end
 	
 endmodule

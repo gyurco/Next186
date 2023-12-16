@@ -179,9 +179,9 @@ set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 set_global_assignment -name SYSTEMVERILOG_FILE Next186_MiST.sv
 set_global_assignment -name QIP_FILE "../mist-modules/mist.qip"
 set_global_assignment -name QIP_FILE ../rtl/Next186.qip
-set_global_assignment -name QIP_FILE dcm.qip
-set_global_assignment -name QIP_FILE dcm_misc.qip
-set_global_assignment -name QIP_FILE dcm_cpu.qip
+set_global_assignment -name QIP_FILE cyc3/dcm.qip
+set_global_assignment -name QIP_FILE cyc3/dcm_misc.qip
+set_global_assignment -name QIP_FILE cyc3/dcm_cpu.qip
 
 set_global_assignment -name SDC_FILE Next186_MiST.sdc
 set_global_assignment -name SMART_RECOMPILE ON

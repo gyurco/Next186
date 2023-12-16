@@ -63,6 +63,8 @@ module soundwave(
 		input [7:0]tandy_snd,
 		output full,	// when not full, write max 2x1152 16bit samples
 		output dss_full,
+		output [15:0] laudio,
+		output [15:0] raudio,
 		output reg AUDIO_L,
 		output reg AUDIO_R
 	);
@@ -87,7 +89,9 @@ module soundwave(
 	wire [11:0]rdusedw;
 	assign full = wrusedw >= 12'd2940;
 	assign dss_full = rdusedw > 12'd90;	// Disney sound source queue full
-	 
+	assign laudio = lclamp;
+	assign raudio = rclamp;
+
 	sndfifo sndfifo_inst 
 	(
 		.wrclk(CLK), // input wr_clk
